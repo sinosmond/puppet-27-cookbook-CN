@@ -1,0 +1,146 @@
+﻿[[ch06sec08]]
+=== Using multiple file sources
+
+A neat feature of Puppet's +file+ resource is that you can specify multiple sources for the file.
+Puppet will look for each of them in order. If the first isn't found, it moves on to the next, and
+so on. You can use this to specify a default substitute if the particular file isn't present, or even
+a series of increasingly generic substitutes.
+
+
+==== How to do it…
+
+1. Add the following class to your manifest:
++
+----
+class mysql::app-config( $app )
+{
+    file { "/etc/my.cnf":
+        source => [ "puppet:///modules/admin/${app}.my.cnf",
+                    "puppet:///modules/admin/generic.my.cnf", ],
+    }
+}
+----
+
+2. Create the file +/etc/puppet/modules/admin/files/minutespace.my.cnf+
+   with the following contents:
++
+....
+# MinuteSpace config file
+....
+
+3. Create the file +/etc/puppet/modules/admin/files/generic.my.cnf+ with the
+   following contents:
++
+....
+# Generic config file
+....
+
+4. Add the following to a node:
++
+----
+class { "mysql::app-config": app => "minutespace" }
+----
+
+5. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1305897071'
+
+notice: /Stage[main]/Mysql::App-config/File[/etc/my.cnf]/ensure:
+defined content as '{md5}24f04b960f4d33c70449fbc4d9f708b6'
+
+notice: Finished catalog run in 0.35 seconds
+....
+
+6. Check that Puppet has deployed the app-specific +config+ file:
++
+....
+# cat /etc/my.cnf
+# MinuteSpace config file
+....
+
+7. Now change the node definition to:
++
+----
+class { "mysql::app-config": app => "shreddit" }
+----
+
+8. Run Puppet again:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1305897864'
+--- /etc/my.cnf 2011-05-20 13:17:56.006239489 +0000
++++ /tmp/puppet-file20110520-15575-1icobgs-0 2011-05-20
+13:24:25.030296062 +0000
+
+@@ -1 +1 @@
+-# MinuteSpace config file
++# Generic config file
+
+info: FileBucket adding /etc/my.cnf as {md5}24f04b960f4d33c70449fb
+c4d9f708b6
+
+info: /Stage[main]/Mysql::App-config/File[/etc/
+my.cnf]: Filebucketed /etc/my.cnf to puppet with sum
+24f04b960f4d33c70449fbc4d9f708b6
+
+notice: /Stage[main]/Mysql::App-config/File[/etc/my.cnf]/content:
+content changed '{md5}24f04b960f4d33c70449fbc4d9f708b6' to '{md5}
+b3a6e744c3ab78dfb20e46ff55f6c33c'
+
+notice: Finished catalog run in 0.93 seconds
+....
+
+
+==== How it works…
+
+We've defined the +/etc/my.cnf+ file as having two sources that are as follows:
+
+----
+file { "/etc/my.cnf":
+    source => [ "puppet:///modules/admin/${app}.my.cnf",
+                "puppet:///modules/admin/generic.my.cnf", ],
+}
+----
+
+The value of +$app+ will be passed in by anyone using the class. In the first example, we passed
+in a value of minutespace:
+
+----
+class { "mysql::app-config": app => "minutespace" }
+----
+
+Puppet will look first of all for +modules/admin/files/minutespace.my.cnf+. This file
+exists, so it will be used. So far, so normal.
+
+Then we change the value of +app+ to shreddit. Puppet now looks for 
++modules/admin/files/shreddit.my.cnf+. 
+This doesn't exist, so Puppet tries the next listed source:
++modules/admin/files/generic.my.cnf+. This does exist, so it will be deployed.
+
+
+==== There's more…
+
+You can use this trick anywhere you have a +file+ resource. For example, some nodes might
+need machine-specific +config+, but not others, so you could do something like the following:
+
+----
+file { "/etc/stuff.cfg":
+    source => [ "puppet:///modules/stuff/${hostname}.cfg",
+                "puppet:///modules/stuff/generic.cfg" ],
+}
+----
+
+Then you put the normal configuration in +generic.cfg+. If machine +cartman+ needs a special
++config+, just put it in the file +cartman.cfg+. This will be used in preference to the +generic+
+file, because it is listed first in the array of sources.
+
+==== See also
+
+- <<ch04sec06,Passing parameters to classes>> in Chapter 4.

@@ -1,0 +1,82 @@
+﻿[[ch09sec04]]
+=== Generating manifests from a running system
+
+While `cft` generates Puppet manifests from a system administrator's console session,
+*puppet resource* generates Puppet manifests from the existing configuration of a system. For
+example, you can have +puppet resource+ generate a manifest that creates all the users
+found on the system. This is very useful for taking a snapshot of a working system and getting
+its configuration quickly into Puppet.
+
+==== How to do it…
+
+1. To generate the manifest for a particular user, run:
++
+----
+# puppet resource user john
+user { 'john':
+    password_min_age => '0',
+    password_max_age => '99999',
+    uid      => '1002',
+    password => '!',
+    gid      => '1001',
+    groups   => ['git'],
+    ensure   => 'present',
+    comment  => 'John Arundel',
+    home     => '/home/john',
+    shell    => '/bin/bash'
+}
+----
+
+2. For a particular service, run:
++
+----
+# puppet resource service ntp
+service { 'ntp':
+    ensure => 'running',
+    enable => 'true'
+}
+----
+
+3. For a package, run:
++
+----
+# puppet resource package exim4
+package { 'exim4':
+    ensure => '4.71-3ubuntu1'
+}
+----
+
+==== There's more…
+
+You can use +puppet resource+ to examine each of the resource types available in Puppet.
+In the preceding examples, we generated a manifest for a specific instance of the resource
+type, but you can also use +puppet resource+ to dump all instances of the resource:
+
+----
+# puppet resource user
+user { 'Debian-exim':
+    ensure           => 'present',
+    uid              => '117',
+    gid              => '124',
+    home             => '/var/spool/exim4',
+    password         => '!',
+    password_min_age => '0',
+    password_max_age => '99999',
+    shell            => '/bin/false'
+}
+
+user { 'avahi':
+    ensure           => 'present',
+    uid              => '104',
+    gid              => '111',
+    home             => '/var/run/avahi-daemon',
+    password         => '*',
+    password_min_age => '0',
+    comment          => 'Avahi mDNS daemon,,,',
+    password_max_age => '99999',
+    shell            => '/bin/false'
+}
+...
+----
+
+This will generate a lot of output!

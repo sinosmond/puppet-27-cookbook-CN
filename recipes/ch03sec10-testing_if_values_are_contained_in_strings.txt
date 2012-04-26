@@ -1,0 +1,51 @@
+﻿[[ch03sec10]]
+=== Testing whether values are contained in strings
+
+Want to know what's in and what's out? Puppet's +in+ keyword can help, with expressions
+such as the following:
+
+----
+if "foo" in $bar
+----
+
+This will be evaluated as +true+ if the string +foo+ is a substring of +$bar+. If +$bar+ is an array,
+and if +foo+ is an element of the array, the expression is true. If +$bar+ is a hash, the
+expression is +true+ if +foo+ is one of the keys of +$bar+.
+
+==== How to do it…
+
+1. Add the following code to your manifest:
++
+----
+if $operatingsystem in [ "Ubuntu", "Debian" ] {
+    notify { "Debian-type operating system detected": }
+} elsif $operatingsystem in [ "RedHat", "Fedora", "SuSE", "CentOS"
+] {
+    notify { "RedHat-type operating system detected": }
+} else {
+    notify { "Some other operating system detected": }
+}
+----
+
+2. Run Puppet:
++
+......
+# puppet agent --test
+Debian-type operating system detected
+......
+
+
+==== There's more…
+
++in+ expressions can be used not just for +if+ statements or other conditionals, but anywhere
+an expression can be used. For example, you can assign the result to a variable as follows:
+
+----
+$debianlike = $operatingsystem in [ "Debian", "Ubuntu" ]
+
+if $debianlike {
+    $ntpservice = "ntp"
+} else {
+    $ntpservice = "ntpd"
+}
+----

@@ -1,0 +1,132 @@
+﻿[[ch03sec05]]
+=== Writing manifests in pure Ruby
+
+¿ Hablas español? Learning languages can be fun, but not everyone wants to do it. Puppet
+has sometimes been criticized for requiring you to write manifests in its own dedicated
+configuration language, rather than an existing general-purpose language such as Ruby.
+
+Not everyone considers this a drawback. The computer scientist Dennis Ritchie remarked:
+
+[quote, Dennis Ritchie,]
+A language that doesn't have everything is actually easier to program in than
+some that do.
+
+Whatever your views, this criticism no longer applies -- Puppet has experimental support for
+writing manifests in Ruby, which is quite usable in production even though it is still at a fairly
+early stage. You can mix and match Ruby and Puppet files within your manifests; Puppet will
+determine the language based on the file extension: +.rb+ for Ruby files, +.pp+ for Puppet files.
+
+The *domain-specific language (DSL)* for writing manifests in Ruby looks very similar to the
+standard Puppet language. In the following example I'll show you how to turn a typical Puppet
+manifest into Ruby. The original manifest in Puppet's language is as follows:
+
+----
+class admin::exim {
+    package { "exim4": ensure => installed }
+
+    service { "exim4":
+        ensure  => running,
+        require => Package["exim4"],
+    }
+
+    file { "/etc/exim4/exim4.conf":
+        content => template("admin/exim4.conf"),
+        notify  => Service["exim4"],
+        require => Package["exim4"],
+    }
+}
+----
+
+==== How to do it…
+
+Create the file +/etc/puppet/modules/admin/manifests/exim.rb+ with the following
+contents:
+
+[source,ruby]
+----
+hostclass "admin::exim" do
+    package "exim4", :ensure => :installed
+
+    service "exim4",
+        :ensure  => :running,
+        :require => "Package[exim4]"
+
+    file "/etc/exim4/exim4.conf",
+        :content => template(["admin/exim4.conf"]),
+        :notify  => "Service[exim4]",
+        :require => "Package[exim4]"
+end
+----
+
+Include this class on a node and run Puppet.
+
+==== How it works…
+
+1. The keyword hostclass declares a class, just like class in Puppet: +hostclass  admin::exim do+
+2. We then have a +do … end+ block which is the equivalent of curly braces in Puppet.
+3. Resources are declared by calling a function named after the resource type: for
+   example, +package+ or +service+: +package "exim4", :ensure => :installed+
+4. Parameters are passed to the function as a comma-separated list, with the
+   parameter names quoted or given a leading colon to make them a Ruby
+   symbol: +:ensure => :running,+
++
+Again built-in Puppet names such as +:installed+ or +:running+ are Ruby symbols.
+
+5. When we need to refer to resources to indicate a relationship, as with +:require+,
+   the resource identifier is given as a string with the resource type capitalized and the
+   name in square brackets: +require => "Package[exim4]"+
++
+We can call a function like template by just using its name and round brackets, and
+passing its arguments as an array delimited by square brackets: +:content => template(["admin/exim4.conf"]),+.
+
+
+==== There's more…
+
+The Ruby DSL is at an early stage. It's fun to experiment with, but unless there are really
+compelling reasons for using Ruby, I'd stick to the standard Puppet language for now. It's quite
+possible that in the future the Ruby DSL will become widely used, but in the meantime, you'll
+find life easier without it. If you do want to use it, however, the following text contains a couple
+of handy hints.
+
+===== Variables
+
+While you can use Ruby variables just as you normally would in a Ruby program, you can
+access your Puppet variables by using +scope.lookupvar+ as follows:
+
+----
+notice( "I am running on node %s" % scope.lookupvar("fqdn") )
+----
+
+gives:
+
+....
+notice: I am running on node cookbook.bitfieldconsulting.com
+....
+
+To set a variable so that it is in scope within your Puppet manifest, use +scope.setvar+
+as follows:
+
+----
+require 'time'
+scope.setvar("now", Time.now)
+notice( "At the third stroke, the time sponsored by Bitfield
+Consulting will be: %s" % scope.lookupvar("now") )
+----
+
+The preceding code results in the following:
+
+....
+notice: At the third stroke, the time sponsored by Bitfield Consulting
+will be: Wed Mar 23 05:58:16 -0600 2011
+....
+
+===== Documentation
+
+You can find more about how to use the Ruby DSL, including more advanced topics such
+as virtual resources and collections, on the Puppet Labs site: http://projects.puppetlabs.com/projects/1/wiki/Ruby_Dsl.
+
+Ken Barber has supplied some syntax examples giving a direct comparison between Puppet
+and Ruby DSL constructs at https://github.com/bobsh/puppet-rubydsl-examples.
+
+Finally, James Turnbull has written a blog post showing a more advanced use of Ruby to
+connect to a MySQL server: http://www.puppetlabs.com/blog/using-ruby-inthe-puppet-ruby-dsl/.

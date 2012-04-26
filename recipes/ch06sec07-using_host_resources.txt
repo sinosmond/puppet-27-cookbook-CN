@@ -1,0 +1,86 @@
+﻿[[ch06sec07]]
+=== Using host resources
+
+[quote, Number Six, "The Prisoner",]
+I am not a number.
+
+It's a common practice to move machines around, especially on cloud infrastructure, so the IP
+of a particular machine may change quite often. Because of this, it's obviously a bad idea to
+hard-code IP addresses into your configuration. Where one machine needs to access another,
+for example, an app server accessing a database server: it's better to use a hostname than an
+IP address.
+
+But how to map names to IP addresses? This is often done with DNS, but small organizations
+may not have a DNS server, and large organizations may make it so time-consuming and
+bureaucratic to implement DNS changes that no one bothers. Also, DNS information can
+propagate to machines at different times, so to ensure quick and consistent address updates,
+one approach is to use local +/etc/hosts+ entries, controlled by Puppet.
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+host { "www.bitfieldconsulting.com":
+    ip     => "109.74.195.241",
+    target => "/etc/hosts",
+    ensure => present,
+}
+----
+
+2. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1305716418'
+
+notice: /Stage[main]//Node[cookbook]/Host[www.bitfieldconsulting.
+com]/ensure: created
+
+info: FileBucket adding /etc/hosts as {md5}977bf5811de978b7f041301
+9e77b4abe
+
+notice: Finished catalog run in 0.21 seconds
+....
+
+==== How it works…
+
+Puppet will check the target file to see if the host entry already exists, and if not, add it, or if it
+exists with a different address, Puppet will update it.
+
+Although there are other possible targets than +/etc/hosts+, this is the default, and the only
+one you're likely to need. I think it's a good practice to specify it explicitly even so, as relying on
+default behavior has a tendency to make the code fragile.
+
+==== There's more…
+
+Organizing your host resources into classes can be helpful. For example, you could put the
+host resources for all your DB servers into one class called +admin::dbhosts+, which is
+included by all web servers.
+
+When machines may need to be defined in multiple classes (for example, a database server
+might also be a repository server), virtual resources can solve this problem. For example, you
+could define all your hosts as virtual in a single class as follows:
+
+----
+class admin::allhosts
+{
+    @host { "db1.bitfieldconsulting.com":}
+}
+----
+
+Then +realize+ the hosts that you need in the various classes:
+
+----
+class admin::dbhosts
+{
+    realize( Host["db1.bitfieldconsulting.com"] )
+}
+
+class admin::repohosts
+{
+    realize( Host["db1.bitfieldconsulting.com"] )
+}
+----

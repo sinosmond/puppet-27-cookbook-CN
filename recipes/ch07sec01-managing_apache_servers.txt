@@ -1,0 +1,93 @@
+﻿[[ch07sec01]]
+=== Managing Apache servers
+
+Apache is a popular web server, except with those who have to configure it. Puppet can ease
+the pain of managing Apache servers to a certain extent.
+
+
+==== How to do it…
+
+1. Create an Apache module, if you don't have one:
++
+....
+# mkdir /etc/puppet/modules/apache
+# mkdir /etc/puppet/modules/apache/templates
+# mkdir /etc/puppet/modules/apache/manifests
+....
+
+2. Create the file +/etc/puppet/modules/apache/manifests/init.pp+ with
+   the following contents:
++
+----
+class apache {
+    package { "apache2-mpm-prefork": ensure => installed }
+
+    service { "apache2":
+        enable  => true,
+        ensure  => running,
+        require => Package["apache2-mpm-prefork"],
+    }
+
+    file { "/etc/apache2/logs":
+        ensure  => directory,
+        require => Package["apache2-mpm-prefork"],
+    }
+
+    file { "/etc/apache2/conf.d/name-based-vhosts.conf":
+        content => "NameVirtualHost *:80",
+        require => Package["apache2-mpm-prefork"],
+        notify  => Service["apache2"],
+    }
+}
+----
+
+3. Add the following code to a node:
++
+----
+include apache
+----
+
+4. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1309189590'
+
+notice: /Stage[main]/Apache/Package[apache2-mpm-prefork]/ensure:
+ensure changed 'purged' to 'present'
+
+notice: /Stage[main]/Apache/File[/etc/apache2/logs]/ensure:
+created
+
+notice: /Stage[main]/Apache/File[/etc/apache2/conf.d/name-basedvhosts.
+conf]/ensure: defined content as '{md5}78465aacbd01eb537b94
+1b21ae0af8b8'
+
+info: /Stage[main]/Apache/File[/etc/apache2/conf.d/name-basedvhosts.
+conf]: Scheduling refresh of Service[apache2]
+
+notice: Finished catalog run in 39.45 seconds
+....
+
+==== There's more…
+
+In the next section, we'll look at how to create virtual host definitions for Apache. However, you
+may find that you need special configuration options for the Apache server as a whole. You could
+set these by deploying +apache2.conf+ with Puppet, but it's neater to put a config snippet into +/etc/apache2/conf.d+. For example, you could add the following to +init.pp+:
+
+----
+define snippet() {
+    file { "/etc/apache2/conf.d/${name}":
+        source => "puppet:///modules/apache/${name}",
+        notify => Service["apache2"],
+    }
+}
+----
+
+and include the following code snippet on a node:
+
+----
+apache::snippet { "site-specific.conf": }
+----

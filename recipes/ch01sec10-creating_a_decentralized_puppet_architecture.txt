@@ -1,0 +1,143 @@
+﻿[[ch01sec10]]
+=== Creating a decentralized Puppet architecture
+
+[quote, Steven Wright,]
+I have the world's largest collection of seashells. I keep it scattered around the
+beaches of the world... perhaps you've seen it.
+
+Some systems—notably the Mafia—run best when they're decentralized. The most common
+way to use Puppet is to run a Puppetmaster server, which Puppet clients can then connect to
+and receive their manifests from. However, you can run `puppet apply` directly on a manifest
+file to have it executed as shown in the following command line. (You'll normally want to use
+the `-v` switch to enable verbose mode, so you can see what's happening):
+
+.......
+# puppet apply -v manifest.pp
+info: Applying configuration version '1294313350'
+.......
+
+You can even supply a manifest directly on the command line:
+
+.......
+# puppet apply -e "file { '/tmp/test': ensure => present }"
+notice: /Stage[main]//File[/tmp/test]/ensure: created
+.......
+
+In other words, if you can arrange to distribute a suitable manifest file to a client machine,
+you can have Puppet execute it directly without the need for a central Puppetmaster. This
+removes the performance bottleneck of a single master server, and also eliminates a single
+point of failure. It also avoids having to sign and exchange SSL certificates when provisioning
+a new client machine.
+
+There are many ways you could deliver the manifest file to the client, but Git (or another
+version control system such as Mercurial, or Subversion) does most of the work for you.
+You can edit your manifests in a local working copy, commit them to Git and push them to a
+central repo, and from there they can be automatically distributed to the client machines.
+
+==== Getting ready
+
+If your Puppet manifests aren't already in Git, follow the steps in Using version control for
+your Puppet manifests in this chapter.
+
+==== How to do it…
+
+1. Make a bare clone of your Puppet repo on the client as follows:
++
+.......
+# git clone --bare ssh://git@repo.example.com/var/git/puppet
+.......
+
+2. Copy the contents of this repo into your +/etc/puppet/+ directory using the
+   following command:
++
+.......
+# git archive --format=tar HEAD | (cd /etc/puppet && tar xf -)
+.......
+
+3. Run Puppet on your +site.pp+ file:
++
+--
+.......
+# puppet apply -v /etc/puppet/manifests/site.pp
+info: Applying configuration version '1294313353'
+.......
+
+Once this is working, the next step is to have the configuration repo automatically
+push out changes to the clients. With Git, you can do this using remotes, like so:
+
+.......
+# git remote add web ssh://git@web1.example.com/etc/puppet
+.......
+
+If you have multiple client machines, you can add more URLs to the same remote:
+
+.......
+# git remote set-url --add webs ssh://git@web2.example.com/etc/puppet
+# git remote set-url --add webs ssh://git@web3.example.com/etc/puppet
+...
+.......
+
+or simply edit the Git configuration file (+.git/config+) like this:
+
+----
+[remote "web"]
+    url = ssh:// git@web1.example.com/etc/puppet
+    url = ssh://git@web2.example.com/etc/puppet
+    url = ssh://git@web3.example.com/etc/puppet
+    ...
+----
+--
+
+4. Now you can push to any client machine, or group of machines, from the repo server
+   with the following command:
++
+........
+# git push web
+........
+
+5. The final step is to have the client machine update its +/etc/puppet+ directory
+   whenever it receives a push from the repo server. You can do this using a Git postreceive
+   hook. In your bare repo, create the file +hooks/post-receive+ and make it
+   executable (mode 0755):
++
+[source,bash]
+----
+#!/bin/sh
+git archive --format=tar HEAD | (cd /etc/puppet && tar xf -)
+----
+
+
+==== How it works…
+
+Instead of contacting the Puppetmaster to receive their compiled manifest, each client
+compiles its own from a local copy of the manifest source. This is updated every time you
+push updates from the Git server (or from your working checkout). This is more efficient with
+respect to network bandwidth, as clients don't have to contact the Puppetmaster on every
+run. It also eliminates a single point of failure, as clients can be updated from anywhere.
+
+Using a decentralized Puppet architecture based on Git as outlined here gives you a great
+deal of flexibility. You can configure access controls and permissions using SSH keys, and
+allow each client machine or group only as much access as it needs. Manifests for a database
+server group, for example, can be made available only to those machines that need it.
+
+While it requires some extra work to set up, and is not necessary for most small organizations,
+this way of deploying Puppet gives you extra flexibility and control for the most demanding
+environments.
+
+==== There's more…
+
+If you want to have Puppet apply the changes every time they are pushed, you can edit the
+`post-receive` script to do this, or take any other action you want. Alternatively, you could run
+Puppet manually, or from +cron+ as described earlier in this chapter— just run `puppet apply`.
+
+There are a few disadvantages to using a Git-based architecture: you can't use advanced
+Puppet features such as external node classifiers or stored configurations. However, when
+you need to scale to a large number of nodes, this is the simplest way to do it.
+
+You can find a more detailed discussion of this architecture in Stephen Nelson-Smith's article
+at http://bitfieldconsulting.com/scaling-puppet-with-distributedversion-control.
+
+==== See also
+
+- <<ch01sec09,Scaling Puppet using Passenger>> in this chapter
+- <<ch01sec01,Using version control>> in this chapter

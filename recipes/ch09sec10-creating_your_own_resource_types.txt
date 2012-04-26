@@ -1,0 +1,162 @@
+﻿[[ch09sec10]]
+=== Creating your own resource types
+
+It's time to get creative. You'll know about various different resource types in Puppet:
+packages, files, users, and so on. Usually, you can do everything you need to do by using
+either combinations of these built-in resources, or a custom +define+ that you can use
+more or less in the same way as a resource (see Chapter 4, <<chapter04,Writing Better Manifests>>
+for information on +define+).
+
+However, if you need to create your own resource type, Puppet makes it quite easy. The
+native types are written in Ruby, and you will need a basic familiarity with Ruby in order to
+create your own.
+
+Let's refresh our memory on the distinction between *types* and *providers*. A type describes
+a resource and the parameters it can have (for example, the +package+ type). A provider tells
+Puppet how to implement a resource for a particular platform or situation (for example, the
++apt+/+dpkg+ providers implement +package+ for Debian-like systems).
+
+A single type (+package+) can have many providers (+apt+, +yum+, +fink+, and so on). If you don't
+specify a provider when declaring a resource, Puppet will choose the most appropriate one
+given the environment.
+
+In this section we'll see how to create a custom type to manage Git repositories, and in the
+next section, we'll write a provider to implement this type.
+
+==== Getting ready…
+
+1. Enable +pluginsync+ in your +puppet.conf+, if you haven't already:
++
+----
+[main]
+pluginsync = true
+----
+
+2. Create a custom module for your plugins and types in your Puppet repository, 
+   if you haven't already:
++
+....
+# cd /etc/puppet/modules
+# mkdir custom
+....
+
+3. Within the module, create a +lib/puppet/type+ directory:
++
+....
+# cd custom
+# mkdir -p lib/puppet/type
+....
+
+
+==== How to do it…
+
+Create a file in the +type+ directory named +gitrepo.rb+ with the following contents:
+
+[source,ruby]
+----
+Puppet::Type.newtype(:gitrepo) do
+    ensurable
+
+    newparam(:source) do
+        isnamevar
+    end
+
+    newparam(:path)
+end
+----
+
+==== How it works…
+
+The first line registers a new type named +gitrepo+:
+
+----
+Puppet::Type.newtype(:gitrepo) do
+----
+
+The +ensurable+ line automatically gives the type a property ensure, like Puppet's built-in
+resources.
+
+----
+    ensurable
+----
+
+We'll now give the type some parameters. For the moment, all we need is a +source+
+parameter for the Git source URL, and a +path+ parameter to tell Puppet where the repository
+should be created in the filesystem.
+
+----
+    newparam(:source) do
+        isnamevar
+    end
+----
+
+The +isnamevar+ declaration tells Puppet that the +source+ parameter is the type's +namevar+.
+So when you declare an instance of this resource, whatever name you give it will be the value
+of +source+. For example:
+
+----
+gitrepo { "git://github.com/puppetlabs/puppet.git":
+    path => "/home/john/work/puppet",
+}
+----
+
+Finally, we add the path parameter:
+
+----
+    newparam(:path)
+----
+
+==== There's more…
+
+Once you're familiar with creating your own resources, you can use them to replace
+complicated +exec+ resources and make your manifests more readable. However, it's a good
+idea to make your resources robust and reusable by adding some documentation, and
+validating your parameters.
+
+===== Documentation
+
+Our example is deliberately simple, but when you move on to developing real custom types for
+your production environment, you should add documentation strings to describe what the type
+and its parameters do. For example:
+
+----
+Puppet::Type.newtype(:gitrepo) do
+    @doc = "Manages Git repos"
+
+    ensurable
+
+    newparam(:source) do
+        desc "Git source URL for the repo"
+        isnamevar
+    end
+
+    newparam(:path) do
+        desc "Path where the repo should be created"
+    end
+end
+----
+
+===== Validation
+
+You can use parameter validation to generate useful error messages when someone tries to
+pass bad values to the resource. For example, you could validate that the directory where the
+repository is to be created actually exists:
+
+----
+  newparam(:path) do
+    validate do |value|
+      basepath = File.dirname(value)
+      unless File.directory?(basepath)
+        raise ArgumentError , "The path %s doesn't exist" %basepath
+      end
+    end
+  end
+----
+
+You can also specify the list of allowed values that the parameter can take as follows:
+
+----
+newparam(:breakfast) do
+    newvalues(:bacon, :eggs, :sausages)
+end
+----

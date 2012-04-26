@@ -1,0 +1,117 @@
+﻿[[ch01sec04]]
+=== Configuring Puppet's file server
+
+Deploying configuration files is one of the most common uses of Puppet. Most non-trivial
+services need some kind of configuration file, and you can have Puppet push it to the client
+using a +file+ resource as shown in the following code:
+
+----
+file { "/opt/nginx/conf.d/app_production.conf":
+    source => "puppet:///modules/app/app_production.conf",
+}
+----
+
+The +source+ parameter works like this: the first part after +puppet:///+ is assumed to be
+the name of a *mount point*, and the remainder is treated as a path to the file as shown.
+
+----
+puppet:///<mount point>/<path>
+----
+
+Usually the value of +<mount point>+ is modules, as in the preceding example. In this case,
+Puppet will look for the file in:
+
+------
+manifests/modules/app/files/app_production.conf
+------
+
++modules+ is a mount point that Puppet treats specially: it expects the next path component
+to be the name of a module, and it will then look in the module's +files+ directory for the
+remainder of the path.
+
+However, Puppet lets you create custom mount points, which can have individual access
+control settings, and can be mapped to different locations on the Puppetmaster. In this recipe
+we'll see how to create and configure these custom mount points.
+
+
+==== How to do it…
+
+1. Add a stanza to the Puppetmaster's +fileserver.conf+, with the name of your
+   mount point in square brackets, and the path where Puppet should look for data,
+   as shown:
++
+----
+[san]
+    path /mnt/san/mydata/puppet
+----
+
+2. In your manifest, specify a file +source+ using your mount point name as follows:
++
+--
+-----
+source => "puppet:///san/admin/users.htpasswd",
+-----
+
+and Puppet will convert this to the path:
+
+-----
+/mnt/san/mydata/puppet/admin/users.htpasswd
+-----
+
+One good reason to create a custom mount point like this is to add some security.
+Let's say you have a top-secret password file which should only be deployed to the
+web server, and no other machine needs it. If someone can run Puppet on any
+machine that has a valid certificate to access the Puppetmaster, there's nothing to
+stop them executing a manifest like this:
+
+------
+file { "/home/cracker/goodstuff/passwords.txt":
+    source => "puppet:///web/passwords.txt",
+}
+------
+
+They can easily retrieve the secret data. Indeed, anyone who can check out the
+Puppet repo or who has an account on the Puppetmaster could access this file. One
+way to avoid this is to put secret data into a special mount point with access control.
+--
+
+3. Add +allow+ and +deny+ parameters to your mount point definition in +fileserver.conf+
+   like this:
++
+-----
+[secret]
+    /data/secret
+    allow web.example.com
+    deny *
+-----
+
+==== How it works…
+
+In this case, only +web.example.com+ can access the file. The default is to deny all access,
+so the +deny *+ line isn't strictly necessary, but it's good style to make it explicit. The web
+server can then use a +file+ resource as shown in the following code:
+
+----
+file { "/etc/passwords.txt":
+    source => "puppet:///secret/passwords.txt",
+}
+----
+
+If this manifest is executed on +web.example.com+, it will work, but on any other clients,
+it will fail.
+
+==== There's more…
+
+You can also specify an IP address instead of a hostname, optionally using *(CIDR) Classless
+Inter-Domain Routing* (slash) notation or wildcards, as follows:
+
+-----
+allow 10.0.55.0/24
+allow 192.168.0.*
+-----
+
+==== See also
+
+- <<ch03sec02,Using modules>> section in Chapter 3
+- <<ch06sec09,Distributing directory trees>> section in Chapter 6
+- <<ch06sec08,Using multiple file sources>> section in Chapter 6

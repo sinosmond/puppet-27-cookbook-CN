@@ -1,0 +1,253 @@
+﻿[[ch01sec09]]
+=== Scaling Puppet using Passenger
+
+If your Puppet infrastructure's starting to creak at the seams, the culprit could be the
+Puppetmaster's web server. Puppet ships with a simple web server called *Webrick* to handle
+client connections to the Puppetmaster. Webrick is not really considered suitable for using
+Puppet in production; with more than a few servers as it can bring the Puppetmaster to
+its knees.
+
+*Mongrel* is sometimes suggested as an alternative as it is a little better than Webrick, but not
+much. In order to scale Puppet to hundreds of servers, the preferred approach is to switch to
+a high-performance web server such as Apache using the *Passenger* (mod_rails) extension.
+
+Puppet comes with the necessary configuration to run under Passenger, so all you need to do
+is install Apache and Passenger, and add a suitable virtual host. The following example uses
+Ubuntu 10.04. You can find instructions on the Puppet Labs website for how to do the same in
+Red Hat Linux, CentOS, and other distributions at 
+http://projects.puppetlabs.com/projects/1/wiki/Using_Passenger.
+
+==== Getting ready
+
+It will be helpful if you have available the source *tarball* for the version of Puppet you're
+running, because it provides several template files and configuration snippets which you
+can use to set up Passenger. For example, if you're running Puppet 2.7.1, download this file:
+http://puppetlabs.com/downloads/puppet/puppet-2.7.1.tar.gz.
+
+If you are using a different version, you will find a suitable download link at
+http://puppetlabs.com. Unpack the source tarball with:
+
+......
+tar xzf puppet-2.7.1.tar.gz
+......
+
+==== How to do it…
+
+1. Install Apache and Passenger, plus associated dependencies:
++
+.......
+# apt-get install apache2 libapache2-mod-passenger rails
+librack-ruby libmysql-ruby
+# gem install rack
+.......
+
+2. Create the necessary directories for Passenger to find the Puppet configuration:
++
+----
+/etc/puppet/rack
+/etc/puppet/rack/public
+----
++
+These directories should be owned by +root+ and set mode 0755.
+
+3. Create the +config.ru+ file which will tell Passenger how to start the Puppet
+   application. You can use the example file provided with the Puppet distribution:
++
+--
+.........
+# cp /tmp/puppet-2.7.1/ext/rack/files/config.ru /etc/puppet/rack/
+# chown puppet /etc/puppet/rack/config.ru
+.........
+
+For Puppet 2.7.1, it has the following contents:
+
+----
+# a config.ru, for use with every rack-compatible webserver.
+# SSL needs to be handled outside this, though.
+
+# if puppet is not in your RUBYLIB:
+# $:.unshift('/opt/puppet/lib')
+
+$0 = "master"
+
+# if you want debugging:
+# ARGV << "--debug"
+
+ARGV << "--rack"
+require 'puppet/application/master'
+# we're usually running inside a Rack::Builder.new {} block,
+# therefore we need to call run *here*.
+run Puppet::Application[:master].run
+----
+--
+
+4. You now need to create a virtual host for Apache to listen on the correct port and
+   send requests to the Puppet application. Again, you can use the example provided
+   with the Puppet distribution:
++
+--
+......
+# cp /tmp/puppet-2.7.1/ext/rack/files/apache2.conf \
+  /etc/apache2/sites-available/puppetmasterd
+# a2ensite puppetmasterd
+......
+
+The file contents will look something like this:
+
+[source,apache]
+----
+# you probably want to tune these settings
+PassengerHighPerformance on
+PassengerMaxPoolSize 12
+PassengerPoolIdleTime 1500
+# PassengerMaxRequests 1000
+PassengerStatThrottleRate 120
+RackAutoDetect Off
+RailsAutoDetect Off
+
+Listen 8140
+
+<VirtualHost *:8140>
+  SSLEngine on
+  SSLProtocol -ALL +SSLv3 +TLSv1
+  SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:-LOW:-SSLv2:-EXP
+
+  SSLCertificateFile /etc/puppet/ssl/certs/cookbook.
+  bitfieldconsulting.com.pem
+  SSLCertificateKeyFile /etc/puppet/ssl/private_keys/cookbook.
+  bitfieldconsulting.com.pem
+  SSLCertificateChainFile /etc/puppet/ssl/ca/ca_crt.pem
+  SSLCACertificateFile /etc/puppet/ssl/ca/ca_crt.pem
+  # If Apache complains about invalid signatures on the CRL, you 
+  # can try disabling
+  # CRL checking by commenting the next line, but this is not
+  # recommended.
+  SSLCARevocationFile /etc/puppet/ssl/ca/ca_crl.pem
+  SSLVerifyClient optional
+  SSLVerifyDepth 1
+  SSLOptions +StdEnvVars
+
+  DocumentRoot /etc/puppet/rack/public/
+  RackBaseURI /
+  <Directory /etc/puppet/rack/>
+    Options None
+    AllowOverride None
+    Order allow,deny
+    allow from all
+  </Directory>
+</VirtualHost>
+----
+--
+
+5. Edit this file to set the values of the +SSLCertificateFile+ and
+   +SSLCertificateKeyFile+ to your own certificates (it's easiest to create these
+   certificates if you've already run Puppet at least once).
+6. You will also need to enable Passenger and mod_ssl in Apache:
++
+.........
+# a2enmod passenger ssl
+.........
+
+7. Add the following lines to your +/etc/puppet/puppet.conf+:
++
+--------
+ssl_client_header = SSL_CLIENT_S_DN
+ssl_client_verify_header = SSL_CLIENT_VERIFY
+--------
+
+8. Stop your existing Puppetmaster if it is running.
+9. Start Apache as follows:
++
+.........
+# /etc/init.d/apache2 restart
+.........
+
+10. If everything has worked, you will be able to run Puppet as usual:
++
+...........
+# puppet agent --test
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1294145142'
+notice: Finished catalog run in 0.25 seconds
+...........
+
+
+==== How it works…
+
+Instead of using Puppet's built-in web server, which is rather slow and can only handle one
+connection at a time, you'll now be using the high-performance multi-threaded Apache web
+server. Puppet is embedded as an application using the Rack framework, which is much more
+efficient. You should find that you can handle many more clients and more frequent Puppet
+runs using the "Apache + Passenger" configuration, and that the impact on server memory
+and performance is less than using the standard Puppetmaster daemon.
+
+==== There's more…
+
+Here is an example Puppet manifest that will implement the preceding steps for you
+(on an Ubuntu system):
+
+----
+class puppet::passenger {
+    package { [ "apache2-mpm-worker",
+                "libapache2-mod-passenger",
+                "librack-ruby",
+                "libmysql-ruby" ]:
+        ensure => installed,
+    }
+
+    service { "apache2":
+        enable => true,
+        ensure => running,
+        require => Package["apache2-mpm-worker"],
+    }
+
+    package { "rack":
+        provider => gem,
+        ensure => installed,
+    }
+
+    file { [ "/etc/puppet/rack",
+             "/etc/puppet/rack/public" ]:
+        ensure => directory,
+        mode => "755",
+    }
+
+    file { "/etc/puppet/rack/config.ru":
+        source => "puppet:///modules/puppet/config.ru",
+        owner => "puppet",
+    }
+
+    file { "/etc/apache2/sites-available/puppetmasterd":
+        source => "puppet:///modules/puppet/puppetmasterd.conf",
+    }
+
+    file { "/etc/apache2/sites-enabled/puppetmasterd":
+        ensure => symlink,
+        target => "/etc/apache2/sites-available/puppetmasterd",
+    }
+
+    exec { "/usr/sbin/a2enmod ssl":
+        creates => "/etc/apache2/mods-enabled/ssl.load",
+    }
+}
+----
+
+Once you're up and running with Passenger, you can use the following command to restart the
+Puppetmaster application:
+
+........
+# service apache2 restart
+........
+
+To monitor that Passenger is running, check for the process named
++ApplicationPoolServerExecutable+.
+
+You can also load-balance Passenger instances in the same way that you would for a regular
+web application.
+
+For more details, or if you run into problems, consult the *Puppet-on-Passenger* documentation
+at: http://projects.puppetlabs.com/projects/1/wiki/Using_Passenger
+
+==== See also
+
+- <<ch01sec10,Creating decentralized Puppet architecture>> in this chapter

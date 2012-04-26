@@ -1,0 +1,32 @@
+﻿[[ch03sec04]]
+=== Using embedded Ruby
+
+[quote, Mikkel Bruun,]
+Ruby, like fire, is a very useful friend, and a very dangerous enemy.
+
+Templates are a powerful way of using embedded Ruby to help build configuration files
+dynamically and iterate over arrays. However, you can embed Ruby in your manifests directly
+without having to use a separate file, by calling the +inline_template+ function.
+
+==== How to do it…
+
+Pass your Ruby code to +inline_template+ within the Puppet manifest as follows:
+
+----
+cron { "nightly-job":
+    command => "/usr/local/bin/nightly-job",
+    hour => "0",
+    minute => inline_template("<%= hostname.hash.abs % 60 %>"),
+}
+----
+
+==== How it works…
+
+Anything inside the string passed to +inline_template+ is executed as if it were an ERB
+template. That is, anything inside the +<%=+ and +%>+ delimiters will be executed as Ruby code,
+and the rest will be treated as a string.
+
+==== See also
+
+- <<ch05sec04,Using ERB templates>> in Chapter 5
+- <<ch05sec05,Using array iteration in templates>> in Chapter 5

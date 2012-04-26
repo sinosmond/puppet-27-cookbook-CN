@@ -1,0 +1,118 @@
+﻿[[ch02sec09]]
+=== Understanding Puppet errors
+
+Stop! Error time. Puppet's error messages can be confusing, and sometimes don't contain
+much helpful information about how to actually resolve the problem.
+
+==== How to do it…
+
+Often the first step is simply to search the web for the error message text and see what
+explanations you can find for the error, along with any helpful advice about fixing it. Here
+are some of the most common puzzling errors, with possible explanations:
+
+- +Could not evaluate: Could not retrieve information from source(s)+
++
+This means you specified a +source+ parameter for a file and Puppet couldn't find it.
+Check that the file is present and has been checked in, and also that the source path
+is correct.
+
+- +change from absent to file failed: Could not set 'file on ensure: 
+  No such file or directory+
++
+This is often caused by Puppet trying to write a file to a directory that doesn't exist.
+Check that the directory either exists already or is defined in Puppet, and that the file
+resource require the directory (so that the directory is always created first).
+
+- +undefined method `closed?' for nil:NilClass+
++
+--
+This unhelpful error message is roughly translated as "something went wrong". It
+tends to be a catch-all error caused by many different problems, but you may be able
+to determine what is wrong from the name of the resource, the class, or the module.
+One trick is to add the `--debug` switch, to get more useful information:
+
+......
+# puppet agent --test --debug
+......
+
+If you check your Git history to see what was touched in the most recent change, this
+may be another way to identify what's upsetting Puppet.
+--
+
+- +Could not parse for environment --- "--- production": Syntax
+  error at end of file at line 1+
++
+This can be caused by mistyping command line options: for example, if you type
+`puppet -verbose` instead of `puppet --verbose`. That kind of error can be
+hard to see.
+
+- +Could not request certificate: Retrieved certificate does not
+  match private key; please remove certificate from server and
+  regenerate it with the current key+
++
+Either the node's SSL host key has changed, or Puppet's SSL directory has been
+deleted, or you are trying to request a certificate for a machine with the same name
+as an existing node. Generally, the simplest way to fix this is to remove Puppet's
+SSL directory from the client machine (usually this is +/etc/puppet/ssl+) and run
+`puppet cert --clean <nodename>` on the Puppetmaster. Then run Puppet
+again, and it should generate a certificate request correctly.
+
+- +Could not retrieve catalog from remote server: wrong header line format+
++
+This usually indicates an error in compiling a template. You'll see this kind of error if
+you have a typo in your ERB syntax, such as in the following code snippet:
++
+----
+rails_env <%!= app_env %>
+----
+
+- +Duplicate definition: X is already defined in [file] at line Y;
+  cannot redefine at [file] line Y+
++
+--
+This one has caused me some confusion in the past. Puppet's complaining about
+a duplicate definition, and normally if you have two resources with the same
+name, Puppet will helpfully tell you where they are both defined. But in this case,
+it's indicating the same file and line number for both. How can one resource be a
+duplicate of itself?
+
+The answer is: if it's a define. If you create two instances of a define, you'll also
+have two instances of all the resources contained within the define, and they need
+to have distinct names. For example:
+
+----
+define check_process() {
+    exec { "is-process-running?":
+        command => "/bin/ps ax |/bin/grep ${name} >/tmp/
+         pslist.${name}.txt",
+    }
+}
+
+check_process { "exim": }
+check_process { "nagios": }
+----
+
+......
+# puppet agent --test
+info: Retrieving plugin
+err: Could not retrieve catalog from remote server: Error 400 on
+SERVER: Duplicate definition: Exec[is-process-running?] is already
+defined in file /etc/puppet/manifests/nodes.pp at line 22; cannot
+redefine at /etc/puppet/manifests/nodes.pp:22 on node cookbook.
+bitfieldconsulting.com
+warning: Not using cache on failed catalog
+err: Could not retrieve catalog; skipping run
+......
+
+Because the +exec+ resource is named +is-process-running+? and this stays
+the same no matter what you pass to the +define+, Puppet will refuse to create two
+instances of it. The solution is to include the name of the instance in the title of each
+resource, as follows:
+
+......
+exec { "is-process-${name}-running?":
+    command => "/bin/ps ax |/bin/grep ${name} >/tmp/
+     pslist.${name}.txt",
+}
+......
+--

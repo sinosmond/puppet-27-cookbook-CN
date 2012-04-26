@@ -1,0 +1,88 @@
+﻿[[ch03sec03]]
+=== Using standard naming conventions
+
+[quote, Phil Karlton,]
+There are only two hard problems in computer science: cache invalidation, naming
+things, and off-by-one errors.
+
+Choosing appropriate and informative names for your modules and classes will be a big help
+when it comes to maintaining your code. This is even more true if other people need to read
+and work on your manifests.
+
+==== How to do it…
+
+1. Name modules after the software or service they manage: for example, +apache+
+   or +haproxy+.
++
+Name classes within modules after the function or service they provide to the
+module: for example, +apache::vhosts+ or +rails::dependencies+.
++
+If a class within a module disables the service provided by that module, name
+it as +disabled+. For example, a class that disables Apache should be named 
++apache::disabled+.
+
+2. If a node provides multiple services, have the node definition include one module
+   or class named for each service. For example:
++
+----
+node server014 inherits server {
+    include puppet::server
+    include mail::server
+    include repo::gem
+    include repo::apt
+    include zabbix
+}
+----
+
+3. The module that manages users should be named +user+.
+4. Within the +user+ module, declare your virtual users within the class +user::virtual+
+5. Within the +user+ module, subclasses for particular groups of users should be named
+   after the group such as +user::sysadmins+, or +user::contractors+.
+6. When you need to override a class for some specific node or service, inherit that
+   class and prefix the name of the subclass with the node. For example, if your node
+   +cartman+ needs a special SSH configuration, and you want to override the +ssh+ class,
+   do it as follows:
++
+----
+class cartman_ssh inherits ssh {
+    [ override config here ]
+}
+----
+
+7. When using Puppet to deploy configuration files for different services, name the file
+   after the service, but with a suffix indicating what kind of file it is. For example:
++
+--
+- Apache +init+ script -- +apache.init+
+- Log rotation configuration snippet for Rails -- +rails.logrotate+
+- Nginx +vhost+ file for +mywizzoapp+ -- +mywizzoapp.vhost.nginx+
+- MySQL configuration for standalone server -- +standalone.mysql+
+
+If you need to manage, for example, different Ruby versions, name the class after the
+version it is responsible for, such as +ruby192+ or +ruby186+.
+--
+
+==== There's more…
+
+The Puppet community maintains a set of best practice guidelines for your Puppet
+infrastructure which includes some hints on naming: http://projects.puppetlabs.com/projects/1/wiki/Puppet_Best_Practice.
+
+Some people prefer to include multiple classes on a node by using a comma-separated list,
+rather than separate +include+ statements. For example:
+
+----
+node server014 inherits server {
+    include puppet::server,
+            mail::server,
+            repo::gem,
+            repo::apt,
+            zabbix
+}
+----
+
+This is a matter of style, but I prefer to use separate +include+ statements, one to a line,
+because it makes it easier to copy and move around class inclusions between nodes without
+having to tidy up the commas and indentation every time.
+
+I mentioned inheritance in a couple of the preceding examples. If you're not sure what this is,
+don't worry: I'll explain it in detail in the next chapter.

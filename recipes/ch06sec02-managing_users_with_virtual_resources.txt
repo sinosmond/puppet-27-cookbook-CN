@@ -1,0 +1,118 @@
+﻿[[ch06sec02]]
+=== Managing users with virtual resources
+
+Users are an excellent example of where virtual resources can come in handy. Consider the
+following setup. You have three users: John, Graham, and Steven. To simplify administration of
+a large number of machines, you have defined classes for two kinds of users: developers and
+sysadmins. All machines need to include sysadmins, but only some machines need developer
+access:
+
+----
+node server
+{
+    include user::sysadmins
+}
+
+node webserver inherits server
+{
+    include user::developers
+}
+----
+
+John is a sysadmin, and Steven is a developer, but Graham is both, so Graham needs to be
+in both groups. This will cause a conflict on a web server as we end up with two definitions of
+the user Graham.
+
+To avoid this situation, it's common practice to make all users virtual, defined in a single
+class +user::virtual+, which every machine includes, and then realizing the users where
+they are needed.
+
+==== How to do it…
+
+1. Create a user module as follows:
++
+....
+# mkdir -p /etc/puppet/modules/user/manifests
+....
+
+2. Create the file /etc/puppet/modules/user/manifests/virtual.pp with
+   the following contents:
++
+----
+class user::virtual
+{
+    @user { "john": }
+    @user { "graham": }
+    @user { "steven": }
+}
+----
+
+3. Create the file +/etc/puppet/modules/user/manifests/developers.pp+
+   with the following contents:
++
+----
+class user::developers
+{
+    realize( User["graham"],
+             User["steven"] )
+}
+----
+
+4. Create the file +/etc/puppet/modules/user/manifests/sysadmins.pp+ with
+   the following contents:
++
+----
+class user::sysadmins
+{
+    realize( User["john"],
+             User["graham"] )
+}
+----
+
+5. Add the following to a node:
++
+----
+include user::virtual
+include user::sysadmins
+include user::developers
+----
+
+6. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1305554239'
+notice: /Stage[main]/User::Virtual/User[john]/ensure: created
+notice: /Stage[main]/User::Virtual/User[steven]/ensure: created
+notice: /Stage[main]/User::Virtual/User[graham]/ensure: created
+notice: Finished catalog run in 2.36 seconds
+....
+
+==== How it works…
+
+Every node should include the +user::virtual+ class, as part of your basic housekeeping
+configuration, which is inherited by all servers. This class will define all users in your
+organization or site. This should also include any users who exist only to run applications or
+services (such as, +apache+ or +git+, for example).
+
+You can then organise your users into groups (not in the sense of UNIX groups, but perhaps as
+different teams or job roles) such as +developers+ and +sysadmins+. The class for a group will
++realize+ whichever users are included in it, shown as follows:
+
+----
+class user::sysadmins
+{
+    realize( User["john"],
+             User["graham"] )
+}
+----
+
+You can then include these groups wherever they are needed, without worrying about conflicts
+caused by multiple definitions of the same user.
+
+==== See also
+
+- <<ch06sec01,Using virtual resources>> in this chapter.
+- <<ch06sec04,Managing users' customization files>> in this chapter.

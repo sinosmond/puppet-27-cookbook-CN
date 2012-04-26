@@ -1,0 +1,58 @@
+﻿[[ch03sec11]]
+=== Using regular expression substitutions
+
+[quote, Robert C. Gallagher,]
+Change is inevitable, except from vending machines.
+
+Puppet's +regsubst+ function provides an easy way to manipulate text, search and replace
+within strings, or extract patterns from strings. We commonly need to do this with data
+obtained from a fact for example, or from external programs.
+
+In this example we'll see how to use +regsubst+ to extract the first three octets of an IP
+address (the network part, assuming it's a Class C address).
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+$class_c = regsubst($ipaddress, "(.*)\..*", "\1.0")
+notify { $ipaddress: }
+notify { $class_c: }
+----
+
+2. Run Puppet:
++
+......
+notice: 10.0.2.15
+notice: 10.0.2.0
+......
+
+==== How it works…
+
++regsubst+ takes at least three parameters: +source+, +pattern+, and +replacement+. In our
+example, we specified the source string as +$ipaddress+, which happens to be:
+
+----
+    10.0.2.15
+----
+
+We also specified the +pattern+ as +(.*)\..*+ and the +replacement+ as +\1.0+
+
+The +pattern+ will match the whole IP address, capturing the first three octets in round
+brackets. The captured text will be available as +\1+ for use in the +replacement+ string.
+
+The whole of the matched text (in this case the whole string) is replaced with +replacement+.
+This is +\1+ (the captured text from the +source+ string) followed by the string +.0+, which
+evaluates to: +10.0.2.0+
+
+==== There's more…
+
++pattern+ can be any regular expression, using the same (Ruby) syntax as regular
+expressions in +if+ statements.
+
+==== See also
+
+- <<ch04sec09,Importing dynamic information>> in Chapter 4
+- <<ch04sec08,Getting information about the environment>> in Chapter 4
+- <<ch03sec08,Using regular expressions in if statements>> in this chapter

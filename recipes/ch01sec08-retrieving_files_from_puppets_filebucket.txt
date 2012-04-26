@@ -1,0 +1,127 @@
+﻿[[ch01sec08]]
+=== Retrieving files from Puppet's filebucket
+
+[quote, Anon,]
+A Freudian slip is when you say one thing, but mean your mother.
+
+We all make mistakes; that's why pencils have erasers. Whenever Puppet changes a file on
+the client, it keeps a backup copy of the previous version. We can see this process in action if
+we make a change, however small, to an existing file:
+
+........
+# puppet agent --test
+info: Caching catalog for cookbook
+info: Applying configuration version '1293459139'
+--- /etc/sudoers 2010-12-27 07:12:20.421896753 -0700
++++ /tmp/puppet-file20101227-1927-13hjvy6-0 2010-12-27 07:13:21.645702932
+-0700
+@@ -12,7 +12,7 @@
+
+ # User alias specification
+-User_Alias SYSOPS = john
++User_Alias SYSOPS = john,bob
+
+info: FileBucket adding /etc/sudoers as {md5}
+c07d0aa2d43d58ea7b5c5307f532a0b1
+info: /Stage[main]/Admin::Sudoers/File[/etc/sudoers]: Filebucketed /etc/
+sudoers to puppet with sum c07d0aa2d43d58ea7b5c5307f532a0b1
+
+notice: /Stage[main]/Admin::Sudoers/File[/etc/sudoers]/content: content
+changed '{md5}c07d0aa2d43d58ea7b5c5307f532a0b1' to '{md5}0d218c16bd31206e
+312c885884fa947d'
+
+notice: Finished catalog run in 0.45 seconds
+........
+
+The part we're interested in is this line:
+
+........
+info: /Stage[main]/Admin::Sudoers/File[/etc/sudoers]: Filebucketed /etc/
+sudoers to puppet with sum c07d0aa2d43d58ea7b5c5307f532a0b1
+........
+
+Puppet creates an MD5 hash of the file's contents and uses this to create a *filebucket*
+path, based on the first few characters of the hash. The filebucket is where Puppet keeps
+backup copies of any files that it replaces, and it's located by default in
++/var/lib/puppet/clientbucket+.
+
+........
+# ls /var/lib/puppet/clientbucket/c/0/7/d/0/a/a/2/
+c07d0aa2d43d58ea7b5c5307f532a0b1
+contents  paths
+........
+
+As you just saw, the `ls` command listed the filenames. You will see two files in the bucket
+location: +contents+ and paths. The +contents+ file contains, as you might expect, the original
+contents of the file. The +paths+ file contains its original path.
+
+It's easy to find the file if you know its content hash (as we did in this case). If you don't, it's
+helpful to create a table of contents of the whole filebucket by building an index file.
+
+==== How to do it…
+
+1. Create the index file using the following command:
++
+.........
+# find /var/lib/puppet/clientbucket -name paths -execdir cat {}
+  \; -execdir pwd \; -execdir date -r {} +"%F %T" \; -exec echo \; >
+  bucket.txt
+.........
+
+2. Search the index file to find the file you're looking for:
++
+....................
+# cat bucket.txt
+/etc/sudoers
+/var/lib/puppet/clientbucket/c/0/7/d/0/a/a/2/
+c07d0aa2d43d58ea7b5c5307f532a0b1
+2010-12-27 07:13:21
+
+/etc/sudoers
+/var/lib/puppet/clientbucket/1/0/9/0/e/2/8/a/1090e28a70ebaae872c2e
+c78894f49eb
+2010-12-27 07:12:20
+....................
+
+3. To retrieve the file once you know its bucket path, just copy the contents file to the
+   original filename:
++
+............
+# cp /var/lib/puppet/clientbucket/1/0/9/0/e/2/8/a/1090e28a70ebaae8
+72c2ec78894f49eb/contents /etc/sudoers
+............
+
+==== How it works…
+
+The script will create a complete list of files in the filebucket, showing the original name of
+the file, the bucket path, and the modification date (in case you need to retrieve one of several
+previous versions of the file). Once you know the bucket path, then you can copy the file back
+into place.
+
+==== There's more…
+
+You can have Puppet create backup copies of the file in its original location, rather than in
+the filebucket. To do this, use the +backup+ parameter in your manifest:
+
+----
+file { "/etc/sudoers":
+    mode => "440",
+    source => "puppet:///modules/admin/sudoers",
+    backup => ".bak",
+}
+----
+
+Now, if Puppet replaces the file, it will create a backup version in the same location with the
+extension .bak. To make this the default policy for all files, use:
+
+----
+File {
+    backup => ".bak",
+}
+----
+
+To disable backups altogether, use the following code:
+
+----
+    backup => false,
+----

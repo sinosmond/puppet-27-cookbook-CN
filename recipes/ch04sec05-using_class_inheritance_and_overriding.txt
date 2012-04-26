@@ -1,0 +1,253 @@
+﻿[[ch04sec05]]
+=== Using class inheritance and overriding
+
+Just as nodes can inherit from other nodes, to save you duplicating lots of stuff for nodes that
+are very similar, the same idea works for classes.
+
+For example, imagine you have a class +apache+ which manages the Apache web server, and
+you want to set up a new Apache machine but with a slightly different config file - perhaps
+listening on a different port.
+
+You could duplicate the whole of the +apache+ class, except for the config file. Alternatively, you
+could take the config file out of the +apache+ class and create two new classes, each of which
+includes the base apache class and adds a different version of the config file.
+
+A cleaner way is to inherit from the +apache+ class, but override just the config file.
+
+==== Getting ready…
+
+1. Create the directory structure for a new +apache+ module:
++
+....
+# mkdir /etc/puppet/modules/apache
+# mkdir /etc/puppet/modules/apache/manifests
+# mkdir /etc/puppet/modules/apache/files
+....
+
+2. Create the file +/etc/puppet/modules/apache/manifests/init.pp+ with the
+   following contents:
++
+----
+class apache {
+    package { "apache2-mpm-worker": ensure => installed }
+
+    service { "apache2":
+        enable  => true,
+        ensure  => running,
+        require => Package["apache2-mpm-worker"],
+    }
+
+    file { "/etc/apache2/ports.conf":
+        source => "puppet:///modules/apache/port80.conf.apache",
+        notify => Service["apache2"],
+    }
+}
+----
+
+3. Install the Apache package, if it's not already present, and copy the included +ports.
+   conf+ file into Puppet:
++
+....
+# apt-get install apache2-mpm-worker
+
+# cp /etc/apache2/ports.conf \
+/etc/puppet/modules/apache/files/port80.conf.apache
+....
+
+4. Add the apache class to a node as follows:
++
+----
+node cookbook {
+    include apache
+}
+----
+
+5. Run Puppet to verify that the manifest works.
+
+==== How to do it…
+
+1. Create a new version of +port80.conf.apache+ named +port8000.conf.apache+
+   with the following changes:
++
+----
+NameVirtualHost *:8000
+Listen 8000
+----
+
+2. Now add a new file +/etc/puppet/modules/apache/manifests/port8000.pp+
+   with the following contents:
++
+----
+class apache::port8000 inherits apache {
+    File["/etc/apache2/ports.conf"] {
+        source => "puppet:///modules/apache/port8000.conf.apache",
+    }
+}
+----
+
+3. Change your node to include the +apache::port8000+ class instead of apache:
++
+----
+node cookbook {
+    include apache::port8000
+}
+----
+
+4. Run Puppet to check that it makes the required changes:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1302970905'
+--- /etc/apache2/ports.conf 2010-11-18 14:16:23.000000000 -0700
++++ /tmp/puppet-file20110416-6165-pzeivi-0 2011-04-16
+10:21:47.204294334 -0600
+@@ -5,8 +5,8 @@
+# Debian etch). See /usr/share/doc/apache2.2-common/NEWS.Debian.gz and
+# README.Debian.gz
+
+-NameVirtualHost *:80
+-Listen 80
++NameVirtualHost *:8000
++Listen 8000
+
+<IfModule mod_ssl.c>
+# If you add NameVirtualHost *:443 here, you will also have
+to change
+info: FileBucket adding /etc/apache2/ports.conf as {md5}38b31d2032
+6f3640a8dfbe1ff5d1c4ad
+info: /Stage[main]/Apache/File[/etc/apache2/ports.conf]:
+Filebucketed /etc/apache2/ports.conf to puppet with sum
+38b31d20326f3640a8dfbe1ff5d1c4ad
+notice: /Stage[main]/Apache/File[/etc/apache2/ports.conf]/content:
+content changed '{md5}38b31d20326f3640a8dfbe1ff5d1c4ad' to '{md5}4
+1d9d446f779c55f13c5fe5a7477d943'
+info: /Stage[main]/Apache/File[/etc/apache2/ports.conf]:
+Scheduling refresh of Service[apache2]
+notice: /Stage[main]/Apache/Service[apache2]: Triggered 'refresh'
+from 1 events
+notice: Finished catalog run in 4.85 seconds
+....
+
+==== How it works…
+
+Let's take another look at the new class:
+
+----
+class apache::port8000 inherits apache {
+    File["/etc/apache2/ports.conf"] {
+        source => "puppet:///modules/apache/port8000.conf.apache",
+    }
+}
+----
+
+You can see that after the class name we have +inherits+ apache. This will make the class
+an exact copy of +apache+, except for the changes that follow.
+
+The following code snippet:
+
+----
+File["/etc/apache2/ports.conf"] {
+----
+
+specifies that we want to make changes to the +file+ resource named +/etc/apache2/ports.conf+
+in the parent class (note that +File+ is capitalized, meaning that we're referring
+to an existing resource rather than defining a new one).
+
+The following code snippet:
+
+----
+source => "puppet:///modules/apache/port8000.conf.apache",
+----
+
+means that we are going to override the +source+ parameter of the parent class's resource
+with a new value. The result will be exactly the same as if we had copied the whole class
+definition from +apache+ but changed the value of +source+:
+
+----
+class apache {
+    package { "apache2-mpm-worker": ensure => installed }
+
+    service { "apache2":
+        enable  => true,
+        ensure  => running,
+        require => Package["apache2-mpm-worker"],
+    }
+
+    file { "/etc/apache2/ports.conf":
+        source => "puppet:///modules/apache/port8000.conf.apache",
+        notify => Service["apache2"],
+    }
+}
+----
+
+==== There's more…
+
+Overriding inherited classes may seem complicated at first. Once you get the idea, though,
+it's actually quite simple. It's a great way to make your manifests more readable because it
+removes lots of duplication, and focuses only on the parts that differ. Here are some more
+ways to use overriding.
+
+===== Undefining parameters
+
+Sometimes you don't want to change the value of a parameter, you just want to remove its
+value altogether. To do this, use the value +undef+. The result will be as though the parameter
+had never been defined in the first place.
+
+----
+class apache::norestart inherits apache {
+    File["/etc/apache2/ports.conf"] {
+        notify => undef,
+    }
+}
+----
+
+===== Adding extra values using the +> operator
+
+Similarly, instead of replacing a value, you may want to add more values to those defined in
+the parent class. The *plusignment* operator ++>+ will do this:
+
+----
+class apache::ssl inherits apache {
+    file { "/etc/ssl/certs/cookbook.pem":
+        source => "puppet:///modules/apache/cookbook.pem",
+    }
+
+    Service["apache2"] {
+        require +> File["/etc/ssl/certs/cookbook.pem"],
+    }
+}
+----
+
+The ++>+ operator adds a value (or an array of values surrounded by square brackets) to the
+value defined in the parent class. In this case, what we end up with is the equivalent of this:
+
+----
+service { "apache2":
+    enable  => true,
+    ensure  => running,
+    require => [ Package["apache2-mpm-worker"], File["/etc/ssl/certs/
+    cookbook.pem"] ],
+}
+----
+
+===== Disabling resources
+
+One of the most common uses for inheritance and overrides is to disable services or other
+resources:
+
+----
+class apache::disabled inherits apache {
+    Service["apache2"] {
+        enable => false,
+        ensure => stopped,
+    }
+}
+----
+
+==== See also
+
+- <<ch04sec04,Using node inheritance>> in this chapter
+- <<ch04sec06,Passing parameters to classes>> in this chapter
+- <<ch03sec03,Using standard naming conventions>> in Chapter 3

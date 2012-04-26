@@ -1,0 +1,107 @@
+﻿[[ch02sec13]]
+=== Using tags
+
+Tag, you're it! Sometimes one Puppet class needs to know about another -- or, at least, to
+know whether or not it's present. For example, a class that manages the firewall may need
+to know whether the node is a web server.
+
+Puppet's +tagged+ function will tell you whether a named class or resource is present in the
+catalog for this node. You can also apply arbitrary tags to a node or class and check for the
+presence of these tags.
+
+==== How to do it…
+
+1. To help you find out if you're running on a particular node or class of node, all nodes
+   are automatically tagged with the node name and the names of any parent nodes it
+   inherits from.
++
+----
+node bitfield_server {
+    include bitfield
+}
+
+node cookbook inherits bitfield_server {
+    if tagged("cookbook") {
+        notify { "this will succeed": }
+    }
+    if tagged("bitfield_server") {
+        notify { "so will this": }
+    }
+}
+----
+
+2. To help you tell whether a particular class is included on this node, all nodes are
+   automatically tagged with the names of all the classes they include, and their
+   parent classes.
++
+----
+include apache::port8000
+
+if tagged("apache::port8000") {
+    notify { "this will succeed": }
+}
+
+if tagged("apache") {
+    notify { "so will this": }
+}
+----
+
+3. If you want to set an arbitrary tag on a node, use the +tag+ function:
++
+----
+tag("old-slow-server")
+if tagged("old-slow-server") {
+    notify { "this will succeed": }
+}
+----
+
+4. If you want to set a tag on a particular resource, use the +tag+ *metaparameter*:
++
+----
+file { "/etc/ssh/sshd_config":
+    source => "puppet:///modules/admin/sshd_config",
+    notify => Service["ssh"],
+    tag    => "security",
+}
+----
+
+5. You can also use tags to determine which parts of the manifest to apply. If you use the
+   `--tags` option on the Puppet command-line, only those classes or resources tagged
+   with specific tags will be applied. For example, if you want to update only the `exim`
+   configuration, but not run any other parts of the manifest, use the following command:
++
+......
+# puppet agent --test --tags exim
+......
+
+
+==== There's more…
+
+You can use tags to create a collection of resources. For example if some service depends on
+a large number of file snippets, you can use the following:
+
+----
+class firewall::service {
+    service { "firewall":
+        …
+    }
+
+    File <| tag == "firewall-snippet" |> ~> Service["firewall"]
+}
+
+class myapp {
+    file { "/etc/firewall.d/myapp.conf":
+        tag => "firewall-snippet",
+        …
+    }
+}
+----
+
+Here, we've specified that the +firewall+ service should be notified if any +file+ resource
+tagged +firewall-snippet+ is updated. All we need to do to add a firewall config snippet for
+any particular app or service is to tag it +firewall-snippet+, and Puppet will do the rest.
+
+Although we could add +notify => Service["firewall"]+ to each snippet resource, if
+our definition of the +firewall+ service were ever to change we would have to hunt down and
+update all the snippets accordingly. The tag lets us encapsulate the logic in one place, making
+future maintenance and refactoring much easier.

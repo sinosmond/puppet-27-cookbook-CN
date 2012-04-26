@@ -1,0 +1,111 @@
+﻿[[ch09sec01]]
+=== Creating custom Facter facts
+
+While Facter's built-in facts are useful, it's actually quite easy to add your own facts. For
+example, if you have machines in different data centers or hosting providers, you can add
+a *custom fact* for this so that Puppet can determine if any local settings need to be applied
+(for example, local DNS servers).
+
+==== Getting ready...
+
+1. Enable the +pluginsync+ option in +puppet.conf+:
++
+----
+[main]
+    pluginsync = true
+----
+
+2. Create a directory for the fact. This should be called +lib/facter+, 
+   and placed in a suitable module directory. For example, you might 
+   use the directory +modules/admin/lib/facter+. Any custom facts you
+   create can then be placed in this directory and Puppet will sync 
+   them to clients.
+
+==== How to do it…
+
+1. Create a text file named +hello.rb+ with the following contents:
++
+[source,ruby]
+----
+Facter.add(:hello) do
+    setcode do
+        "Hello, world"
+    end
+end
+----
+
+2. Run Puppet on a client. This should sync the fact to the client machine:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+
+notice: /File[/var/lib/puppet/lib/facter/hello.rb]/ensure: defined
+content as '{md5}7314e71d35db83b563a253e741121b1d'
+
+info: Loading downloaded plugin /var/lib/puppet/lib/facter/hello.rb
+info: Loading facts in hello
+info: Loading facts in hello
+info: Loading facts in hello
+info: Loading facts in hello
+info: Connecting to sqlite3 database: /var/lib/puppet/state/
+clientconfigs.sqlite3
+
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1297258039'
+
+notice: Finished catalog run in 0.57 seconds
+....
+
+3. Test the fact by running Facter directly as follows:
++
+....
+# facter hello
+Hello, world
+....
+
+4. Now you can reference the fact in a Puppet manifest:
++
+----
+notify { $hello: }
+----
+
+5. When you run Puppet, the value returned by the fact will be inserted as follows:
++
+....
+notice: Hello, world
+....
+
+
+==== How it works…
+
+The built-in facts in Facter are defined in the same way as the custom fact that we just
+created. This architecture makes it very easy to add or modify facts, and provides a standard
+way for you to read information about the host into your Puppet manifests.
+
+Facts can contain any Ruby code, and the last value evaluated inside the +setcode do … end+
+block will be the value returned by the fact. For example, you could make a more useful
+fact that returns the number of users currently logged in:
+
+----
+Facter.add(:users) do
+    setcode do
+        %x{/usr/bin/who |wc -l}.chomp
+    end
+end
+----
+
+The output is:
+
+....
+notice: 2 users logged in
+....
+
+==== There's more…
+
+You can extend the use of facts to build a completely 'nodeless' Puppet configuration: in other
+words, Puppet can decide what resources to apply to a machine based solely on the results of
+facts. Jordan Sissel has written about this approach at http://www.semicomplete.com/blog/geekery/puppet-nodeless-configuration.html.
+
+There are many examples of custom facts available on the web, including Cosimo Streppone's
+article on deriving data-center location from IP addresses at http://my.opera.com/cstrep/blog/puppet-custom-facts-and-master-less-puppet-deployment.

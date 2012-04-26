@@ -1,0 +1,179 @@
+﻿[[ch06sec01]]
+=== Using virtual resources
+
+What are virtual resources and why do we need them? Let's look at a typical situation, where
+virtual resources might come in useful.
+
+You are responsible for two applications, +facesquare+ and +twitstagram+. Both are web
+apps running on Apache. The definition for +facesquare+ might look something like the
+following:
+
+----
+class app::facesquare
+{
+    package { "apache2-mpm-worker": ensure => installed }
+}
+----
+
+The definition for +twitstagram+ might look like the following:
+
+----
+class app::twitstagram
+{
+    package { "apache2-mpm-worker": ensure => installed }
+}
+----
+
+All is well until you need to consolidate both apps onto a single server as follows:
+
+----
+node micawber
+{
+    include app::facesquare
+    include app::twitstagram
+}
+----
+
+Now Puppet will complain, because you tried to define two resources with the same name:
++apache2-mpm-worker+. The following error will be shown:
+
+....
+err: Could not retrieve catalog from remote server: Error 400 on SERVER:
+Duplicate definition: Package[apache2-mpm-worker] is already defined in
+file /etc/puppet/modules/app/manifests/facesquare.pp at line 2; cannot
+redefine at /etc/puppet/modules/app/manifests/twitstagram.pp:2 on node
+cookbook.bitfieldconsulting.com
+....
+
+You could remove the duplicate package definition from one of the classes, but then it would
+fail if you tried to include the +app+ class on another server that didn't already have Apache.
+
+You can get round this problem by putting the Apache package in its own class and then using
++include apache+; Puppet doesn't mind you including the same class multiple times. But this
+has the disadvantage that every potentially conflicting resource must have its own class.
+
+Virtual resources to the rescue. A virtual resource is just like a normal resource, except that it
+starts with an @ character, shown as follows:
+
+----
+@package { "apache2-mpm-worker": ensure => installed }
+----
+
+You can think of it as being like an 'FYI' resource: I'm just telling you about this resource, and
+I don't actually want you to do anything with it yet. Puppet will read and remember virtual
+resource definitions, but won't actually create the resource until you say so.
+
+To create the resource, use the +realize+ function as follows:
+
+----
+realize( Package["apache2-mpm-worker"] )
+----
+
+You can call +realize+ as many times as you want on the resource and it won't result in a
+conflict. So, virtual resources are the way to go when several different classes all require the
+same resource and they may need to co-exist on the same node.
+
+
+==== How to do it…
+
+1. Create a new module +app+:
++
+....
+# mkdir -p /etc/puppet/modules/app/manifests
+....
+
+2. Create the file +/etc/puppet/modules/app/manifests/facesquare.pp+ with
+   the following contents:
++
+----
+class app::facesquare
+{
+    realize( Package["apache2-mpm-worker"] )
+}
+----
+
+3. Create the file +/etc/puppet/modules/app/manifests/twitstagram.pp+ with
+   the following contents:
++
+----
+class app::twitstagram
+{
+    realize( Package["apache2-mpm-worker"] )
+}
+----
+
+4. Create the file +/etc/puppet/modules/admin/manifests/virtualpackages.pp+
+   with the following contents:
++
+----
+class admin::virtual-packages
+{
+    @package { "apache2-mpm-worker": ensure => installed }
+}
+----
+
+5. Include the following on the node:
++
+----
+node cookbook
+{
+    include admin::virtual-packages
+    include app::facesquare
+    include app::twitstagram
+}
+----
+
+6. Run Puppet.
+
+==== How it works…
+
+You define the package as a virtual resource in one place, the +admin::virtual-packages+
+class. All nodes can include this class and you can put all your virtual packages in it. None of
+them will actually be installed on a node, until you call +realize+:
+
+----
+class admin::virtual-packages
+{
+    @package { "apache2-mpm-worker": ensure => installed }
+}
+----
+
+Every class that needs the Apache package can call +realize+ on the following virtual
+resource:
+
+----
+class app::twitstagram
+{
+    realize( Package["apache2-mpm-worker"] )
+}
+----
+
+Puppet knows that because you made the resource virtual, you intended multiple references
+to the same package, and didn't just accidentally create two resources with the same name.
+So, it does the right thing.
+
+==== There's more…
+
+To realize virtual resources, you can also use the *collection* syntax:
+
+----
+Package <| title = "apache2-mpm-worker" |>
+----
+
+The advantage of this syntax is that you're not restricted to the resource name; you could also
+use a tag, for example:
+
+----
+Package <| tag = "security" |>
+----
+
+Or, you can just specify all instances of the resource type, by leaving the query section blank
+as follows:
+
+----
+Package <| |>
+----
+
+==== See also
+
+- <<ch06sec02,Managing users with virtual resources>> in this chapter.

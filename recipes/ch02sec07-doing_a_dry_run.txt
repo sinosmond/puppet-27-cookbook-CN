@@ -1,0 +1,68 @@
+﻿[[ch02sec07]]
+=== Doing a dry run
+
+[quote, Radiohead,]
+No alarms and no surprises.
+
+I hate surprises. Sometimes your Puppet manifest doesn't do exactly what you expected, or
+perhaps someone else has checked in changes you didn't know about. Either way, it's good
+to know exactly what Puppet is going to do before it does it.
+
+For example, if it would update a config file and restart a production service this could result
+in unplanned downtime. Also, sometimes manual configuration changes are made on a server
+which Puppet would overwrite.
+
+To avoid these problems, you can use Puppet's *dry run* mode (also called *noop* mode, for
+*no operation*).
+
+==== How to do it…
+
+Run Puppet with the `--noop` switch:
+
+......
+# puppet agent --test --noop
+info: Connecting to sqlite3 database: /var/lib/puppet/state/
+clientconfigs.sqlite3
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1296492323'
+--- /etc/exim4/exim4.conf   2011-01-17 08:13:34.349716342 -0700
++++ /tmp/puppet-file20110131-20189-127zyug-0 2011-01-31
+09:45:27.792843709 -0700
+@@ -1,4 +1,5 @@
+ #########
++# allow spammers to use our host as a relay
+ #########
+notice: /Stage[main]/Admin::Exim/File[/etc/exim4/exim4.conf]/content: is
+{md5}02798714adc9c7bf82bf18892199971a, should be {md5}6f46256716c0937f3b6
+ffd6776ed059b (noop)
+info: /Stage[main]/Admin::Exim/File[/etc/exim4/exim4.conf]: Scheduling
+refresh of Service[exim4]
+notice: /Stage[main]/Admin::Exim/Service[exim4]: Would have triggered
+'refresh' from 1 events
+notice: Finished catalog run in 0.90 seconds
+......
+
+==== How it works…
+
+In +noop+ mode, Puppet does everything it would normally, with the exception of actually
+making any changes to the machine. It tells you what it would have done, and you can
+compare this with what you expected to happen. If there are any differences, double-check
+the manifest or the current state of the machine.
+
+In the preceding example, note that Puppet warns us it would have restarted the `exim`
+service, due to a config file update. This may or may not be what we want, but it's useful
+to know in advance. I make it a rule, when applying any non-trivial changes on production
+servers, to run Puppet in +noop+ mode first, and verify what's going to happen.
+
+==== There's more…
+
+You can also use dry run mode as a simple auditing tool. It will tell you if any changes have
+been made to the machine since Puppet last applied its manifest. Some organizations require
+all config changes to be made with Puppet, which is one way of implementing a change
+control process. Unauthorized changes can be detected using Puppet in the dry run mode
+where you can then decide whether to merge the changes back into the Puppet manifest, or
+undo them.
+
+==== See also
+
+- <<ch06sec12,Auditing resources>> in Chapter 6

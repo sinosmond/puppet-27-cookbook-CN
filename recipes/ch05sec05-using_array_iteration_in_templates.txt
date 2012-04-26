@@ -1,0 +1,115 @@
+﻿[[ch05sec05]]
+=== Using array iteration in templates
+
+In the preceding example we saw that you can use Ruby to interpolate different values in
+templates depending on the result of an expression. You can also use a loop to generate
+content based on; the elements of an array:
+
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+$ipaddresses = [ '192.168.0.1',
+                 '158.43.128.1',
+                 '10.0.75.207' ]
+
+file { "/tmp/addresslist.txt":
+    content => template("admin/addresslist.erb")
+}
+----
+
+2. Create the file +/etc/puppet/modules/admin/templates/addresslist.erb+
+   with the following contents:
++
+----
+<% ipaddresses.each do |ip| -%>
+IP address <%= ip %> is present.
+<% end -%>
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1304766335'
+notice: /Stage[main]//Node[cookbook]/File[/tmp/addresslist.txt]/
+ensure: defined content as '{md5}7ad1264ebdae101bb5ea0afef474b3ed'
+notice: Finished catalog run in 0.64 seconds
+....
+
+4. Check the contents of the generated file as follows:
++
+....
+# cat /tmp/addresslist.txt
+IP address 192.168.0.1 is present.
+IP address 158.43.128.1 is present.
+IP address 10.0.75.207 is present.
+....
+
+==== How it works…
+
+1. In the first line of the template, we reference the array +ipaddresses+, and call the
+   corresponding +each+ method as follows:
++
+----
+<% ipaddresses.each do |ip| -%>
+----
+
+2. In Ruby, this creates a loop that will execute once for each element of the array. Each
+   time round the loop, the variable +ip+ will be set to the value of the current element.
+3. In our example, the +ipaddresses+ array contains three elements, so the following
+   line will be executed three times, once for each element:
++
+----
+IP address <%= ip %> is present.
+----
+
+4. This will result in three output lines:
++
+----
+IP address 192.168.0.1 is present.
+IP address 158.43.128.1 is present.
+IP address 10.0.75.207 is present.
+----
+
+5. The final line ends the loop as follows:
++
+----
+<% end -%>
+----
+
+6. Note that the first and last lines end with +-%>+, instead of just +%>+ as we saw before.
+   The effect of the +-+ is to suppress the newline that would otherwise be generated,
+   giving us an unwanted blank line in the file.
+
+==== There's more…
+
+Templates can also iterate over hashes, or arrays of hashes as follows:
+
+----
+$interfaces = [ { name => 'eth0',
+                  ip => '192.168.0.1' },
+                { name => 'eth1',
+                  ip => '158.43.128.1' },
+                { name => 'eth2',
+                  ip => '10.0.75.207' } ]
+
+<% interfaces.each do |interface| -%>
+Interface <%= interface['name'] %> has the address <%= interface['ip']
+%>.
+<% end -%>
+----
+
+....
+Interface eth0 has the address 192.168.0.1.
+Interface eth1 has the address 158.43.128.1.
+Interface eth2 has the address 10.0.75.207.
+....
+
+==== See also
+
+- <<ch05sec04,Using ERB templates>> in this chapter

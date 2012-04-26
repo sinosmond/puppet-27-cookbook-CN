@@ -1,0 +1,34 @@
+﻿[[ch01sec07]]
+=== Pre-signing certificates
+
+Because of the security implications, it's best to avoid using autosign if you can help it. In
+general, if you want to automate adding a large number of clients, it's better to pre-generate
+the certificates on the Puppetmaster and then push them to the client as part of the build
+process. You can use `puppet cert --generate <hostname>` to do this.
+
+==== How to do it…
+
+1. Generate a pre-signed certificate for +client1.example.com+ with the following command:
++
+.......
+puppet cert --generate client1.example.com
+.......
++
+Puppet will now generate and sign a client certificate in the name of +client1.example.com+.
+
+2. Transfer the three required files; the private key, the client certificate, and the CA
+   certificate, to the new client. These are found in the following locations:
++
+-----
+/etc/puppet/ssl/private_keys/client1.example.com.pem
+/etc/puppet/ssl/certs/client1.example.com.pem
+/etc/puppet/ssl/certs/ca.pem
+-----
++
+Transfer these to the corresponding directories on the client, and it will then be
+authenticated without the certificate request step. Note that the location of Puppet's
+SSL certs varies according to the +ssldir+ setting in +puppet.conf+.
+
+==== See also
+
+- <<ch01sec06,Using autosign>> in this chapter

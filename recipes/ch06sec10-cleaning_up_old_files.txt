@@ -1,0 +1,86 @@
+﻿[[ch06sec10]]
+=== Cleaning up old files
+
+We all have to clean house once in a while. Puppet's +tidy+ resource will help you clean
+up old or out-of-date files, reducing disk usage. For example, if you have Puppet reporting
+enabled as described in the section on <<ch02sec01,Generating reports>>, you might want to regularly
+delete old report files.
+
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+tidy { "/var/lib/puppet/reports":
+    age     => "1w",
+    recurse => true,
+}
+----
+
+2. Run Puppet:
++
+....
+# puppet agent -–test
+info: Retrieving plugin info: Caching catalog for cookbook.
+bitfieldconsulting.com
+
+notice: /Stage[main]//Node[cookbook]/Tidy[/var/lib/puppet/
+reports]: Tidying File[/var/lib/puppet/reports/cookbook.
+bitfieldconsulting.com/201102241546.yaml]
+
+notice: /Stage[main]//Node[cookbook]/Tidy[/var/lib/puppet/
+reports]: Tidying File[/var/lib/puppet/reports/cookbook.
+bitfieldconsulting.com/20110214727.yaml]
+
+...
+
+info: Applying configuration version '1306149187'
+
+notice: /File[/var/lib/puppet/reports/cookbook.bitfieldconsulting.
+com/201102241546.yaml]/ensure: removed
+
+notice: /File[/var/lib/puppet/reports/cookbook.bitfieldconsulting.
+com/201102141727.yaml]/ensure: removed …
+
+notice: Finished catalog run in 1.48 seconds
+....
+
+==== How it works…
+
+Puppet searches the specified path for any files matching the +age+ parameter: in this case, +1w+
+(one week). It also searches subdirectories (+recurse => true+).
+
+Any files matching your criteria will be deleted.
+
+==== There's more…
+
+You can specify file ages in seconds, minutes, hours, days, or weeks, by using a single
+character to specify the time unit, like the following:
+
+- 60s
+- 180m
+- 24h
+- 30d
+- 4w
+
+You can specify that files greater than a given size should be removed, such as the following:
+
+----
+size => "100m",
+----
+
+This removes files of 100 megabytes and over. For kilobytes, use k, and for bytes, use b.
+
+[NOTE]
+==========
+Please note that if you specify both age and size parameters, they
+are treated as independent criteria. For example, if you specify the
+following files, then Puppet will remove all files older than one day, or
+over 512KB in size.
+
+----
+  age => "1d",
+  size => "512k",
+----
+==========

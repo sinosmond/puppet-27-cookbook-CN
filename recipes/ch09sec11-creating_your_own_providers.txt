@@ -1,0 +1,158 @@
+﻿[[ch09sec11]]
+=== Creating your own providers
+
+In the previous section, we created a new custom type called +gitrepo+ and told Puppet that
+it takes two parameters, +source+ and +path+. However, so far we haven't told Puppet how to
+actually check out the repository -- in other words, how to create a specific instance of this
+type. That's where the provider comes in.
+
+We saw that a type will often have several possible providers. In our example, there is only
+one sensible way to instantiate a Git repo, so we'll only supply one provider: +git+. If you were
+to generalize this type -- say to just +repo+ -- it's not hard to imagine creating several different
+providers depending on the type of repository; for example, +git+, +svn+, +cvs+, and so on.
+
+==== Getting ready…
+
+1. Within your +custom+ module, create a subdirectory of +lib/puppet+ called
+   +provider/gitrepo+:
++
+....
+# mkdir -p lib/puppet/provider/gitrepo
+....
+
+2. In the +gitrepo+ directory, create a file called +git.rb+ with the following contents:
++
+[source,ruby]
+----
+require 'fileutils'
+
+Puppet::Type.type(:gitrepo).provide(:git) do
+    commands :git => "git"
+
+    def create
+        git "clone", resource[:source], resource[:path]
+    end
+
+    def exists?
+        File.directory? resource[:path]
+    end
+end
+----
+
+==== How to do it…
+
+1. Create an instance of your new type somewhere in your Puppet manifest as follows:
++
+----
+gitrepo { "https://github.com/puppetlabs/puppet.git":
+    path   => "/tmp/puppet",
+    ensure => present,
+}
+----
+
+2. Now run Puppet, and your new type will be loaded and instantiated:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+notice: /File[/var/lib/puppet/lib/puppet]/ensure: created
+notice: /File[/var/lib/puppet/lib/puppet/provider]/ensure: created
+
+notice: /File[/var/lib/puppet/lib/puppet/provider/gitrepo]/ensure:
+created
+
+notice: /File[/var/lib/puppet/lib/puppet/provider/gitrepo/git.rb]/
+ensure: defined content as '{md5}a12870d89a4b517e48fe417ce2e12ac2'
+
+notice: /File[/var/lib/puppet/lib/puppet/type]/ensure: created
+
+notice: /File[/var/lib/puppet/lib/puppet/type/gitrepo.rb]/ensure:
+defined content as '{md5}90d5809e1d01dc9953464e8d431c9639'
+
+info: Loading downloaded plugin /var/lib/puppet/lib/puppet/
+provider/gitrepo/git.rb
+
+info: Loading downloaded plugin /var/lib/puppet/lib/puppet/type/
+gitrepo.rb
+
+info: Redefining gitrepo in Puppet::Type
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1299850325'
+
+notice: /Stage[main]//Node[cookbook]/Gitrepo[https://github.com/
+puppetlabs/puppet.git]/ensure: created
+
+notice: Finished catalog run in 74.43 seconds
+....
+
+[NOTE]
+========
+Note: due to a bug in Puppet, when you first create your new type, you
+may need to run +puppet agent+ twice: once to load the type definition,
+and again to actually create the instance. If you see the following
+message:
+
+......
+err: /Stage[main]//Node[cookbook]/Gitrepo[https://
+github.com/puppetlabs/puppet.git]: Could not
+evaluate: No ability to determine if gitrepo exists
+......
+
+you've been bitten by the bug -- just run Puppet again and it should work.
+By the time you read this it may well have been fixed.
+========
+
+==== How it works…
+
+First we register this as a provider for the +gitrepo+ type as follows:
+
+----
+Puppet::Type.type(:gitrepo).provide(:git) do
+----
+
+When you declare an instance of the type in your manifest, Puppet will first of all check
+whether the instance already exists:
+
+----
+def exists?
+    File.directory? resource[:path]
+end
+----
+
+We implement a method +exists?+ that will be called by Puppet to make this check. It returns
++true+ if a directory exists matching the +path+ parameter of the instance.
+
+If +exists?+ returns true, then Puppet will take no further action. If not, Puppet will try to
+create the resource by calling the +create+ method:
+
+----
+def create
+    git "clone", resource[:source], resource[:path]
+end
+----
+
+In this case, the +create+ method does a `git clone` on the Git source provided (in the
++source+ parameter) into the path specified by the +path+ parameter.
+
+==== There's more…
+
+You can see that custom types and providers in Puppet are very powerful. In fact, they can
+do anything -- at least, anything that Ruby can do. If you are managing some parts of your
+infrastructure with complicated +define+ and +exec+ resources, you may want to consider
+replacing these with a custom type. In fact, it's worth looking around to see if someone else
+has already done this before implementing your own.
+
+Our example was very simple, and there is much more to learn about writing your own
+types. If you're going to distribute your code for others to use, or even if you aren't, it's a
+good idea to include tests with it. 
+
+Puppet Labs has some useful pages on type development:
+http://docs.puppetlabs.com/guides/custom_types.html and http://projects.puppetlabs.com/projects/1/wiki/Development_Practical_Types.
+For information on writing tests to Puppet Labs standards, see http://projects.puppetlabs.com/projects/1/wiki/Development_Writing_Tests.
+
+For an excellent, easy-to-follow introduction to type development, see James Turnbull's article
+"Creating Puppet types and providers is easy…" at 
+http://www.kartar.net/2010/02/puppet-types-and-providers-are-easy/.
+
+Dean Wilson also has a very instructive example of a custom type to manage APT sources:
+https://github.com/deanwilson/puppet-aptsourced.

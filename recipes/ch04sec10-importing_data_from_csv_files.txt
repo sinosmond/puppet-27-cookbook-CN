@@ -1,0 +1,170 @@
+﻿[[ch04sec10]]
+=== Importing data from CSV files
+
+Want to know something? When you need to look up some value in a table, you could do
+it with lengthy +case+ statements or selectors, but a neater way is to use the +extlookup+
+function. This queries an external CSV file on the Puppetmaster and returns the matching
+piece of data.
+
+Grouping all such data into a single file and moving it outside the Puppet manifests makes
+it easier to maintain, as well as easier to share with other people: a development team can
+manage the things Puppet needs to know about their application, for example, by deploying a
+suitable CSV file as part of the release. Puppet just needs to know where to find the file, and
++extlookup+ will do the rest.
+
+==== Getting ready…
+
+1. Create the file +/var/www/apps/common.csv+ with the following contents:
++
+----
+path,/var/www/apps/%{name}
+railsversion,3
+domain,www.%{name}.com
+----
+
+2. Create the file +/var/www/apps/myapp.csv+ with the following contents:
++
+----
+railsversion,2
+----
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+$extlookup_datadir = "/var/www/apps/"
+$extlookup_precedence = [ "%{name}", "common" ]
+
+class app( $name ) {
+    $railsversion = extlookup("railsversion")
+    $path = extlookup("path")
+    $domain = extlookup("domain")
+    notify { "App data: Path ${path}, Rails version
+    ${railsversion}, domain ${domain}": }
+}
+
+class { "app": name => "myapp" }
+----
+
+2. Run Puppet:
++
+......
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303129760'
+notice: App data: Path /var/www/apps/myapp, Rails version 2,
+domain www.myapp.com
+notice: /Stage[main]/App/Notify[App data: Path /var/www/apps/
+myapp, Rails version 2, domain www.myapp.com]/message: defined
+'message' as 'App data: Path /var/www/apps/myapp, Rails version 2,
+domain www.myapp.com'
+notice: Finished catalog run in 0.58 seconds
+......
+
+
+==== How it works…
+
+1. The first thing we do is define the variable +$extlookup_datadir+, which tells
+   +extlookup+ what directory to look for data files in. You would normally set this in
+   +site.pp+ or wherever you define global variables:
++
+----
+$extlookup_datadir = "/var/www/apps/"
+----
+
+2. Then, we tell +extlookup+ what data files to look at, in order of precedence:
++
+--
+----
+$extlookup_precedence = [ "%{name}", "common" ]
+----
+
+This can be an array of any length. When we make an +extlookup+ query, Puppet
+will try each of the files in order until it finds one that has the requested value. The
+file names can contain variables. In this example, we've used +%{name}+, so we're
+expecting a variable called +$name+ to be set when we call +extlookup+ and Puppet will
+use its value as the first filename to look for.
+--
+
+3. Next, inside the +app+ class, we call +extlookup+ to get a value:
++
+--
+----
+$railsversion = extlookup("railsversion")
+----
+
+The +extlookup+ machinery now looks for a CSV file to read the data from. It looks in
+the +$extlookup_datadir+ directory (in this case +/var/www/apps+) for a file named
++%{name}.csv+ (in this case +myapp.csv+). So it reads the file +/var/www/apps/myapp.csv+ 
+which contains +railsversion,2+
+
+We've found the required value (2), so +extlookup+ returns it.
+--
+
+4. The next +extlookup+ call isn't so lucky:
++
+--
+----
+$path = extlookup("path")
+----
+
+Again, +extlookup+ looks first in +myapp.csv+, but it doesn't find a value matching
++path+. So it moves on to the next file listed in +$extlookup_precedence+, which is
++common.csv+:
+
+----
+path,/var/www/apps/%{name}
+railsversion,3
+domain,www.%{name}.com
+----
+
+Thankfully, this does match, so Puppet returns the value +/var/www/apps/%{name}+,
+which in this case evaluates to +/var/www/apps/myapp+.
+--
+
+You can see that this allows us to have a set of default values in +common.csv+ that each app
+may choose to override in its own +myapp.csv+ file. +extlookup+ will keep on querying the
+files listed in +$extlookup_precedence+ until it finds the value requested. As +myapp.csv+ is
+listed first, any setting in it will take precedence over settings in +common.csv+.
+
+==== There's more…
+
+You can also specify default values in the extlookup call, to be used if no suitable data is
+found in the CSV files:
+
+----
+$path = extlookup("path", "/var/www/misc")
+----
+
+You can also specify a CSV file to be consulted first, before anything in
++$extlookup_precedence+:
+
+----
+$path = extlookup("path", "/var/www/misc", "paths")
+----
+
+This will look in +paths.csv+ for the data, and if it doesn't find it, will move on to the files listed in +$extlookup_precedence+ as usual.
+
+The values in your CSV files can also refer to variables, as we did here:
+
+----
+domain,www.%{name}.com
+----
+
+You can use any variable that's in scope, including Facter facts:
+
+----
+domain,%{fqdn}
+----
+
+*R.I. Pienaar's article "Complex data and Puppet"* is an excellent introduction to extlookup: http://www.devco.net/archives/2009/08/31/complex_data_and_puppet.php.
+
+*Jordan Sissel has written "about configuring your whole infrastructure using extlookup"*: http://sysadvent.blogspot.com/2010/12/day-12-scaling-operabilitywith-truth.html.
+
+
+==== See also
+
+- <<ch04sec09,Importing dynamic information>> in this chapter
+- <<ch09sec01,Creating custom Facter facts>> in Chapter 9

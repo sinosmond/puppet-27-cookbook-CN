@@ -1,0 +1,122 @@
+﻿[[ch04sec07]]
+=== Writing reusable, cross-platform manifests
+
+Every system administrator dreams of a unified, homogeneous infrastructure, of identical
+machines all running the same version of the same OS. As in other areas of life, however, the
+reality is often messy and doesn't conform to the plan.
+
+You are probably responsible for a bunch of assorted servers of varying age and architecture,
+running different kernels from different OS distributions, often scattered across different data
+centers and ISPs.
+
+This situation should strike terror into the hearts of sysadmins of the "SSH in a +for+ loop"
+persuasion, because executing the same commands on every server can have different,
+unpredictable, and even dangerous results.
+
+We should certainly strive to bring older servers up to date and get everything as far as
+possible working on a single reference platform to make administration simpler, cheaper, and
+more reliable. But until we get there, Puppet makes coping with heterogeneous environments
+slightly easier.
+
+==== How to do it…
+
+1. If you have servers in different data centers that need slightly different network
+   configuration, for example, use the node inheritance technique to encapsulate the
+   differences:
++
+----
+node wreckspace_server inherits server {
+        include admin::wreckspace_specific
+}
+----
+
+2. Where you need to apply the same manifest to servers with different OS distributions,
+   the main differences will probably be the names of packages and services, and the
+   location of config files. Try to capture all these differences into a single class, using
+   selectors to set global variables:
++
+--
+----
+$ssh_service = $operatingsystem? {
+     /Ubuntu|Debian/ => "ssh",
+     default => "sshd",
+}
+----
+
+Then you needn't worry about the differences in any other part of the manifest; when
+you refer to something, use the variable in confidence that it will point to the right
+thing in each environment:
+
+----
+service { $ssh_service:
+    ensure => running,
+}
+----
+--
+
+3. Often we need to cope with mixed architectures; this can affect the paths to
+   shared libraries, and also may require different versions of packages. Again, try to
+   encapsulate all the required settings in a single +architecture+ class which sets
+   global variables:
++
+--
+----
+$libdir = $architecture ? {
+    x86_64 => "/usr/lib64",
+    default => "/usr/lib",
+}
+----
+
+Then you can use these wherever an architecture-dependent value is required, in
+your manifests or even in templates:
+
+----
+; php.ini
+[PHP]
+; Directory in which the loadable extensions (modules) reside.
+extension_dir = <%= libdir %>/php/modules
+----
+--
+
+==== How it works…
+
+The advantage of this approach (which could be called "top-down") is that you only need to
+make your choices once. The alternative, bottom-up approach, would be to have a selector or
++case+ statement everywhere a setting is used:
+
+----
+service { $operatingsystem? {
+    /Ubuntu|Debian/ => "ssh",
+    default         => "sshd" }:
+    ensure          => running,
+}
+----
+
+This not only results in lots of duplication, but makes the code harder to read. And when a
+new operating system is added to the mix, you'll need to make changes throughout the whole
+manifest, instead of just in one place.
+
+==== There's more…
+
+If you are writing a module for public distribution (for example on Puppet Forge), you can make
+it much more valuable by making it as cross-platform as possible. As far as you can, test it on
+lots of different distributions, platforms, and architectures, and add the appropriate variables
+so it works everywhere.
+
+If you use a public module and adapt it to your own environment, consider updating the public
+version with your changes if you think they might be helpful to other people.
+
+Even if you are not thinking of publishing a module, bear in mind that it may be in production
+use for a long time and may have to adapt to many changes in the environment. If it's
+designed to cope with this from the start, it'll make life easier for you - or whoever ends up
+maintaining your code.
+
+[quote, Dave Carhart,]
+Always code as if the guy who ends up maintaining your code will be a violent
+psychopath who knows where you live.
+
+==== See also
+
+- <<ch04sec04,Using node inheritance>> in this chapter
+- <<ch04sec05,Using class inheritance and overriding>> in this chapter
+- <<ch09sec08,Using public modules>> in Chapter 9

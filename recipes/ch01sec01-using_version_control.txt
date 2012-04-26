@@ -1,0 +1,143 @@
+﻿[[ch01sec01]]
+=== Using version control
+
+[quote, Doug Gwyn,]
+Unix was not designed to stop you from doing stupid things, because that would
+also stop you from doing clever things.
+
+Ever deleted something and wished you hadn't? The most important tip in this book is to put
+your Puppet manifests in a *version control system* such as Git or Subversion. Editing the
+manifests directly on the *Puppetmaster* is a bad idea, because your changes could get applied
+before you're ready. Puppet automatically detects any changes to manifest files, so you might
+find half-finished manifests being applied to your clients. This could have nasty results!
+
+Instead, use version control (I recommend Git) and make the +/etc/puppet+ directory on the
+Puppetmaster a checkout from your repository. This gives you several advantages:
+
+- You don't run the risk of Puppet applying incomplete changes
+- You can undo changes and revert to any previous version of your manifest
+- You can experiment with new features using a branch, without affecting the master
+  version used in production
+- If several people need to make changes to the manifests, they can make them
+  independently, in their own working copies, and then merge their changes later
+- You can use the log feature to see what was changed, and when (and by whom).
+
+==== Getting ready
+
+You'll need a Puppetmaster and a set of existing manifests in +/etc/puppet+. If you don't have
+these already, refer to the Puppet documentation to find out how to install Puppet and create
+your first manifests.
+
+To put your manifests under version control, you need to import the +/etc/puppet+ directory
+from the Puppetmaster into your version control system, and make it a working copy. In this
+example, we'll use a *GitHub* account to store the Puppet configuration.
+
+You'll need a GitHub account (it's free to sign up) and a repository. Follow the instructions at
+http://www.github.com[www.github.com] to create one.
+
+[TIP]
+================
+You can download the example code files for all Packt books you have
+purchased from your account at http://www.PacktPub.com. If you purchased
+this book elsewhere, you can visit http://www.PacktPub.com/support and
+register to have the files e-mailed directly to you.
+================
+
+==== How to do it…
+
+1. To turn the +/etc/puppet+ directory on the Puppetmaster into a Git repository, run
+   the following commands:
++
+..................
+root@cookbook:/etc/puppet# git init
+Initialized empty Git repository in /etc/puppet/.git/
+root@cookbook:/etc/puppet# git add manifests/ modules/
+root@cookbook:/etc/puppet# git commit -m "initial commit"
+[master (root-commit) c7a24cf] initial commit
+ 59 files changed, 1790 insertions(+), 0 deletions(-)
+ create mode 100644 manifests/site.pp
+ create mode 100644 manifests/utils.pp
+...
+..................
+
+2. Connect this to your GitHub repo and push as follows:
++
+..................
+# git push -u origin master
+Counting objects: 91, done.
+Compressing objects: 100% (69/69), done.
+Writing objects: 100% (91/91), 21.07 KiB, done.
+Total 91 (delta 4), reused 0 (delta 0)
+To git@github.com:bitfield/puppet-demo.git
+ * [new branch] master -> master
+..................
++
+Branch master setup to track remote branch masters from the origin.
+
+==== How it works…
+
+You've created a "master" *repository* (usually known as a *repo* for short) at GitHub which
+contains your Puppet manifests. You can check out multiple copies of this in different places
+and work on them before committing your changes. For example, if you had a team of system
+admins, each of them could work on their own local copy of the repo.
+
+The copy in +/etc/puppet+ on the Puppetmaster is now just another working copy, slaved to
+the GitHub repo. When you decide that you want to tell Puppet about your changes, you can
+update this copy and it will pull the latest changes from GitHub.
+
+==== There's more…
+
+Now that you've set up version control, you can use the following workflow for editing your
+Puppet manifests:
+
+1. Make your changes in the working copy using your favorite text editor.
+2. Commit the changes and push them to the GitHub repo, as shown in the preceding text.
+3. Update the Puppetmaster's working copy, using git pull.
++
+--
+- Here is an example where we add a new file to the manifest, commit it, and
+  then update the Puppetmaster's working copy. I've made some edits to the
+  working copy on my laptop:
++
+..........................
+john@laptop:~$ cd puppet-work
+john@laptop:~/puppet-work$ mkdir manifests
+john@laptop:~/puppet-work$ touch manifests/nodes.pp
+john@laptop:~/puppet-work$ git add manifests/nodes.pp
+john@laptop:~/puppet-work$ git commit -m "adding nodes.pp"
+[master 5c7b94c] adding nodes.pp
+ 0 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 manifests/nodes.pp
+john@laptop:~/puppet-work$ git push
+Counting objects: 7, done.
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 409 bytes, done.
+Total 4 (delta 1), reused 0 (delta 0)
+To git@github.com:bitfield/puppet-demo.git
+    c7a24cf..b74d452 master -> master
+..........................
+
+- Now I'll update the working copy on the Puppetmaster:
++
+..........................
+root@cookbook:/etc/puppet# git pull
+remote: Counting objects: 5, done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 4 (delta 0), reused 0 (delta 0)
+Unpacking objects: 100% (4/4), done.
+From git@github.com:bitfield/puppet-demo.git
+    26d668c..5c7b94c master -> origin/master
+Updating 26d668c..5c7b94c
+Fast-forward
+0 files changed, 0 insertions(+), 0 deletions(-)
+create mode 100644 manifests/nodes.pp
+..........................
+
+- You can automate this process by using a tool such as *Rake*.
+--
+
+==== See also
+
+- <<ch01sec03,Deploying changes with Rake>> in this chapter
+- <<ch01sec10,Creating a decentralized Puppet architecture>> in this chapter
+- <<ch01sec02,Using commit hooks>> in this chapter

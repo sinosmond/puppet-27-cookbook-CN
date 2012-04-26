@@ -1,0 +1,57 @@
+﻿[[ch02sec04]]
+=== Producing automatic HTML documentation
+
+[quote, David Knight,]
+An expert is someone who is one page ahead of you in the manual.
+
+Like most engineers, I never read the manual, unless and until the product actually catches
+fire. However, as your manifests get bigger and more complex, it can be helpful to create
+HTML documentation for your nodes and classes using Puppet's automatic documentation
+tool, `puppet doc`.
+
+==== How to do it…
+
+Run puppet doc over your manifest as follows:
+
+....
+puppet doc --all --outputdir=/var/www/html/puppet --mode rdoc \
+  --manifestdir=/etc/puppet/manifests/
+....
+
+image::image/ch02sec04_1.png[]
+
+==== How it works…
+
+`puppet doc` creates a structured HTML documentation tree in +/var/www/html/puppet+
+similar to that produced by *RDoc*, the popular Ruby documentation generator. This makes
+it easier to understand how different parts of the manifest relate to one another, as you can
+click on an included class name and see its definition.
+
+==== There's more…
+
+`puppet doc` will generate basic documentation of your manifests as they are at present.
+However, you can include more useful information by adding comments to your manifest files,
+using the standard RDoc syntax. Here's an example of some documentation comments added
+to a class:
+
+----
+class puppet {
+    # This class sets up the Puppet client.
+    #
+    # ==Actions
+    # Install a cron job to run Puppet.
+    #
+    # ==Requires
+    # * Package["puppet"]
+    #
+    cron { "run-puppet":
+        command => "/usr/sbin/puppet agent --test >/dev/null 2>&1",
+        minute => inline_template("<%= hostname.hash.abs % 60 %>"),
+    }
+}
+----
+
+Your comments are added to the documentation for each class in the resulting HTML files as
+shown in the following screenshot:
+
+image::image/ch02sec04_2.png[]

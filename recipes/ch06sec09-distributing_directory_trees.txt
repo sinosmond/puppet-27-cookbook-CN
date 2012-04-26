@@ -1,0 +1,107 @@
+﻿[[ch06sec09]]
+=== Distributing directory trees
+
+[quote, Saying,]
+To understand recursion, you must first understand recursion.
+
+When you find yourself deploying several files with Puppet, all to the same directory, it might
+be worth considering a recursive file resource instead. If you set the +recurse+ parameter
+on a directory, Puppet will copy the directory to the node along with its contents and all its
+subdirectories, shown as follows:
+
+----
+file { "/usr/lib/nagios/plugins/custom":
+    source  => "puppet:///modules/nagios/plugins",
+    require => Package["nagios-plugins"],
+    recurse => true,
+}
+----
+
+==== How to do it…
+
+1. Create a suitable directory tree in the Puppet repository as follows:
++
+....
+# mkdir /etc/puppet/modules/admin/files/tree
+# mkdir /etc/puppet/modules/admin/files/tree/a
+# mkdir /etc/puppet/modules/admin/files/tree/b
+# mkdir /etc/puppet/modules/admin/files/tree/c
+# mkdir /etc/puppet/modules/admin/files/tree/a/1
+....
+
+2. Add the following to your manifest:
++
+----
+file { "/tmp/tree":
+    source  => "puppet:///modules/admin/tree",
+    recurse => true,
+}
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1304768523'
+
+notice: /Stage[main]//Node[cookbook]/File[/tmp/tree]/ensure:
+created
+
+notice: /File[/tmp/tree/a]/ensure: created
+notice: /File[/tmp/tree/a/1]/ensure: created
+notice: /File[/tmp/tree/b]/ensure: created
+notice: /File[/tmp/tree/c]/ensure: created
+notice: Finished catalog run in 1.25 seconds
+....
+
+==== How it works…
+
+If a +file+ resource has the +recurse+ parameter set on it, and if it is a directory, then Puppet
+will deploy not only the directory itself, but all its contents (including subdirectories and their
+contents). This is a great way to put a whole tree of files onto a node, or to quickly create a
+large number of paths using a single resource.
+
+
+==== There's more…
+
+Sometimes, you want to deploy files to an existing directory, but remove any files that aren't
+managed by Puppet. For example, in Ubuntu's +/etc/apt/sources.list.d+ directory, you
+might want to make sure that there are no files present that don't come from Puppet.
+
+The +purge+ parameter will do this for you. Define the directory as a resource in Puppet:
+
+----
+file { "/etc/apt/sources.list.d":
+    ensure  => directory,
+    recurse => true,
+    purge   => true,
+}
+----
+
+The combination of +recurse+ and +purge+ will remove all files and subdirectories in 
++/etc/apt/sources.list.d+ that are not deployed by Puppet. You can then deploy your own files
+to that location using a separate resource as follows:
+
+----
+file { "/etc/apt/sources.list.d/bitfield.list":
+    content => "deb http://packages.bitfieldconsulting.com/lucid-main\n",
+}
+----
+
+If there are subdirectories, which contain files you don't want to +purge+, just define the
+subdirectory as a Puppet resource, and it will be left alone:
+
+----
+file { "/etc/exim4/conf.d/acl":
+    ensure => directory,
+}
+----
+
+[NOTE]
+============
+Be aware that, at least in current implementations of Puppet, recursive file
+copies can be quite slow and place a heavy memory load on the server. If the
+data doesn't change very often, it might be better to deploy a tarball instead.
+============

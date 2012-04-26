@@ -1,0 +1,128 @@
+﻿[[ch07sec03]]
+=== Creating Nginx virtual hosts
+
+*Nginx* is a fast, lightweight web server that has replaced Apache in many contexts, especially
+for running web applications. However, the configuration language is not a great improvement
+in clarity over Apache's. Also, much of the documentation is only available in Russian,
+which explains why you see so many copies around of "Understanding Russian for Nginx
+Administrators".
+
+==== Getting ready…
+
+You'll need the Nginx module we used in the section, <<ch06sec06,Running a command when a file is
+updated>>. You'll also need to turn off the Apache server if you created one in the section on
+<<ch07sec01,Managing Apache servers>> in this chapter using the following command:
+
+----
+# service apache2 stop
+----
+
+==== How to do it…
+
+1. Add this to +/etc/puppet/modules/nginx/manifests/init.pp+:
++
+----
+define site( $sitedomain = "" ) {
+    include nginx
+
+    if $sitedomain == "" {
+        $vhost_domain = $name
+    } else {
+        $vhost_domain = $sitedomain
+    }
+
+    file { "/etc/nginx/sites-available/${vhost_domain}.conf":
+        content => template("nginx/vhost.erb"),
+        require => Package["nginx"],
+    }
+
+    file { "/etc/nginx/sites-enabled/${vhost_domain}.conf":
+        ensure  => link,
+        target  => "/etc/nginx/sites-available/${vhost_domain}.
+         conf",
+        require => File["/etc/nginx/sites-available/${vhost_
+         domain}.conf"],
+        notify  => Exec["reload nginx"],
+    }
+}
+----
+
+2. Create the file +/etc/puppet/modules/nginx/templates/vhost.erb+ with the
+   following contents:
++
+----
+server {
+    listen 80;
+    server_name <%= vhost_domain %>;
+    access_log /var/log/nginx/<%= vhost_domain %>-access_log;
+    root /var/www/<%= vhost_domain %>;
+}
+----
+
+3. Create the directory +/var/www/bbqrecipes.com+ and place an +index.html+ file in
+   it with a suitable message such as:
++
+----
+Welcome to the BBQ Recipes site!
+----
+
+4. Add the following to a node:
++
+----
+nginx::site { "bbqrecipes.com": }
+----
+
+5. Run Puppet:
++
+....
+# puppet agent -test
+
+info: Retrieving plugin info: Caching catalog for cookbook.
+bitfieldconsulting.com info: Applying configuration version
+'1309198476'
+
+notice: /Stage[main]/Nginx/Package[nginx]/ensure: ensure changed
+'purged' to 'present'
+
+notice: /Stage[main]//Node[cookbook]/Nginx::Site[bbqrecipes.com]/
+File[/etc/nginx/sites-available/bbqrecipes.com.conf]/ensure:
+defined content as '{md5}fa92d2e7543b378e26827a063be34a31'
+
+notice: /Stage[main]//Node[cookbook]/Nginx::Site[bbqrecipes.com]/
+File[/etc/nginx/sites-enabled/bbqrecipes.com.conf]/ensure: created
+
+info: /Stage[main]//Node[cookbook]/Nginx::Site[bbqrecipes.com]/
+File[/etc/nginx/sites-enabled/bbqrecipes.com]: Scheduling refresh
+of Exec[reload nginx]
+
+notice: /Stage[main]/Nginx/Service[nginx]/ensure: ensure changed
+'stopped' to 'running'
+
+notice: /Stage[main]/Nginx/Exec[reload nginx]: Triggered 'refresh'
+from 1 event
+
+notice: Finished catalog run in 21.45 seconds
+....
+
+==== How it works…
+
+Puppet inserts the site domain into the boilerplate code in the template file via the variable
++vhost_domain+. This is all Nginx needs to know in order to respond to requests on the
++domain+ and +serve+ files from the appropriate root directory in the file system.
+
+==== There's more…
+
+Unlike Apache, Nginx doesn't support dynamic modules (yet). This means if you want to add
+support for some special feature that isn't included by default, you need to recompile Nginx
+yourself. The right thing would be to build Nginx with the options that you want, and then
+create a package from this that you can serve from your own repository (as described in the
+section, <<ch05sec07,Setting up an APT package repository>>).
+
+However, some Puppet administrators skip this step and simply pull down and build the Nginx
+source on the target server. To do this, use an +exec+ with a similar pattern to that in the section
+on '<<ch05sec09,Building packages automatically from source>>'. In an Agile development environment, which often means one where the management changes its mind about the product every few days,
+this kind of approach can be quicker and cheaper than continually repackaging.
+
+==== See also
+
+- <<ch07sec06,Managing Rails applications>> in this chapter

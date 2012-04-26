@@ -1,0 +1,206 @@
+﻿[[ch03sec02]]
+=== Using modules
+
+Shamed by your Puppet code? Do people blench and look away when they see your
+manifests? One of the most important things you can do to make your Puppet manifests
+clearer and more maintainable is to organize them into *modules*.
+
+A module is simply a way of grouping related things; for example, a +webserver+ module might
+include everything necessary to be a webserver such as Apache configuration files, virtual
+host templates, and the Puppet code necessary to deploy these.
+
+Separating things into modules makes it easier to re-use and share code; it's also the most
+logical way to organize your manifests. In this example we'll create a module to manage
++memcached+, a memory caching system commonly used with web applications.
+
+==== How to do it…
+
+1. Find your modulepath; this is set in puppet.conf but the default value is
+   +/etc/puppet/modules+. If you are using version control for your Puppet manifests, as
+   I recommend you do, then use the directory in your working copy which will be
+   deployed to +/etc/puppet/modules+ instead.
++
+--
+....
+# puppet --genconfig |grep modulepath
+modulepath = /etc/puppet/modules:/usr/share/puppet/modules
+....
+
+Create a subdirectory in the module path named memcached:
+
+....
+# cd /etc/puppet/modules
+# mkdir memcached
+....
+
+Inside this, create +manifests+ and +files+ directories:
+
+....
+# cd memcached
+# mkdir manifests files
+....
+
+In the +manifests+ directory, create another file +init.pp+ with the
+following contents:
+
+----
+class memcached {
+    package { "memcached":
+        ensure => installed,
+    }
+
+    file { "/etc/memcached.conf":
+        source => "puppet:///modules/memcached/memcached.conf",
+    }
+
+    service { "memcached":
+        ensure  => running,
+        enable  => true,
+        require => [ Package["memcached"],
+                     File["/etc/memcached.conf"] ],
+    }
+}
+----
+
+Changing to the +files+ directory, create the file +memcached.conf+ with the
+following contents:
+
+----
+-m 64
+-p 11211
+-u nobody
+-l 127.0.0.1
+----
+--
+
+2. To use your new module, add this to your node definition:
++
+----
+node cookbook {
+    include memcached
+}
+----
+
+3. Run Puppet to test the new configuration:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1300361964'
+notice: /Stage[main]/Memcached/Package[memcached]/ensure: ensure
+changed 'purged' to 'present'
+...
+info: /Stage[main]/Memcached/File[/etc/memcached.conf]:
+Filebucketed /etc/memcached.conf to puppet with sum a977521922a151
+c959ac953712840803
+notice: /Stage[main]/Memcached/File[/etc/memcached.conf]/content:
+content changed '{md5}a977521922a151c959ac953712840803' to '{md5}
+f5c0bb01a24a5b3b86926c7b067ea6ba'
+notice: Finished catalog run in 20.68 seconds
+....
+
+4. Check that the new service is running:
++
+....
+# service memcached status
+  * memcached is running
+....
+
+
+==== How it works…
+
+Modules have a specific directory structure. Not all of these directories need to be present,
+but if they are, this is how they should be organized:
+
+----
+MODULEPATH/
+ `-- MODULE_NAME
+         |-- files/
+         |-- templates/
+         |-- manifests/
+         |--   ...
+         `-- README
+----
+
+The +memcached+ class is defined in the file +memcached.pp+, which will be imported by Puppet
+automatically. Now we can include it on nodes:
+
+----
+include memcached
+----
+
+Inside the +memcached+ class, we refer to the +memcached.conf+ file:
+
+----
+file { "/etc/memcached.conf":
+    source => "puppet:///modules/memcached/memcached.conf",
+}
+----
+
+As we saw in the section on Puppet's file server and custom mount points, the +source+
+parameter in the preceding code tells Puppet to look for the file in the following path:
+
+----
+MODULEPATH/
+    memcached/
+        files/
+            memcached.conf
+----
+
+==== There's more…
+
+Learn to love modules, because they'll make your Puppet life a lot easier. They're not
+complicated. However, practice and experience will help you judge when things should
+be grouped into modules, and how best to arrange your module structure. Some tips
+which may help you on the way, have been explained in the following text.
+
+===== Templates
+
+If you need to use a template as part of the module, place it in the 
++MODULE_NAME/templates+ directory and refer to it as follows:
+
+----
+file { "/etc/memcached.conf":
+    content => template("memcached/memcached.conf"),
+}
+----
+
+Puppet will look for the file in:
+
+----
+MODULEPATH/
+    memcached/
+        templates/
+            memcached.conf
+----
+
+===== Facts, functions, types, and providers
+
+Modules can also contain custom facts, custom functions, custom types, and providers. For
+more information about these, see the chapter on
+<<chapter09,External Tools and the Puppet Ecosystem>>.
+
+===== puppet-module
+
+You can also use the +puppet-module+ gem to generate the directory layout for new modules,
+rather than doing it by hand. See the section <<ch09sec08,Using public modules>> in Chapter 9 for more details.
+
+===== Third-party modules
+
+You can download modules provided by other people and use them in your own manifests
+just like the modules you create. For more on this, see the section <<ch09sec08,Using public modules>>
+in Chapter 9.
+
+===== Module organization
+
+For more details on how to organize your modules, go to the Puppet Labs site:
+http://docs.puppetlabs.com/guides/modules.html.
+
+==== See also
+
+- <<ch01sec04,Configuring Puppet's file server>> in Chapter 1
+- <<ch09sec01,Creating custom Facter facts>> in Chapter 9
+- <<ch09sec08,Using public modules>> in Chapter 9
+- <<ch09sec10,Creating your own resource types>> in Chapter 9
+- <<ch09sec11,Creating your own providers>> in Chapter 9

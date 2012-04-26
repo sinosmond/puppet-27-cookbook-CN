@@ -1,0 +1,59 @@
+﻿[[chapter04]]
+== Writing Better Manifests
+
+[quote, Bjarne Stroustrup,]
+There are only two kinds of programming languages: those people always bitch
+about and those nobody uses.
+
+In this chapter we will cover the following topics:
+
+
+- Using arrays of resources
+- Using define resources
+- Using dependencies
+- Using node inheritance
+- Using class inheritance and overriding
+- Passing parameters to classes
+- Writing reusable, cross-platform manifests
+- Getting information from the environment
+- Importing dynamic information
+- Importing data from CSV files
+- Passing arguments to shell commands
+
+
+Your Puppet manifest is the living documentation for your entire infrastructure. Keeping it tidy
+and well organized is a great way to make it easier to maintain and understand. Puppet gives
+you a number of tools to do this, including the following:
+
+- Arrays
+- Defines
+- Dependencies
+- Inheritance
+- Class parameters
+
+We'll see how to use all of these and more. As you read through the chapter, try out the
+examples, and look through your own manifests to see where these features might help you
+simplify and improve your Puppet code.
+
+
+include::recipes/ch04sec01-using_arrays_of_resources.txt[]
+
+include::recipes/ch04sec02-using_define_resources.txt[]
+
+include::recipes/ch04sec03-using_dependencies.txt[]
+
+include::recipes/ch04sec04-using_node_inheritance.txt[]
+
+include::recipes/ch04sec05-using_class_inheritance_and_overriding.txt[]
+
+include::recipes/ch04sec06-passing_parameters_to_classes.txt[]
+
+include::recipes/ch04sec07-writing_reusable_cross-platform_manifests.txt[]
+
+include::recipes/ch04sec08-getting_information_from_the_environment.txt[]
+
+include::recipes/ch04sec09-importing_dynamic_information.txt[]
+
+include::recipes/ch04sec10-importing_data_from_csv_files.txt[]
+
+include::recipes/ch04sec11-passing_arguments_to_shell_commands.txt[]

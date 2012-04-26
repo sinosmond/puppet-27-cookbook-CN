@@ -1,0 +1,308 @@
+﻿[[ch05sec07]]
+=== Setting up an APT package repository
+
+Running your own package repository has several advantages. You can distribute your own
+packages with it. You can control the versions of upstream or third-party packages that you
+put into it. And you can locate it close to where your servers are, to avoid the problem of slow
+or unreliable mirror sites.
+
+Even if you don't need to create your own packages, you may want to download the required
+versions of your critical dependency packages and store them in your own repo, thus
+preventing any surprises when things change upstream (for example, your distro version
+could reach end-of-life and the repos could be turned off).
+
+It also makes it easier to auto-update packages within Puppet. You may occasionally need
+to update a package (for example, when a security update is available), so it's convenient to
+specify +ensure => latest+ in the package definition. But when you don't control the repo,
+this puts you at risk of an unexpected upgrade which breaks something in your system.
+
+Your own repository gives you the best of both worlds: you can auto-update the package in
+Puppet, but since it comes from your repository, a new version will only be available when
+you put one there. You can test the version from upstream before making it available in your
+production repository.
+
+==== Getting ready…
+
+You will need the +apache+ module from the section, _Using ERB templates_, in this chapter.
+So create this if you don't already have it.
+
+In the example, I've called the repository +packages.bitfieldconsulting.com+,
+because that's what mine is called. You'll probably want to use a different name, so
+replace it throughout the example with the name of your repo.
+
+==== How to do it…
+
+1. Create a new repo module:
++
+....
+# mkdir /etc/puppet/modules/repo
+# mkdir /etc/puppet/modules/repo/manifests
+# mkdir /etc/puppet/modules/repo/files
+....
+
+2. Create the file +/etc/puppet/modules/repo/manifests/bitfield-server.pp+
+   with the following contents:
++
+----
+class repo::bitfield-server {
+    include apache
+
+    package { "reprepro": ensure => installed }
+
+    file { [ "/var/apt",
+             "/var/apt/conf" ]:
+        ensure => directory,
+    }
+
+    file { "/var/apt/conf/distributions":
+        source  => "puppet:///modules/repo/distributions",
+        require => File["/var/apt/conf"],
+    }
+
+    file { "/etc/apache2/sites-available/apt-repo":
+        source  => "puppet:///modules/repo/apt-repo.conf",
+        require => Package["apache2-mpm-worker"],
+    }
+
+    file { "/etc/apache2/sites-enabled/apt-repo":
+        ensure  => symlink,
+        target  => "/etc/apache2/sites-available/apt-repo",
+        require => File["/etc/apache2/sites-available/apt-repo"],
+        notify  => Service["apache2"],
+    }
+}
+----
+
+3. Create the file +/etc/puppet/modules/repo/files/distributions+ with the
+   following contents:
++
+----
+Origin: Bitfield Consulting
+Label: bitfield
+Suite: stable
+Codename: lucid
+Architectures: amd64 i386
+Components: main non-free contrib
+Description: Custom and cached packages for Bitfield Consulting
+----
+
+4. Create the file +/etc/puppet/modules/repo/files/apt-repo.conf+ with the
+   following contents:
++
+[source,apache]
+----
+<VirtualHost *:80>
+    DocumentRoot /var/apt
+    ServerName packages.bitfieldconsulting.com
+    ErrorLog /var/log/apache2/packages.bitfieldconsulting.com.
+    error.log
+
+    LogLevel warn
+
+    CustomLog /var/log/apache2/packages.bitfieldconsulting.com.
+    access.log combined
+
+    ServerSignature On
+
+    # Allow directory listings so that people can browse the
+    # repository from their browser too
+    <Directory "/var/apt">
+        Options Indexes FollowSymLinks MultiViews
+        DirectoryIndex index.html
+        AllowOverride Options
+        Order allow,deny
+        allow from all
+    </Directory>
+
+    # Hide the conf/ directory for all repositories
+    <Directory "/var/apt/conf">
+        Order allow,deny
+        Deny from all
+        Satisfy all
+    </Directory>
+
+    # Hide the db/ directory for all repositories
+    <Directory "/var/apt/db">
+        Order allow,deny
+        Deny from all
+        Satisfy all
+    </Directory>
+</VirtualHost>
+----
+
+5. Add the following to the manifest for a node:
++
+----
+include repo::bitfield-server
+----
+
+6. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1304775601'
+
+notice: /Stage[main]/Repo::Bitfield-server/File[/var/apt]/ensure:
+created
+
+notice: /Stage[main]/Repo::Bitfield-server/File[/var/apt/conf]/
+ensure: created
+
+notice: /Stage[main]/Repo::Bitfield-server/File[/var/apt/conf/
+distributions]/ensure: defined content as '{md5}65dc791b876f53318a
+35fcc42c770283'
+
+notice: /Stage[main]/Repo::Bitfield-server/Package[reprepro]/
+ensure: created
+
+notice: /Stage[main]/Repo::Bitfield-server/File[/etc/apache2/
+sites-enabled/apt-repo]/ensure: created
+
+notice: /Stage[main]/Repo::Bitfield-server/File[/etc/apache2/
+sites-available/apt-repo]/ensure: defined content as '{md5}2da4686
+957e5acf49220047fe6f6e6e1'
+
+info: /Stage[main]/Repo::Bitfield-server/File[/etc/apache2/sitesenabled/
+apt-repo]: Scheduling refresh of Service[apache2]
+
+notice: /Stage[main]/Apache/Service[apache2]: Triggered 'refresh'
+from 1 events
+
+notice: Finished catalog run in 16.32 seconds
+....
+
+==== How it works…
+
+Actually, you don't need very much to create an APT repository. It works over HTTP, so you just
+need an Apache virtual host. You can put the actual package files anywhere you like, as long
+as there is a +conf/distributions+ file which will give APT information about the repository.
+
+1. The first part of the +bitfield-server+ class ensures we have Apache set up:
++
+----
+class repo::bitfield-server {
+    include apache
+----
+
+2. The +reprepro+ tool is useful for managing the repository itself (for example, adding
+   new packages):
++
+----
+    package { "reprepro": ensure => installed }
+----
+
+3. We create the root directory of the repository in +/var/apt+, along with the
+   +conf/distributions+ file:
++
+----
+    file { [ "/var/apt",
+             "/var/apt/conf" ]:
+        ensure => directory,
+    }
+
+    file { "/var/apt/conf/distributions":
+        source => "puppet:///modules/repo/distributions",
+        require => File["/var/apt/conf"],
+    }
+----
+
+4. The remainder of the class deploys the Apache virtual host file to enable it to serve
+   requests on +packages.bitfieldconsulting.com+ as follows:
++
+----
+file { "/etc/apache2/sites-available/apt-repo":
+    source  => "puppet:///modules/repo/apt-repo.conf",
+    require => Package["apache2-mpm-worker"],
+}
+
+file { "/etc/apache2/sites-enabled/apt-repo":
+    ensure  => symlink,
+    target  => "/etc/apache2/sites-available/apt-repo",
+    require => File["/etc/apache2/sites-available/apt-repo"],
+    notify  => Service["apache2"],
+}
+----
+
+==== There's more…
+
+Of course, a repository isn't much good without any packages in it. In this section we'll
+see how to add packages, and also how to configure machines to download packages
+from your repository.
+
+===== Adding packages
+
+To add a package to your repository, download it and then use +reprepro+ to add it:
+
+....
+# cd /tmp
+# wget http://archive.ubuntu.com/ubuntu/pool/main/n/ntp/ntp_4.2.4p8+dfsg-
+1ubuntu2.1_i386.deb
+# cd /var/apt
+# reprepro includedeb lucid /tmp/ntp_4.2.4p8+dfsg-1ubuntu2.1_i386.deb
+Exporting indices...
+....
+
+===== Configuring nodes to use the repository
+
+1. Create the file +/etc/puppet/modules/repo/manifests/bitfield.pp+ with the
+   following contents (replacing the IP address with that of your repository server):
++
+--
+----
+class repo::bitfield {
+    host { "packages.bitfieldconsulting.com":
+        ip     => "10.0.2.15",
+        ensure => present,
+        target => "/etc/hosts",
+    }
+
+    file { "/etc/apt/sources.list.d/bitfield.list":
+        content => "deb http://packages.bitfieldconsulting.com/
+        lucid main\n",
+        require => Host["packages.bitfieldconsulting.com"],
+        notify  => Exec["bitfield-update"],
+    }
+
+    exec { "bitfield-update":
+        command => "/usr/bin/apt-get update",
+        require => File["/etc/apt/sources.list.d/bitfield.
+        list"],
+        refreshonly => true,
+    }
+}
+----
+
+If you have a DNS server or control of your DNS zone, you can skip the host entry.
+--
+
+2. Apply this class to a node as follows:
++
+----
+node cookbook {
+    include repo::bitfield
+}
+----
+
+3. Test whether the +ntp+ package shows up as available from your repository:
++
+....
+# apt-cache madison ntp
+  ntp | 1:4.2.4p8+dfsg-1ubuntu2.1 | http://us.archive.ubuntu.
+com/ubuntu/ lucid-updates/main Packages
+  ntp | 1:4.2.4p8+dfsg-1ubuntu2.1 | http://packages.
+bitfieldconsulting.com/ lucid/main Packages
+  ntp | 1:4.2.4p8+dfsg-1ubuntu2 | http://us.archive.ubuntu.
+com/ubuntu/ lucid/main Packages
+  ntp | 1:4.2.4p8+dfsg-1ubuntu2 | http://us.archive.ubuntu.
+com/ubuntu/ lucid/main Sources
+  ntp | 1:4.2.4p8+dfsg-1ubuntu2.1 | http://us.archive.ubuntu.
+com/ubuntu/ lucid-updates/main Sources
+....
+
+===== Signing your packages
+
+For production use, you should sign your packages and repository with a GPG key; for
+information about how to set this up, see Sander Marechal's useful article on setting up and
+managing APT repositories at http://www.jejik.com/articles/2006/09/setting_up_and_managing_an_apt_repository_with_reprepro/.

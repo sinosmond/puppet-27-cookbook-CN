@@ -1,0 +1,52 @@
+﻿[[chapter09]]
+== External Tools and the Puppet Ecosystem
+
+[quote, Belinda Asbell,]
+Unix is the answer, but only if you phrase the question very carefully.
+
+In this chapter we will cover the following topics:
+
+- Creating custom Facter facts
+- Executing commands before and after Puppet runs
+- Generating manifests from shell sessions
+- Generating manifests from a running system
+- Using Puppet Dashboard
+- Using Foreman
+- Using MCollective
+- Using public modules
+- Using an external node classifier
+- Creating your own resource types
+- Creating your own providers
+
+Puppet is a useful tool by itself, but you can get much greater benefits from using Puppet in
+combination with other tools and frameworks. We'll look at some of these in this chapter,
+from tools for getting data into Puppet -- Facter, `cft`, and `puppet resource` -- to tools for
+managing and reporting the data that comes out of Puppet -- Foreman and Puppet Dashboard.
+
+You'll also learn how to extend Puppet by creating your own custom resource types and
+implementing them on different platforms, how to use an external node classifier script to
+integrate Puppet with databases such as LDAP, how to use public modules from Puppet Forge,
+and how Puppet plays with the systems management framework MCollective.
+
+
+include::recipes/ch09sec01-creating_custom_facter_facts.txt[]
+
+include::recipes/ch09sec02-executing_commands_before_and_after_puppet_runs.txt[]
+
+include::recipes/ch09sec03-generating_manifests_from_shell_sessions.txt[]
+
+include::recipes/ch09sec04-generating_manifests_from_a_running_system.txt[]
+
+include::recipes/ch09sec05-using_puppet_dashboard.txt[]
+
+include::recipes/ch09sec06-using_foreman.txt[]
+
+include::recipes/ch09sec07-using_mcollective.txt[]
+
+include::recipes/ch09sec08-using_public_modules.txt[]
+
+include::recipes/ch09sec09-using_an_external_node_classifier.txt[]
+
+include::recipes/ch09sec10-creating_your_own_resource_types.txt[]
+
+include::recipes/ch09sec11-creating_your_own_providers.txt[]

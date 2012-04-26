@@ -1,0 +1,137 @@
+﻿[[ch01sec03]]
+=== Deploying changes with Rake
+
+Like everyone who makes his living with a keyboard, I hate unnecessary typing. If you
+are using the workflow described in the section on using version control, you can add
+some automation to make this process a little easier. There are several tools that can run
+commands for you on remote servers, including Capistrano and Fabric, but for this example
+we'll use Rake.
+
+==== Getting ready
+
+If you don't have Rake installed already, run the following command:
+
+..........
+apt-get install rake
+..........
+
+You'll need a working Internet connection.
+
+==== How to do it…
+
+1. Create a file in the top level of your Puppet working copy named +Rakefile+ that
+   looks like this:
++
+----
+PUPPETMASTER = 'cookbook'
+SSH = 'ssh -t -A'
+
+task :deploy do
+    sh "git push"
+    sh "#{SSH} #{PUPPETMASTER} 'cd /etc/puppet && sudo git pull'"
+end
+----
+
+2. When you make changes in your working copy of the Puppet manifests, you can
+   simply run:
++
+............
+$ rake deploy
+............
+
+3. Rake will take care of updating the Git repo and refreshing the Puppetmaster's
+   working copy for you:
++
+............
+$ git push
+Counting objects: 4, done.
+Delta compression using 2 threads.
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 452 bytes, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To ssh:/ /git@cookbook.bitfieldconsulting.com/var/git/cookbook
+    561e5a6..a8b8c76 master -> master
+ssh -A -l root cookbook 'cd /etc/puppet && git pull'
+From ssh://cookbook.bitfieldconsulting.com/var/git/cookbook
+    561e5a6..a8b8c76 master -> origin/master
+Updating 561e5a6..a8b8c76
+Fast-forward
+ Rakefile | 6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
+ create mode 100644 Rakefile
+............
+
+4. You can also add a Rake task to run Puppet on the client machine:
++
+----
+task :apply => [:deploy] do
+    client = ENV['CLIENT']
+    sh "#{SSH} #{client} 'sudo puppet agent --test'" do |ok,
+    status|
+        puts case status.exitstatus
+            when 0 then "Client is up to date."
+            when 1 then "Puppet couldn't compile the manifest."
+            when 2 then "Puppet made changes."
+            when 4 then "Puppet found errors."
+        end
+    end
+end
+----
+
+5. When you want to test your changes on the client machine, run the following command:
++
+.......
+rake CLIENT=cookbook apply
+.......
+
+6. Replace +cookbook+ with the name of the client machine, or set the +CLIENT+
+   environment variable so that Rake knows which machine to run Puppet on.
++
+..........
+info: Caching catalog for cookbook
+info: Applying configuration version '1292865016'
+info: Creating state file /var/lib/puppet/state/state.yaml
+notice: Finished catalog run in 0.03 seconds
+..........
+
+7. If you want to see what changes Puppet would make, without actually changing
+   anything, use the `--noop` flag:
++
+----
+task :noop => [:deploy] do
+    client = ENV['CLIENT']
+    sh "#{SSH} #{client} 'sudo puppet agent --test --noop'"
+end
+----
+
+8. Now you can run:
++
+........
+$ rake noop
+........
++
+This will show you a preview of the changes.
+
+
+==== How it works…
+
+A +Rakefile+ consists of a series of tasks, identified by the +task+ keyword. The task definition
+is a set of steps, in this case the sequence of shell commands required to push your manifest
+changes to the master repo, and update the Puppetmaster's working copy.
+
+Tasks can be linked, so that one depends on the other. For example, in our +Rakefile+ the
++apply+ task is linked to deploy, so that whenever you run `rake` apply, Rake will make
+sure the +deploy+ task is done first, and the +apply+ task next.
+
+==== There's more…
+
+You can extend this +Rakefile+ to automate more tasks, including running a syntax check
+on the Puppet manifests before updating them, and even bootstrapping a new machine
+with Puppet. Rake is a powerful tool and can be a big help in managing a large network
+with Puppet.
+
+==== See also
+
+- <<ch01sec01,Using version control>> in this chapter
+- <<ch01sec10,Creating a decentralized Puppet architecture>> in this chapter
+- <<ch01sec02,Using commit hooks>> in this chapter

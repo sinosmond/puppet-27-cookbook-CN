@@ -1,0 +1,303 @@
+﻿[[ch08sec06]]
+=== Managing EC2 instances
+
+[quote, Henry Petroski,]
+The most amazing achievement of the computer software industry is its continuing
+cancellation of the steady and staggering gains made by the computer hardware
+industry.
+
+
+If you think your computer's gotten slower in recent years, you're probably right. For many
+applications, you can no longer squeeze all the computing power you need into a single beige
+box under your desk. To address this issue, computing power has become a commodity you
+can buy online.
+
+Amazon doesn't just sell books anymore: they also sell jewelry, motorcycles, leaf blowers, and
+more usefully for our present purposes, computing power. You can sign up for Amazon Web
+Services with a credit card and proceed to create as many server instances as you like, for
+which you pay by the hour. If you just want to test the water, you can run a Micro instance for
+up to a year for free. If you're looking at moving some parts of your infrastructure into public
+cloud, this is a great way to experiment.
+
+This recipe will show you a simple way to provision an *EC2* instance automatically and build
+it with Puppet. Although there are more powerful ways to do this, including using MCollective,
+for teaching purposes we're going to do the bare minimum necessary to get an instance
+running and apply a Puppet manifest to it. You can use this as a foundation for adding your
+own refinements and improvements once you've got the basic idea.
+
+==== Getting ready…
+
+You'll need an *Amazon Web Services* (*AWS*) account if you don't already have one. You can
+sign up here: http://aws-portal.amazon.com/gp/aws/developer/subscription/index.html?productCode=AmazonEC2.
+
+You'll need the AWS access key ID and secret access key corresponding to your account. You
+can find these on this page: http://aws-portal.amazon.com/gp/aws/developer/account/index.html?action=access-key.
+
+You'll also need your SSH Keypair for accessing EC2 instances. To find this, log in to the AWS
+Management Console at https://console.aws.amazon.com/ec2/home.
+
+Select the *Amazon EC2 tab*, and click *Key Pairs* under the *Network & Security* heading in the
+navigation section.
+
+Click *Create key pair* and then download the +keypair+ file when prompted. Save this
+somewhere safe, and set the file permissions to +mode 0600+ as follows:
+
+....
+# chmod 600 bitfield.pem
+....
+
+==== How to do it…
+
+1. Create a +fog+ module:
++
+....
+# mkdir /etc/puppet/modules/fog
+# mkdir /etc/puppet/modules/fog/manifests
+# mkdir /etc/puppet/modules/fog/files
+....
+
+2. Create the file +/etc/puppet/modules/fog/manifests/init.pp+ with the
+   following contents:
++
+----
+class fog {
+    package { "fog":
+        ensure   => installed,
+        provider => gem,
+    }
+
+    file { "/usr/local/etc/fog_credentials":
+        source => "puppet:///modules/fog/fog_credentials",
+    }
+
+    file { "/usr/local/bin/boot-ec2":
+        source => "puppet:///modules/fog/boot-ec2.rb",
+        mode   => "755",
+    }
+
+    file { "/usr/local/bin/bootstrap-ec2":
+        source => "puppet:///modules/fog/bootstrap-ec2.sh",
+        mode   => "755",
+    }
+}
+----
+
+3. Create the file +/etc/puppet/modules/fog/files/boot-ec2.rb+ with the
+   following contents (change the +:private_key_path+ argument to point to your
+   own AWS private key file):
++
+[source,ruby]
+----
+#!/usr/bin/ruby
+require 'rubygems'
+require 'fog'
+
+HOSTNAME = 'devbox'
+@server = ''
+Fog.credentials_path = '/usr/local/etc/fog_credentials'
+
+def command( cmdline )
+    puts "Running command: #{cmdline}"
+    res = @server.ssh( "sudo #{cmdline}" )[0]
+    puts res.stdout
+    puts res.stderr
+end
+
+def create()
+    puts "Bootstrapping instance..."
+    connection = Fog::Compute.new( { :provider => 'AWS' } )
+    @server = connection.servers.bootstrap( :key_name =>
+                                            'bitfield',
+                                            :private_key_path =>
+                                            '~/bitfield.pem',
+                                            :username => 'ubuntu')
+    @server.wait_for { ready? }
+    @server.reload
+    puts "Instance name: #{@server.dns_name}"
+    puts "Setting hostname..."
+    @server.ssh( "sudo hostname #{HOSTNAME}" )
+end
+
+def copy_bootstrap_files()
+    puts "Copying bootstrap files..."
+    @server.scp( "puppet.tar.gz", "/tmp" )
+    @server.scp( "/usr/local/bin/bootstrap-ec2", "/tmp" )
+end
+
+def bootstrap()
+    puts "Bootstrapping..."
+    command( "sudo sh /tmp/bootstrap-ec2" )
+end
+
+create()
+copy_bootstrap_files()
+bootstrap()
+----
+
+4. Create the file +/etc/puppet/modules/fog/files/bootstrap-ec2.sh+ with the
+   following contents:
++
+[source,bash]
+----
+#!/bin/bash
+apt-get update
+apt-get -y install puppet
+apt-get -y install git-core
+cd /root
+tar xzf /tmp/puppet.tar.gz
+puppet --modulepath=/root/puppet/modules \
+  /root/puppet/manifests/site.pp
+----
+
+5. Create the file +/etc/puppet/modules/fog/files/fog_credentials+ with the
+   following contents (replace with your own AWS credentials):
++
+----
+:default:
+  :aws_access_key_id: AKIAI5RGMC3QRPO3AJWR
+  :aws_secret_access_key: iygf2+7SfKV/OlEyrh+otazeVin9G3XXrvJYKx8E
+----
+
+6. Add the following node definition, which will be applied to the EC2 instance:
++
+----
+node devbox {
+    file { "/etc/motd":
+        content => "Puppet power!\n",
+    }
+}
+----
+
+7. Add the following to a node:
++
+----
+include fog
+----
+
+8. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1313160844'
+
+notice: /Stage[main]/Fog/Package[fog]/ensure: ensure changed
+'purged' to 'present'
+
+notice: /Stage[main]/Fog/File[/usr/local/bin/bootstrap-ec2]/
+ensure: defined content as '{md5}5bc2ffb3b5aa94b33b17d419625ecbab'
+
+notice: /Stage[main]/Fog/File[/usr/local/bin/boot-ec2]/ensure:
+defined content as '{md5}dadc835c6e52c89cb928d60db7677713'
+
+notice: /Stage[main]/Fog/File[/usr/local/etc/fog_credentials]/
+ensure: defined content as '{md5}3b140aedac170bbfcc2837077e03bb93'
+
+notice: Finished catalog run in 1.67 seconds
+....
+
+9. Create a Puppet tarball in your working directory for distribution to the EC2 instance.
+   The simplest way to do this is to `tar` up your existing Puppet repo or checkout:
++
+....
+# cd /etc
+# tar czf /tmp/puppet.tar.gz --exclude .git puppet
+# cd -
+# mv /tmp/puppet.tar.gz .
+....
+
+10. Run the +boot-ec2+ script:
++
+....
+# boot-ec2
+Bootstrapping instance...
+Instance name: ec2-107-20-59-174.compute-1.amazonaws.com
+Setting hostname...
+Copying bootstrap files...
+Bootstrapping...
+Running command: sudo sh /tmp/bootstrap.sh
+sudo: unable to resolve host devbox
+sudo: unable to resolve host devbox
+...
+notice: //Node[devbox]/File[/etc/motd]/content: defined content as
+'unknown checksum'
+....
+
+11. Log in to the instance to check your manifest has been applied properly:
++
+....
+# ssh -i bitfield.pem ubuntu@ec2-107-20-59-174.compute-1.
+amazonaws.com
+Puppet power!
+ubuntu@devbox:~$
+....
+
+12. You've got a Puppet-controlled cloud server! If you want ten more instances, run the
+    script ten more times. Don't forget to shut your instances down after you're finished
+    using them. You can do this from the AWS Management Console.
+
+==== How it works…
+
+*Fog* is a Ruby library for managing cloud resources, including EC2 and other providers such
+as Rackspace. Although you can use Amazon's own `ec2-tools` scripts to start and manage
+instances, using Fog makes it much easier to move your instances to another provider,
+and you don't need to install Java or other dependencies for `ec2-tools`. Having built EC2
+infrastructure both ways, I can confidently say that I prefer using Fog, despite the fact that it
+has almost no documentation (Amazon actually has too much).
+
+In the `boot-ec2` script, we've used Fog to create a new EC2 instance using our credentials,
+and to transfer a copy of the Puppet manifest onto it. We then copy the `bootstrap-ec2`
+script which installs Puppet and applies the manifest.
+
+In this example, the manifest is pretty simple:
+
+----
+file { "/etc/motd":
+    content => "Puppet power!\n",
+}
+----
+
+You can easily change it to be, for example, the same as for your production app server. This
+would be a good way of quickly deploying a large pool of app servers behind a physical load
+balancer, for example, to handle a sudden spike in demand. Alternatively, you can use EC2
+instances as test or staging servers -- it's up to you.
+
+==== There's more…
+
+There's no limit to the number of instances you can deploy with EC2 — except perhaps the
+limit imposed by your credit card. So you could try modifying the script shown here to start
+a number of instances, set by a command-line argument.
+
+You might also want different types of instances — web servers and queue worker servers,
+for example. You could modify the boot script to take an argument specifying the instance
+type to start.
+
+The script shown here has an important limitation in that it supplies the instance with a
+snapshot of your Puppet manifest, in the form of a tarball. Obviously, as you make changes to
+your Puppet manifest, that won't be reflected on the instance. For the purposes of simplicity,
+the example in this recipe just uses Puppet to build the server initially; and it doesn't run the
+Puppet daemon or connect to a Puppetmaster server.
+
+This is often fine for EC2 instances that are short-lived and only spun up for specific purposes.
+If you need servers that run for a longer time or you need to be able to push changes out to
+them with Puppet, you'll need to modify the script to have the instance contact your Puppet
+server. To solve the problem of signing certificates, you might pre-generate the certificate and
+deploy it to the instance along with the bootstrap script, for example. Alternatively, you could
+have the script log in to your Puppet server and sign the instance's certificate request via SSH
+or MCollective. The mechanism can be as simple or as sophisticated as you like.
+
+You might also want to be able to use other cloud providers, such as Rackspace or
+Linode. To do this, you will need to make small modifications to the script. Consult the Fog
+documentation for more information on this at http://fog.io.
+
+[NOTE]
+========
+You can also use Puppet's new Cloud Provisioner extension to manage
+your EC2 instances; for more on this see the Puppet Labs page at
+http://docs.puppetlabs.com/guides/cloud_pack_getting_started.html.
+========
+
+==== See also
+
+- <<ch08sec07,Managing virtual machines with Vagrant>> in this chapter

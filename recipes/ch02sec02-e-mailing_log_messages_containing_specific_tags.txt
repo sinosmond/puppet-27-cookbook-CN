@@ -1,0 +1,102 @@
+﻿[[ch02sec02]]
+=== E-mailing log messages containing specific tags
+
+If, like most sysadmins, you feel like you don't get enough e-mail, you'll be looking for a way
+to generate more. Another type of Puppet report is called +tagmail+. This will e-mail the log
+messages to any address you specify.
+
+
+==== How to do it…
+
+1. Add +tagmail+ to the comma-separated list of reports in +puppet.conf+:
++
+----
+[master]
+reports = store,tagmail
+----
+
+2. Add some *tags* and associated e-mail addresses in the file +/etc/puppet/tagmail.conf+. 
+For example, this line will e-mail all log messages to me:
++
+----
+all: john@example.com
+----
+
+3. When Puppet runs, you will get an e-mail that looks like the following:
++
+----
+From: report@cookbook.bitfieldconsulting.com
+Subject: Puppet Report for cookbook.bitfieldconsulting.com
+To: john@example.com
+
+Mon Jan 17 08:42:30 -0700 2011 //cookbook.bitfieldconsulting.com/
+Puppet (info): Caching catalog for cookbook.bitfieldconsulting.com
+Mon Jan 17 08:42:30 -0700 2011 //cookbook.bitfieldconsulting.com/
+Puppet (info): Applying configuration version '1295278949'
+----
+
+==== How it works…
+
+Puppet looks at each line in +tagmail.conf+ and sends any messages matching the tag
+to the e-mail address specified. The special tag +all+ matches all messages. The tag +err+
+matches errors as shown in the following code snippet:
+
+----
+err: john@example.com
+----
+
+You can list as many rules as you like in the +tagmail.conf+ file, and Puppet will send e-mails
+for all rules that match. In the following example, errors go to one address, and web server
+related messages go to another:
+
+----
+err: puppetmaster@example.com
+webserver: webteam@example.com
+----
+
+==== There's more…
+
+The +tagmail+ reports are a powerful feature which you may need to experiment with a bit so
+that you can get the most out of them. I have given a few tips to help you in the following text.
+
+===== What are tags?
+
+Tags are explained in later <<ch02sec13,Using tags>> in this book, but for reporting purposes,
+it's enough to
+know that a *tag* can be the name of a node or a class. For example, the tag +webserver+ is
+matched if a machine includes the class webserver. You can also add a tag explicitly, using
+the +tag+ function as follows:
+
+----
+class exim {
+    tag("email")
+    service { "exim4":
+        ensure => running,
+        enable => true,
+    }
+}
+----
+
+===== Specifying multiple tags, or excluding tags
+
+You can specify a comma-separated list of tags in +tagmail.conf+, and also exclude certain
+tags by using an exclamation point (!).
+
+----
+all, !webserver: puppetmaster@example.com
+----
+
+===== Sending reports to multiple e-mail addresses
+
+You can send messages to multiple, comma-separated e-mail addresses as shown in the
+following code-snippet:
+
+----
+err: puppetmaster@example.com, sysadmin@example.com
+----
+
+==== See also
+
+- <<ch02sec01,Generating reports>> in this chapter
+- <<ch02sec03,Creating graphical reports>> in this chapter
+- <<ch02sec13,Using tags>> in this chapter

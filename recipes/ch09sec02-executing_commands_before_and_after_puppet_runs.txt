@@ -1,0 +1,33 @@
+﻿[[ch09sec02]]
+=== Executing commands before and after Puppet runs
+
+If you need to have a command executed before each Puppet run, you can do this using
+the +prerun_command+ configuration setting. Similarly, you can use +postrun_command+ to
+execute a command after the run has completed. This mechanism gives you a powerful hook
+to integrate Puppet with other software, or even trigger events on other machines.
+
+The +prerun+ and +postrun+ commands must succeed (that is, return a zero exit status), or
+Puppet will report an error. This enables you to have any command failures reported using
+Puppet's reporting mechanism, for example.
+
+
+==== How to do it…
+
+Set +prerun_command+ or +postrun_command+ in +puppet.conf+ to the commands you want
+to run:
+
+----
+prerun_command  = /usr/local/bin/before-puppet-run.sh
+postrun_command = /usr/local/bin/after-puppet-run.sh
+----
+
+==== There's more…
+
+You can use prerun and postrun commands to integrate Puppet with Ubuntu's +etckeeper+
+system. *Etckeeper* is a version control system for tracking changes to files in the +/etc+
+directory. To do this, define these commands in +puppet.conf+:
+
+----
+prerun_command=/etc/puppet/etckeeper-commit-pre
+postrun_command=/etc/puppet/etckeeper-commit-post
+----

@@ -1,0 +1,99 @@
+﻿[[ch06sec11]]
+=== Using schedules with resources
+
+Using a +schedule+ resource, you can control when other resources get applied. For example,
+the built-in +daily+ schedule does what you'd expect: if you specify a resource, such as the
+following, then it'll be applied once a day:
+
+----
+exec { "/usr/bin/apt-get update":
+    schedule => daily,
+}
+----
+
+The slightly tricky thing about +schedule+ is that it doesn't guarantee that the resource will be
+applied once a day. It's just a limit: the resource won't be applied more than once a day. When
+and whether the resource is applied at all will depend on when and whether Puppet runs.
+
+That being so, +schedule+ is best used to restrict other resources, for example, you might
+want to make sure that `apt-get update` hasn't run more than once an hour, or that a
+maintenance job doesn't run during daytime production hours.
+
+For this, you will need to create your own +schedule+ resources.
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+schedule { "not-in-office-hours":
+    period => daily,
+    range  => [ "17:00-23:59", "00:00-09:00" ],
+    repeat => 1,
+}
+
+exec { "/bin/echo Doing maintenance!":
+    schedule => "not-in-office-hours",
+}
+----
+
+2. Run Puppet.
+
+
+==== How it works…
+
+We've created a +schedule+ called +not-in-office-hours+, which specifies the repetition
+period as +daily+, and the allowable time range as after 5 p.m., or before 9 a.m. as follows:
+
+----
+    period  => daily,
+    range   => [ "17:00-23:59", "00:00-09:00" ],
+----
+
+We've also said that the maximum number of times a resource can be applied in one period
+is once:
+
+----
+    repeat => 1,
+----
+
+Now, we apply that schedule to an +exec+ resource as follows:
+
+----
+    exec { "/bin/echo Doing maintenance!":
+        schedule => "not-in-office-hours",
+    }
+----
+
+Without the +schedule+ parameter, this resource would run every time Puppet runs. Now,
+Puppet will check the +not-in-office-hours+ schedule to see the following:
+
+- Whether the time is in the permitted range
+- Whether the resource has been run the maximum permitted number of times in this
+  period
+
+For example, let's consider what happens if Puppet runs every hour, on the following hours:
+
+- 4 p.m.: It's outside the permitted time range, so Puppet will do nothing.
+- 5 p.m.: It's inside the permitted time range, and the resource hasn't been run yet in
+  this period, so Puppet will apply the resource.
+- 6 p.m.: It's inside the permitted time range, but the resource has already been run
+  once, so it has reached its maximum +repeat+ count. Puppet will do nothing.
+
+And so on until the next day.
+
+==== There's more…
+
+You can increase the +repeat+ parameter if you want to, for example, run a job no more than 6
+times an hour:
+
+----
+    period => hourly,
+    repeat => 6,
+----
+
+Remember that this won't guarantee that the job will run 6 times an hour. It just sets an upper
+limit. No matter how often Puppet runs or anything else happens, the job won't run if it has
+already run 6 times this hour. If Puppet only runs once a day, the job will just be run once. So,
++schedule+ is best used for making sure that things *don't* happen at certain times (or don't
+exceed a given frequency).

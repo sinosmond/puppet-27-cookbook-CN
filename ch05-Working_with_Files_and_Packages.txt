@@ -1,0 +1,50 @@
+﻿[[chapter05]]
+== Working with Files and Packages
+
+[quote, Gerald Weinberg,]
+If builders built buildings the way programmers wrote programs, then the first
+woodpecker that came along would destroy civilization.
+
+In this chapter we will cover the following topics:
+
+- Making quick edits to config files
+- Using Augeas to automatically edit config files
+- Building config files using snippets
+- Using ERB templates
+- Using array iteration in templates
+- Installing packages from a third-party repository
+- Setting up an APT package repository
+- Setting up a gem repository
+- Building packages automatically from source
+- Comparing package versions
+
+Almost everything you'll do as a Puppet administrator involves either files or packages.
+They are the most important kinds of resources in Puppet and this chapter will help you
+to understand them thoroughly, and learn some useful features and patterns to help you
+make better use of them.
+
+In this chapter we'll see how to make small edits to files, how to make larger changes in a
+structured way using the *Augeas* tool, how to construct files from concatenated snippets, and
+how to generate files from templates. We'll also learn how to install packages from additional
+repositories, and how to create those repositories.
+
+
+include::recipes/ch05sec01-making_quick_edits_to_config_files.txt[]
+
+include::recipes/ch05sec02-using_augeas_to_automatically_edit_config_files.txt[]
+
+include::recipes/ch05sec03-building_config_files_using_snippets.txt[]
+
+include::recipes/ch05sec04-using_erb_templates.txt[]
+
+include::recipes/ch05sec05-using_array_iteration_in_templates.txt[]
+
+include::recipes/ch05sec06-installing_packages_from_a_third-party_repository.txt[]
+
+include::recipes/ch05sec07-setting_up_an_apt_package_repository.txt[]
+
+include::recipes/ch05sec08-setting_up_a_gem_repository.txt[]
+
+include::recipes/ch05sec09-building_packages_automatically_from_source.txt[]
+
+include::recipes/ch05sec10-comparing_package_versions.txt[]

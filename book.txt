@@ -1,0 +1,39 @@
+﻿Puppet 2.7 Cookbook
+===================
+:Author:      John Arundel
+:Email:       hello@bitfieldconsulting.com
+:description: Build reliable, scalable, secure, +
+              high-performance systems to fully utilize the power of cloud computing
+:doctype:     book
+:lang:        en
+:encoding:    utf-8
+:revdate:     October, 2011
+:revnumber:   1.0
+
+
+/////////////////////////////
+// include::00-entries.txt[]
+// include::01-author.txt[]
+// include::02-reviewers.txt[]
+// include::03-preface.txt[]
+/////////////////////////////
+
+
+include::ch01-Puppet_Infrastructure.txt[]
+
+include::ch02-Monitoring_Reporting_and_Troubleshooting.txt[]
+
+include::ch03-Puppet_Language_and_Style.txt[]
+
+include::ch04-Writing_Better_Manifests.txt[]
+
+include::ch05-Working_with_Files_and_Packages.txt[]
+
+include::ch06-Users_and_Virtual_Resources.txt[]
+
+include::ch07-Applications.txt[]
+
+include::ch08-Servers_and_Cloud_Infrastructure.txt[]
+
+include::ch09-External_Tools_and_the_Puppet_Ecosystem.txt[]
+

@@ -1,0 +1,128 @@
+﻿[[ch02sec05]]
+=== Drawing dependency graphs
+
+Dependencies can get complicated quickly, and it's easy to end up with a *circular
+dependency* (where A depends on B which depends on A) which will cause Puppet to
+complain and stop work. Fortunately, Puppet's `--graph` option makes it easy to generate a
+diagram of your resources and the dependencies between them, which can be a big help in
+fixing such problems.
+
+==== Getting ready…
+
+Install the +graphviz+ package to view the diagram files as shown in the following code snippet:
+
+......
+# apt-get install graphviz
+......
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/modules/admin/manifests/ntp.pp+ with the
+   following code containing a circular dependency:
++
+----
+class admin::ntp {
+    package { "ntp":
+      ensure => installed,
+      require => File["/etc/ntp.conf"],
+    }
+
+    service { "ntp":
+      ensure => running,
+      require => Package["ntp"],
+    }
+
+    file { "/etc/ntp.conf":
+      source => "puppet:///modules/admin/ntp.conf",
+      notify => Service["ntp"],
+      require => Package["ntp"],
+    }
+}
+----
+
+2. Copy your existing ntp.conf file into Puppet:
++
+......
+# cp /etc/ntp.conf /etc/puppet/modules/admin/files
+......
+
+3. Include this class on a node:
++
+----
+node cookbook {
+    include admin::ntp
+}
+----
+
+4. Run Puppet as follows:
++
+......
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+
+err: Could not apply complete catalog: Found 1 dependency cycle:
+(File[/etc/ntp.conf] => Package[ntp] => File[/etc/ntp.conf]);
+try using the '--graph' option and open the '.dot' files in
+OmniGraffle or GraphViz
+
+notice: Finished catalog run in 0.42 seconds
+......
+
+5. Run Puppet with the `--graph` option as suggested:
++
+......
+# puppet agent --test --graph
+......
+
+6. Check that the graph files have been created:
++
+......
+# ls /var/lib/puppet/state/graphs/
+expanded_relationships.dot relationships.dot resources.dot
+......
+
+7. Create a graphic of the relationships graph:
++
+......
+# dot -Tpng -o relationships.png \
+  /var/lib/puppet/state/graphs/relationships.dot
+......
+
+8. View the graphic with the following command:
++
+......
+# eog relationships.png
+......
++
+image::image/ch02sec05.png[]
+
+
+==== How it works…
+
+When you run `puppet --graph` (or enable the +graph+ option in +puppet.conf+) Puppet
+will generate three graphs in *DOT* format (a graphics language).These are as follows:
+
+- +resources.dot+: shows the hierarchical structure of your classes and resources,
+  but without dependencies
+- +relationships.dot+: shows the dependencies between resources as arrows,
+  as in the preceding example
+- +expanded_relationships.dot+: is a more detailed version of the relationships graph
+
+The +dot+ tool (part of the +graphviz+ package) will convert these to an image format such as
+PNG for viewing.
+
+In the relationships graph, each resource in your manifest is shown as a balloon, with arrowed
+lines connecting them to indicate the dependencies. You can see that in our example, the
+dependencies between +File["/etc/ntp.conf"]+ and +Package["ntp"]+ form a circle.
+
+To fix the circular dependency problem, all you need to do is remove one of the dependency
+lines and thus break the circle.
+
+==== There's more…
+
+Resource and relationship graphs can be useful even when you don't have a bug to find. If
+you have a very complex network of classes and resources, studying the resources graph
+can help you see where to simplify things. Similarly, when dependencies become too
+complicated to understand from reading the manifest, the graphs can be a much more
+useful form of documentation.

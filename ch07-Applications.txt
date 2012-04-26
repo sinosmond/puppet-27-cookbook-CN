@@ -1,0 +1,34 @@
+﻿[[chapter07]]
+== Applications
+
+[quote, Luke Kanies,]
+The best software in the world only sucks. The worst software is significantly worse
+than that.
+
+In this chapter we will cover the following topics:
+
+- Managing Apache servers
+- Creating Apache virtual hosts
+- Creating Nginx virtual hosts
+- Creating MySQL databases and users
+- Managing Drupal sites
+- Managing Rails applications
+
+Without applications, a server is just a very expensive space heater. This chapter will present
+some recipes for managing some specific applications with Puppet: MySQL, Apache, Nginx,
+Rails, and Drupal. These are very popular applications, so they should be useful to you in
+themselves. However, the patterns and techniques they use are applicable to almost any
+software, so you can adapt them to your own purposes without much difficulty.
+
+
+include::recipes/ch07sec01-managing_apache_servers.txt[]
+
+include::recipes/ch07sec02-creating_apache_virtual_hosts.txt[]
+
+include::recipes/ch07sec03-creating_nginx_virtual_hosts.txt[]
+
+include::recipes/ch07sec04-creating_mysql_databases_and_users.txt[]
+
+include::recipes/ch07sec05-managing_drupal_sites.txt[]
+
+include::recipes/ch07sec06-managing_rails_applications.txt[]

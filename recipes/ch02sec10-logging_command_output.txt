@@ -1,0 +1,58 @@
+﻿[[ch02sec10]]
+=== Logging command output
+
+[quote, Little Britain,]
+Computer says no.
+
+Detailed feedback on problems can be helpful. When you use +exec+ resources to run
+commands on the node, it's not always easy to find out why they haven't worked. Puppet
+will give you an error message if a command returns a non-zero exit status. The error will be
+similar to the following:
+
+----
+err: /Stage[main]//Node[cookbook]/Exec[this-will-fail]/returns: change
+from notrun to 0 failed: /bin/ls file-that-doesnt-exist returned 2
+instead of one of [0] at /etc/puppet/manifests/nodes.pp:10
+----
+
+Often we would like to see the actual output from the command that failed, rather than just
+the numerical exit status. You can do this with the +logoutput+ parameter.
+
+==== How to do it…
+
+Define an +exec+ resource with the +logoutput+ parameter as follows:
+
+----
+exec { "this-will-fail":
+    command  => "/bin/ls file-that-doesnt-exist",
+   logoutput => on_failure,
+}
+----
+
+==== How it works…
+
+Now, if the command fails, Puppet will also print its output:
+
+......
+notice: /Stage[main]//Node[cookbook]/Exec[this-will-fail]/returns: /bin/
+ls: cannot access file-that-doesnt-exist: No such file or directory
+err: /Stage[main]//Node[cookbook]/Exec[this-will-fail]/returns: change
+from notrun to 0 failed: /bin/ls file-that-doesnt-exist returned 2
+instead of one of [0] at /etc/puppet/manifests/nodes.pp:11
+......
+
+==== There's more…
+
+You can set this to be the default for all +exec+ resources by defining the following:
+
+----
+Exec {
+    logoutput => on_failure,
+}
+----
+
+If you want to see the command output whether it succeeds or fails, use the following:
+
+----
+    logoutput => true,
+----

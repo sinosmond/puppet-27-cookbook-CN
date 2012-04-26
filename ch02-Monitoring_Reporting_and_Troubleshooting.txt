@@ -1,0 +1,64 @@
+﻿[[chapter02]]
+== Monitoring, Reporting, and Troubleshooting
+
+[quote, Error message,]
+Found problem more than one. However, this does not mean that relevant part
+is thing by mistake. Could be fertilized by special purpose in other application
+program.
+
+In this chapter, we will cover the following topics:
+
+- Generating reports
+- E-mailing log messages containing specific tags
+- Creating graphical reports
+- Producing automatic HTML documentation
+- Drawing dependency graphs
+- Testing your Puppet manifests
+- Doing a dry run
+- Detecting compilation errors
+- Understanding Puppet errors
+- Logging command output
+- Logging debug messages
+- Inspecting configuration settings
+- Using tags
+- Using run stages
+- Using environments
+
+We've all had the experience of sitting in an exciting presentation about some new technology,
+and then rushing home to play with it. Of course, once you start experimenting with it, you
+immediately run into problems. What's going wrong? Why doesn't it work? How can I see
+what's happening under the hood? This chapter will help you answer some of these questions,
+and give you the tools to solve common Puppet problems. We'll also see how you can generate
+useful reports on your Puppet infrastructure, and how Puppet can help you monitor and
+troubleshoot your network as a whole.
+
+
+include::recipes/ch02sec01-generating_reports.txt[]
+
+include::recipes/ch02sec02-e-mailing_log_messages_containing_specific_tags.txt[]
+
+include::recipes/ch02sec03-creating_graphical_reports.txt[]
+
+include::recipes/ch02sec04-producing_automatic_html_documentation.txt[]
+
+include::recipes/ch02sec05-drawing_dependency_graphs.txt[]
+
+include::recipes/ch02sec06-testing_your_puppet_manifests.txt[]
+
+include::recipes/ch02sec07-doing_a_dry_run.txt[]
+
+include::recipes/ch02sec08-detecting_compilation_errors.txt[]
+
+include::recipes/ch02sec09-understanding_puppet_errors.txt[]
+
+include::recipes/ch02sec10-logging_command_output.txt[]
+
+include::recipes/ch02sec11-logging_debug_messages.txt[]
+
+include::recipes/ch02sec12-inspecting_configuration_settings.txt[]
+
+include::recipes/ch02sec13-using_tags.txt[]
+
+include::recipes/ch02sec14-using_run_stages.txt[]
+
+include::recipes/ch02sec15-using_environments.txt[]

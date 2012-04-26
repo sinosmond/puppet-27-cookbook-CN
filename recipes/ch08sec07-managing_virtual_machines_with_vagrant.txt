@@ -1,0 +1,312 @@
+﻿[[ch08sec07]]
+=== Managing virtual machines with Vagrant
+
+[quote, Ted Nelson,]
+In 1974 computers were oppressive devices in far-off air-conditioned places. Now
+you can be oppressed in your own living room.
+
+While it's great to be able to deploy virtual machines in the cloud, running them on your own
+desktop is sometimes even more convenient, especially for testing. If every developer can
+have a clone of the production system in a VM on her own machine, she's less likely to run
+into problems when deploying for real. Similarly, if every sysadmin can test his configuration
+management changes on a private VM, it's a great way to catch issues before they affect
+customers.
+
+For some years tools like VirtualBox and VMware have been available to do this. However,
+desktop cloud has really taken off with the arrival of *Vagrant*, a tool for managing and
+provisioning VM environments automatically. Vagrant drives VirtualBox to automate the
+process of creating a VM, provisioning it with Chef or Puppet, setting up networking, port
+forwarding, and packaging running VMs into images for others to use.
+
+You can use Vagrant to manage your development VMs on your own desktop, or on a shared
+machine such as a continuous integration server. For example, you might use a CI tool such
+as Jenkins to boot a VM with Vagrant, deploy your app, and then run your tests against it as
+though it were in production.
+
+==== How to do it…
+
+1. Create a +vagrant+ module:
++
+....
+# mkdir /etc/puppet/modules/vagrant
+# mkdir /etc/puppet/modules/vagrant/manifests
+# mkdir /etc/puppet/modules/vagrant/files
+....
+
+2. Create the file +/etc/puppet/modules/vagrant/manifests/init.pp+ with
+   the following contents:
++
+----
+class vagrant {
+    $virtualbox_deps = [ "libgl1-mesa-glx",
+                         "libqt4-network",
+                         "libqt4-opengl",
+                         "libqtcore4",
+                         "libqtgui4",
+                         "libsdl1.2debian",
+                         "libxmu6",
+                         "libxt6",
+                         "gawk",
+                         "linux-headers-${kernelrelease}" ]
+        package { $virtualbox_deps: ensure => installed }
+
+        exec { "download-virtualbox":
+            cwd     => "/root",
+            command => "/usr/bin/wget http://download.virtualbox.org/
+             virtualbox/4.1.0/virtualbox-4.1_4.1.0-73009~Ubuntu~lucid_
+             i386.deb",
+            creates => "/root/virtualbox-4.1_4.1.0-73009~Ubuntu~lucid_
+             i386.deb",
+            timeout => "-1",
+        }
+
+        exec { "install-virtualbox":
+            command => "/usr/bin/dpkg -i /root/virtualbox-4.1_4.1.0-
+             73009~Ubuntu~lucid_i386.deb",
+            unless  => "/usr/bin/dpkg -l |/bin/grep virtualbox-4.1",
+            require => [ Exec["download-virtualbox"],
+            Package[$virtualbox_deps] ],
+        }
+
+        $vagrant_deps = [ "build-essential",
+                          "rubygems" ]
+
+        package { $vagrant_deps: ensure => installed }
+
+        exec { "install-rubygems-update":
+            command => "/usr/bin/gem install -v 1.8.6 rubygemsupdate",
+            unless  => "/usr/bin/gem -v |/bin/grep 1.8.6",
+            require => Package["rubygems"],
+        }
+
+        exec { "run-rubygems-update":
+            command => "/var/lib/gems/1.8/bin/update_rubygems",
+            unless  => "/usr/bin/gem -v |/bin/grep 1.8.6",
+            require => Exec["install-rubygems-update"],
+        }
+
+        package { "vagrant":
+            provider => gem,
+            ensure   => installed,
+            require  => [ Package["build-essential"], 
+                          Exec["runrubygems-update"] ],
+        }
+
+        define devbox( $vm_user ) {
+            include vagrant
+            $vm_dir = "/home/${vm_user}/${name}"
+            file { [ $vm_dir,
+                     "${vm_dir}/data" ]:
+                ensure => directory,
+                owner  => $vm_user,
+            }
+
+            file { "${vm_dir}/Vagrantfile":
+                source => "puppet:///modules/vagrant/devbox.
+                 Vagrantfile",
+                require => File[$vm_dir],
+            }
+     }
+}
+----
+
+3. Create the file +/etc/puppet/modules/vagrant/files/devbox.Vagrantfile+
+   with the following contents:
++
+----
+Vagrant::Config.run do |config|
+  config.vm.box = "lucid32"
+  config.vm.box_url = "http://files.vagrantup.com/lucid32.box"
+  config.vm.forward_port "http", 80, 8080
+  config.vm.share_folder "v-data", "/vagrant_data", "./data"
+
+  config.vm.customize do |vm|
+    vm.name = "devbox"
+  end
+
+  config.vm.provision :puppet,:module_path => "puppet/modules-0"
+  do |puppet|
+    puppet.manifests_path = "puppet/manifests"
+    puppet.manifest_file = "site.pp"
+  end
+end
+----
+
+4. Include the following on the node where you want to run the VM (replace +john+ with
+   your own username).
++
+----
+vagrant::devbox { "devbox":
+    vm_user => "john",
+}
+----
+
+5. Add a node definition for devbox:
++
+----
+node devbox {
+    group { "puppet": ensure => present }
+    file { "/etc/motd":
+        content => "Puppet power!\n",
+    }
+}
+----
+
+6. Run Puppet:
++
+....
+# puppet agent --test
+....
+
+7. You should find a directory +devbox+ created in your home directory. In this directory,
+   either check out your Puppet repository to a directory named puppet, or make a
+   *symlink* to an existing Puppet checkout:
++
+--
+....
+# cd ~/devbox
+# git clone git@github.com:Example/Puppet.git puppet
+....
+
+or
+
+....
+# ln -s /etc/puppet ~/devbox/puppet
+....
+--
+
+8. In the +devbox+ directory, run the following command line:
++
+--
+....
+# vagrant up
+[default] Box lucid32 was not found. Fetching box from specified
+URL...
+[default] Downloading with Vagrant::Downloaders::HTTP...
+[default] Downloading box: http://files.vagrantup.com/lucid32.box
+[default] Extracting box...
+[default] Verifying box...
+[default] Cleaning up downloaded box...
+[default] Importing base box 'lucid32'...
+[default] Matching MAC address for NAT networking...
+[default] Clearing any previously set forwarded ports...
+[default] Forwarding ports...
+[default] -- http: 80 => 8080 (adapter 1)
+[default] -- ssh: 22 => 2222 (adapter 1)
+[default] Creating shared folders metadata...
+[default] Running any VM customizations...
+[default] Booting VM...
+[default] Waiting for VM to boot. This can take a few minutes.
+[default] VM booted and ready for use!
+[default] Mounting shared folders...
+[default] -- v-root: /vagrant
+[default] -- v-data: /vagrant_data
+[default] -- manifests: /tmp/vagrant-puppet/manifests
+[default] Running provisioner: Vagrant::Provisioners::Puppet...
+[default] Running Puppet with site.pp...
+[default] stdin: is not a tty
+[default] notice: /Stage[main]//Node[devbox]/File[/etc/motd]/
+ensure: defined content as '{md5}0bdeca690dbb409d48391f3772d389b7'
+[default]
+[default] notice: /Group[puppet]/ensure: created
+[default]
+[default] notice: Finished catalog run in 0.36 seconds
+[default]
+....
+
+Log into the +devbox+ VM to test it:
+
+....
+# vagrant ssh
+Puppet power!
+Last login: Thu Jul 21 13:07:53 2011 from 10.0.2.2
+vagrant@devbox:~$ logout
+Connection to 127.0.0.1 closed.
+....
+--
+
+==== How it works…
+
+The +vagrant+ class installs Vagrant and VirtualBox and all their dependencies. It also makes
+the +devbox+ define available. You can then use it to create multiple +devbox+ instances for
+multiple users on a machine. An instance of +devbox+ such as:
+
+----
+vagrant::devbox { "app-foo-devbox":
+    vm_user => "john",
+}
+----
+
+will create a Vagrant project directory named +app-foo-devbox+ (a directory containing a
++Vagrantfile+ that specifies a virtual machine definition) in the user's (in this case +john+)
+home directory.
+
+When Vagrant boots the VM for the first time, it's configured to look in a subdirectory of the
+project directory named +puppet+ for the Puppet manifest to provision the machine. This
+can be a symlink to your Puppet working copy, or a standalone Puppet manifest just for the
++devbox+ — whatever you like, so long as Vagrant can find it.
+
+Once the VM has been provisioned, it's ready for use. Just run `vagrant up` to start the
+machine, `vagrant ssh` to log into it, and `vagrant halt` to stop it.
+
+By the way, the +puppet+ group resource in the node definition is there to work around a bug
+in Vagrant's Puppet provisioning that may be fixed by the time you read this. Vagrant is under
+active development so one or two things may not work exactly as they do here: if in doubt,
+check the documentation link at the end of this recipe.
+
+You may find that the VM does not boot fully sometimes, and Vagrant just times out waiting
+for it. This seems to be due to a bug that may be fixed by the time you read this. If not, you can
+work around the problem by adding the following code snippet to the Vagrantfile:
+
+----
+config.vm.boot_mode = :gui
+----
+
+and restarting the VM. It will now boot in GUI mode, with a console window. Log in via this
+window as user +vagrant+, with password +vagrant+, and run the following command:
+
+....
+# sudo /etc/init.d/networking restart
+....
+
+You should find that Vagrant now completes the provisioning phase and that `vagrant ssh`
+will work.
+
+==== There's more…
+
+In this example we just configured +devbox+ with a simple manifest that adds a message to the
++/etc/motd+ file. To make this more useful, have +devbox+ pick up the same manifest as the
+real server you'll be deploying to. For example:
+
+----
+node production, devbox {
+    include myapp::production
+}
+----
+
+Thus, any changes you make to the production server config will be reflected in the machine
+you run your tests on, so that you can pick up problems before deploying. Similarly, if you
+need to make a config change to support a new feature, you can test it on the VM first to see
+if anything doesn't work.
+
+If you want to suspend or shut down your VM while you're not using it, run:
+
+....
+# vagrant suspend
+....
+
+or
+
+....
+# vagrant halt
+....
+
+To wipe the VM completely, so that you can test re-provisioning it, for example, run:
+
+....
+# vagrant destroy
+....
+
+The Vagrant maintainers have done a great job of making it very straightforward to
+use, but you can read more about Vagrant if you need to at the documentation site:
+http://vagrantup.com/docs/index.html.

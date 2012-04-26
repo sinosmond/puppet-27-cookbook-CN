@@ -1,0 +1,117 @@
+﻿[[ch05sec03]]
+=== Building config files using snippets
+
+How do you eat an elephant? One bite at a time. Sometimes you have a situation where you
+want to build up a single config file from various snippets managed by different classes. For
+example, you might have two or three services that require +rsync+ modules to be configured,
+so you can't distribute a single +rsyncd.conf+. Although you could use Augeas, there's a
+simple way to concatenate config snippets together into a single file using an +exec+ resource.
+
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/modules/admin/manifests/rsyncdconf.pp+
+   with the following contents:
++
+----
+class admin::rsyncdconf {
+    file { "/etc/rsyncd.d":
+        ensure => directory,
+    }
+
+    exec { "update-rsyncd.conf":
+        command => "/bin/cat /etc/rsyncd.d/*.conf > /etc/
+        rsyncd.conf",
+        refreshonly => true,
+    }
+}
+----
+
+2. Add the following to your manifest:
++
+----
+class myapp::rsync {
+    include admin::rsyncdconf
+
+    file { "/etc/rsyncd.d/myapp.conf":
+        ensure  => present,
+        source  => "puppet:///modules/myapp/myapp.rsync",
+        require => File["/etc/rsyncd.d"],
+        notify  => Exec["update-rsyncd.conf"],
+    }
+}
+include myapp::rsync
+----
+
+3. Create the file +/etc/puppet/modules/myapp/files/myapp.rsync+ with the
+   following contents:
++
+----
+[myapp]
+    uid = myappuser
+    gid = myappuser
+    path = /opt/myapp/shared/data
+    comment = Data for myapp
+    list = no
+    read only = no
+    auth users = myappuser
+----
+
+4. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303731804'
+notice: /Stage[main]/Admin::Rsyncdconf/File[/etc/rsyncd.d]/ensure:
+created
+notice: /Stage[main]/Myapp::Rsync/File[/etc/rsyncd.d/myapp.conf]/
+ensure: defined content as '{md5}e1e57cf38bb88a7b4f2fd6eb1ea2823a'
+info: /Stage[main]/Myapp::Rsync/File[/etc/rsyncd.d/myapp.conf]:
+Scheduling refresh of Exec[update-rsyncd.conf]
+notice: /Stage[main]/Admin::Rsyncdconf/Exec[update-rsyncd.conf]:
+Triggered 'refresh' from 1 events
+notice: Finished catalog run in 1.01 seconds
+....
+
+==== How it works…
+
+The +admin::rsyncdconf+ class creates a directory for +rsync+ config snippets to be placed
+into as follows:
+
+----
+file { "/etc/rsyncd.d":
+    ensure => directory,
+}
+----
+
+When you create a config snippet (such as in +myapp::rsync+), all you need to do is +require+
+the directory -- +require => File["/etc/rsyncd.d"]+,and +notify+ the +exec+ resource that
+updates the main config file as follows: +notify => Exec["update-rsyncd.conf"],+.
+
+This +exec+ resource will then be run every time one of the following snippets is updated:
+
+----
+exec { "update-rsyncd.conf":
+    command     => "/bin/cat /etc/rsyncd.d/*.conf > /etc/rsyncd.conf",
+    refreshonly => true,
+}
+----
+
+The preceding code snippet will concatenate all the snippets in +/etc/rsyncd.d+ into
++rsyncd.conf+.
+
+The reason this is useful is that you can have many different snippet resources spread
+throughout different classes and modules, all of which will eventually be combined into a
+single +rsyncd.conf+ file, but you can keep the code to combine this in one place.
+
+==== There's more…
+
+This is a useful pattern whenever you have a service like +rsync+ that has a single config
+file which may contain distinct snippets. In effect, it gives you the functionality of Apache's
++conf.d+ or PHP's +php-ini.d+ directories.
+
+==== See also
+
+- <<ch02sec13,Using tags>> in Chapter 2

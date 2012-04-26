@@ -1,0 +1,88 @@
+﻿[[ch02sec15]]
+=== Using environments
+
+[quote, Joke,]
+A Zen student went up to a hot dog vendor and said: "Make me one with
+everything".
+
+Context is important. If you want to test Puppet manifests before putting them into production,
+you can use Puppet's *environment* feature to do this. This lets you apply a different manifest
+depending on the environment setting of the client machine. For example, you might define
+the following environments:
+
+- development
+- staging
+- production
+
+You can set up environments in your +puppet.conf+ file. In this example, we'll add a
++development+ environment, pointing to a different set of manifests.
+
+==== How to do it…
+
+Add the following lines to +puppet.conf+:
+
+----
+[development]
+manifest = /etc/puppet/env/development/manifests/site.pp
+modulepath = /etc/puppet/env/development/modules:/etc/puppet/modules
+----
+
+==== How it works…
+
+You can put your environment manifests anywhere you like, as long as you set the +manifest+
+parameter to point to the top-level +site.pp+ file. In this example we've put the manifests
+for this environment in +/etc/puppet/env/development+. Similarly, you need to set
++modulepath+ to the location of your modules directory for that environment.
+
+In the preceding example, the +modulepath+ also includes +/etc/puppet/modules+; this is
+so that if Puppet doesn't find a module in your +development+ environment, it will also look for
+it in the default environment. This means you only need to put the modules you're working on
+into the +development+ environment.
+
+The default environment is production, so if you run Puppet without specifying an
+environment, that's what you'll get.
+
+==== There's more…
+
+If you are using a version control system such as Git, your environments can be Git branches.
+Once you have finished testing and staging a new module, you can merge it into the Git master
+branch for use in production. You can read more about this strategy for using environments
+in R.I. Pienaar's article: http://www.devco.net/archives/2009/10/10/puppet_environments.php.
+
+You can specify the environment of a client machine in several ways. You can use the
+`--environment` switch when running Puppet as follows:
+
+....
+# puppet agent --test --environment=development
+....
+
+Alternatively, you can specify it in the client's +puppet.conf+:
+
+----
+[main]
+environment=development
+----
+
+If you are using an external node classifier script (described elsewhere in this book), this can
+also specify the client's environment.
+
+You can also have a different +fileserver.conf+ for each environment (see the section on
+configuring Puppet's file server). To do this, set the variable +fileserverconfig+ for each
+environment in the Puppetmaster's +puppet.conf+ file as follows:
+
+----
+[development]
+fileserverconfig = /etc/puppet/fileserver.conf.development
+
+[production]
+fileserverconfig = /etc/puppet/fileserver.conf.production
+----
+
+For more information, see the Puppet Labs page on using environments: 
+http://projects.puppetlabs.com/projects/1/wiki/Using_Multiple_Environments
+
+==== See also
+
+- <<ch01sec01,Using version control>> in Chapter 1
+- <<ch03sec02,Using modules>> in Chapter 3
+- <<ch09sec09,Using an external node classifier>> in Chapter 9

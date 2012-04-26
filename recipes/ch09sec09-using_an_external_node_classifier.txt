@@ -1,0 +1,102 @@
+﻿[[ch09sec09]]
+=== Using an external node classifier
+
+When Puppet runs on a node, it needs to know which classes should be applied to that node.
+For example, if it is a web server node, it might need to include an +apache+ class. The normal
+way to map nodes to classes is in the Puppet manifest itself, for example in a +nodes.pp+ file:
+
+----
+node web1 {
+    include apache
+}
+----
+
+Alternatively, you can use an *external node classifier* to do this job. An external node classifier
+is any executable program that can accept a node name and return a list of classes for that
+node. It could be a simple shell script, for example, or a wrapper around a more complicated
+program or API that can decide how to map nodes to classes.
+
+==== Getting ready…
+
+Set the following variables in your +puppet.conf+:
+
+----
+[master]
+external_nodes = /usr/local/bin/puppet_node_classifier
+node_terminus  = exec
+----
+
+==== How to do it…
+
+1. Create this simple example script as +/usr/local/bin/puppet_node_classifier+:
++
+----
+#!/bin/bash
+if [ "$1" == "cookbook.bitfieldconsulting.com" ]; then
+   cat <<"END"
+---
+classes:
+  - admin::sudoers
+  - admin::exim
+  - puppet
+  - nagios::target
+
+environment: production
+parameters:
+  location: Bitfield HQ
+END
+
+else
+    exit 1
+fi
+----
+
+2. Make the script executable:
++
+....
+# chmod 755 /usr/local/bin/puppet_node_classifier
+....
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1299677816'
+notice: Finished catalog run in 1.19 seconds
+....
+
+==== How it works…
+
+Puppet calls the script you specify as +external_nodes+ in +puppet.conf+ and passes the
+name of the node as the command-line argument. In our example script, we check this
+argument and if it is equal to cookbook.bitfieldconsulting.com, we output a list of
+classes in the required format for Puppet. Otherwise, the script exits with status 1 (indicating
+to Puppet that the node was not found).
+
+The script also sets the value of +environment+ (see the section on <<ch02sec15,Using environments>> for
+an explanation of this parameter). The variable +location+ is also set to +Bitfield HQ+ -- this
+means nothing to Puppet, but the variable will be defined in scope in your manifest, so you
+could use it to determine DNS resolver settings, for example. You can set any variables you
+like here.
+
+Obviously, this script is not terribly useful since it just outputs a predetermined list of classes.
+A more sophisticated script might check a database to find the class list, or look up the node
+in a hash or an external text file. Hopefully, this example is enough to get you started writing
+your own external node classifier.
+
+==== There's more…
+
+One of the major uses for external node classification is to connect Puppet with an LDAP
+directory. Many large organizations have an LDAP infrastructure, and you can set this up so
+that Puppet can get information on nodes from the LDAP directory, and other LDAP clients can
+also get information about the nodes managed by Puppet.
+
+For more information about how to do this, see the "Puppet and LDAP" page at:
+http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes.
+
+This feature is also used by Puppet Dashboard and Foreman to manage the relationship
+between nodes and classes via a web interface -- they act as external node classifiers.
+
+

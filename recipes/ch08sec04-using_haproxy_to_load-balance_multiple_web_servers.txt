@@ -1,0 +1,201 @@
+﻿[[ch08sec04]]
+=== Using HAProxy to load-balance multiple web servers
+
+[quote, Richard Feynman,]
+The inside of a computer is as dumb as hell but it goes like mad!
+
+Back in the day, the way to speed up slow web servers was to add more cores. I recall one
+employer buying a monster 24-core Sun box the size of a Hummer. We had to have the data
+center door widened to get it in.
+
+Scaling websites nowadays is still a matter of adding cores, but they either come in their
+own little beige boxes, as commodity hardware, or you rent them as as a wholesale compute
+resource from a cloud provider. In order to group all these cores together to serve a single
+website, we use load balancers.
+
+Once, a load balancer was a big box that sat in a rack and cost eighty thousand dollars.
+Although you can still buy those, for most organizations a software load balancer solution
+using commodity Linux servers is a better value proposition.
+
+*HAProxy* is the software load balancer of choice for most people: fast, powerful, and highly
+configurable. In this recipe, I'll show you how to build an HAProxy server to load-balance web
+requests across two existing backend servers.
+
+==== How to do it…
+
+1. Create a +loadbalancer+ module:
++
+....
+# mkdir /etc/puppet/modules/loadbalancer
+# mkdir /etc/puppet/modules/loadbalancer/manifests
+# mkdir /etc/puppet/modules/loadbalancer/files
+....
+
+2. Create the file +/etc/puppet/modules/loadbalancer/manifests/init.pp+
+   with the following contents:
++
+----
+class loadbalancer {
+  package { "haproxy": ensure => installed }
+
+  file { "/etc/default/haproxy":
+    source  => "puppet:///modules/loadbalancer/haproxy.defaults",
+    require => Package["haproxy"],
+  }
+
+  service { "haproxy":
+    ensure  => running,
+    enable  => true,
+    require => Package["haproxy"],
+  }
+
+  file { "/etc/haproxy/haproxy.cfg":
+    source  => "puppet:///modules/loadbalancer/haproxy.cfg",
+    require => Package["haproxy"],
+    notify  => Service["haproxy"],
+  }
+}
+----
+
+3. Create the file 
+   /etc/puppet/modules/loadbalancer/files/haproxy.defaults+
+   with the following contents:
++
+----
+# Don't edit this file - it's managed by Puppet
+# Set ENABLED to 1 if you want the init script to start haproxy.
+ENABLED=1
+# Add extra flags here.
+#EXTRAOPTS="-de -m 16"
+----
+
+4. Create the file +/etc/puppet/modules/loadbalancer/files/haproxy.cfg+
+   with the following contents. In the +myapp+ section, replace the IP address in each
+   +server+ line with the IP address of your backend server, and the +:8000+ port number
+   with the port number where your server is listening.
++
+----
+global
+        daemon
+        user haproxy
+        group haproxy
+        pidfile /var/run/haproxy.pid
+
+defaults
+        log        global
+        stats      enable
+        mode       http
+        option     httplog
+        option     dontlognull
+        option     dontlog-normal
+        retries    3
+        option     redispatch
+        contimeout 4000
+        clitimeout 60000
+        srvtimeout 30000
+
+listen stats :8080
+       mode  http
+       stats uri /
+       stats auth haproxy:topsecret
+
+listen myapp 0.0.0.0:80
+       balance leastconn
+       server  myapp1 10.0.2.30:8000    check maxconn 100
+       server  myapp2 10.0.2.40:8000    check maxconn 100
+----
+
+5. Include the following on your HAProxy node:
++
+----
+include loadbalancer
+----
+
+6. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1311616315'
+
+notice: /Stage[main]/Loadbalancer/Package[haproxy]/ensure: ensure
+changed 'purged' to 'present'
+
+--- /etc/haproxy/haproxy.cfg 2009-11-06 17:59:44.000000000
+
++0000
++++ /tmp/puppet-file20110725-16369-1b85cr8-0 2011-07-25
+18:09:03.749146699 +0000
+
+@@ -1,86 +1,28 @@
+-# this config needs haproxy-1.1.28 or haproxy-1.2.1
+...
+
+info: /Stage[main]/Loadbalancer/File[/etc/haproxy/haproxy.
+cfg]: Filebucketed /etc/haproxy/haproxy.cfg to puppet with sum
+c3bfb0c86138552475dea458e8ab36f3
+
+notice: /Stage[main]/Loadbalancer/File[/etc/haproxy/haproxy.cfg]/
+content: content changed '{md5}c3bfb0c86138552475dea458e8ab36f3'
+to '{md5}fa5fac3cf31f043f0120d0d45cef3f54'
+
+info: /Stage[main]/Loadbalancer/File[/etc/haproxy/haproxy.cfg]:
+Scheduling refresh of Service[haproxy]
+
+notice: /Stage[main]/Loadbalancer/Service[haproxy]/ensure: ensure
+changed 'stopped' to 'running'
+
+notice: /Stage[main]/Loadbalancer/Service[haproxy]: Triggered
+'refresh' from 1 events
+
+--- /etc/default/haproxy 2009-11-06 17:59:21.000000000 +0000
+
++++ /tmp/puppet-file20110725-16369-1ndfrti-0 2011-07-25
+18:09:05.749136866 +0000
+@@ -1,4 +1,5 @@
+
+ # Set ENABLED to 1 if you want the init script to start haproxy.
+-ENABLED=0
++ENABLED=1
+ # Add extra flags here.
+ #EXTRAOPTS="-de -m 16"
++
+
+notice: /Stage[main]/Loadbalancer/File[/etc/default/haproxy]/
+content: content changed '{md5}a1f2deb7c7a10e55dc7c971a2288f5d4'
+to '{md5}2217d74d66bd72630268598b1f11f173'
+
+notice: Finished catalog run in 22.21 seconds
+....
+
+7. Check the HAProxy *stats* interface in your web browser to make sure everything is
+   OK (note that my *Backend* servers are shown as *DOWN* because those VMs aren't
+   running: when I start them, HAProxy will detect this automatically and mark them up).
++
+image::image/ch08sec04.png[]
+
+==== How it works…
+
+The haproxy daemon listens for incoming requests and distributes them to the pool of
+backend servers (*myapp1* and *myapp2* in our example). If one backend server becomes
+overloaded, HAProxy will avoid sending it more traffic until it recovers. This helps prevent
+the drastic slowdown as a single web server becomes overloaded and queues up more and
+more requests that it can't serve. If a server fails altogether, HAProxy won't send it any more
+requests until it becomes available again.
+
+The *stats* interface will show you how your backend servers are performing, how many
+sessions they are handling, whether HAProxy has marked them up or down, and so on.
+
+==== There's more…
+
+If you want to add more backends to handle increased demand, just add more +server+ lines
+to +haproxy.cfg+. If you find that the existing servers are getting swamped, try decreasing the
+per-server +maxconn+ setting a little. HAProxy has a vast range of configuration parameters that
+you can explore: see the HAProxy documentation at http://haproxy.1wt.eu/#docs.
+
+If you need SSL capabilities, you can put Nginx in front of HAProxy to handle this.
+
+Although it's most often used as a web server, HAProxy can proxy a lot more than just HTTP.
+It can handle any TCP traffic, so you can use it to load-balance MySQL servers, SMTP, video
+servers, or anything you like.

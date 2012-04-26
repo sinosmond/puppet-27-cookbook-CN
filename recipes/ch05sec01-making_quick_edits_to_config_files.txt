@@ -1,0 +1,93 @@
+﻿[[ch05sec01]]
+=== Making quick edits to config files
+
+Did you know Puppet can do micro-surgery? Often we don't want to have to put a whole config
+file into Puppet just to add one setting -- especially if the file is managed by someone else and
+we can't overwrite it. What would be useful is a simple recipe to add a line to a config file if it's
+not already present: for example, adding a module name to +/etc/modules+ to tell the kernel
+to load that module at boot.
+
+You can use an +exec+ resource to do jobs like this: this example shows how to use +exec+ to
+append a line to a text file.
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/manifests/utils.pp+ with the following content:
++
+----
+define append_if_no_such_line($file, $line) {
+    exec { "/bin/echo '$line' >> '$file'":
+        unless => "/bin/grep -Fx '$line' '$file'",
+    }
+}
+----
+
+2. Add this line to +/etc/puppet/manifests/site.pp+:
++
+----
+import "utils.pp"
+----
+
+3. Now add this to your manifest:
++
+----
+append_if_no_such_line { "enable-ip-conntrack":
+    file => "/etc/modules",
+    line => "ip_conntrack",
+}
+----
+
+4. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303649606'
+notice: /Stage[main]//Node[cookbook]/Append_if_no_such_
+line[enable-ip-conntrack]/Exec[/bin/echo 'ip_conntrack' >> '/etc/
+modules']/returns: executed successfully
+notice: Finished catalog run in 1.22 seconds
+....
+
+==== How it works…
+
+The +exec+ resource will append the specified text in +$line+ to the file +$file+, provided it's not
+already present:
+
+----
+exec { "/bin/echo '$line' >> '$file'":
+    unless => "/bin/grep -Fx '$line' '$file'",
+----
+
+This +append_if_no_such_line+ resource is now available for you to use in your manifest.
+In this example, we've used it to ensure that the +/etc/modules+ file (which specifies what
+kernel modules to load at boot time) contains the following line:
+
+----
+ip_conntrack
+----
+
+==== There's more…
+
+You can use similar +define+ functions to perform other minor operations on text files. For
+example, the following code snippet will enable you to search and replace within a file:
+
+----
+define replace_matching_line( $match, $replace ) {
+    exec { "/usr/bin/ruby -i -p -e 'sub(%r{$match}, \"$replace\")'
+    $name":
+      onlyif    => "/bin/grep -E '$match' $name",
+      logoutput => on_failure,
+    }
+}
+
+replace_matching_line { "/etc/apache2/apache2.conf":
+    match   => "LogLevel .*",
+    replace => "LogLevel debug",
+}
+----
+
+==== See also
+
+- <<ch05sec02,Using Augeas to automatically edit config files>> in this chapter

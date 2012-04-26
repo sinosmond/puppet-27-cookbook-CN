@@ -1,0 +1,114 @@
+﻿[[ch03sec01]]
+=== Using community Puppet style
+
+[quote, H. L. Mencken,]
+A society made up of individuals who were all capable of original thought would
+probably be unendurable.
+
+Sometimes going along with the crowd is a good idea. If other people need to read or maintain
+your manifests, or if you want to share code with the community, it's a good idea to follow the
+existing style conventions as closely as possible.
+
+==== How to do it…
+
+1. Always quote your resource names; for example, use +package { "exim4":+ and
+   not +package { exim4:+
++
+Some characters like hyphens and spaces can confuse Puppet's parser, and to be
+on the safe side it's wise to put all names consistently in double quotes.
+
+2. Always quote parameter values that are not reserved words in Puppet; for example:
++
+--
+----
+name  => "Nucky Thompson",
+mode  => "0700",
+owner => "deploy",
+----
+
+but
+
+----
+ensure => installed,
+enable => true,
+ensure => running,
+----
+
+Always include curly braces ({}) around variable names when referring to them in
+strings. For example:
+
+----
+source => "puppet:///modules/webserver/${brand}.conf",
+----
+
+Otherwise Puppet's parser has to guess which characters should be part of the variable
+name and which belong to the surrounding string. Curly braces make it explicit.
+--
+
+3. Always end lines that declare parameters with a comma, even if it is the last parameter:
++
+--
+----
+service { "memcached":
+    ensure => running,
+    enable => true,
+}
+----
+
+Very often, when you edit the file, you'll want to append an extra parameter to it
+and forget to add the necessary comma!
+--
+
+4. When declaring a resource with a single parameter, make the declaration on one
+   line and with no trailing comma as follows:
++
+----
+package { "puppet": ensure => installed }
+----
+
+5. Where there is more than one parameter, give each parameter its own line:
++
+--
+----
+package { "rake":
+    ensure => installed,
+    provider => gem,
+    require => Package["rubygems"],
+}
+----
+
+When declaring *symlinks*, use +ensure => link+ as follows:
+
+----
+file { "/etc/php5/cli/php.ini":
+    ensure => link,
+    target => "/etc/php.ini",
+}
+----
+--
+
+6. To make the code easier to read, line up the parameter arrows in line with the
+   longest parameter, as shown in the following code:
++
+--
+----
+file { "/var/www/${app}/shared/config/rvmrc":
+    owner   => "deploy",
+    group   => "deploy",
+    content => template("rails/rvmrc"),
+    require => File["/var/www/${app}/shared/config"],
+}
+----
+
+The arrows should be aligned for each resource, but not across the whole file; otherwise
+it can make it difficult for you to cut and paste code from one file to another.
+--
+
+==== There's more…
+
+The Puppet community maintains a style guide document on the Puppet Labs site:
+http://projects.puppetlabs.com/projects/puppet/wiki/Style_Guide
+
+Tim Sharpe has written a `puppet-lint` tool that you can use to check your manifests
+for style guide compliance. Run `gem install puppet-lint` to use it, or have a look
+at https://github.com/rodjek/puppet-lint for more details.

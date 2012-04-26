@@ -1,0 +1,82 @@
+﻿[[ch05sec06]]
+=== Installing packages from a third-party repository
+
+Most often, you will want to install packages from the main distribution repository, so a simple
++package+ resource will do:
+
+----
+package { "exim4": ensure => installed }
+----
+
+Sometimes, though, you need a package which is only found in a third-party repository (an
+*Ubuntu PPA*, for example). Or it might be that you need a more recent version of a package
+than that provided by the distribution, which is available from a third party.
+
+On a manually administered machine, you would normally do this by adding the repository
+source configuration to +/etc/apt/sources.list.d+ (and, if necessary, a GPG key for the
+repository) before installing the package. We can automate this process easily with Puppet.
+
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+package { "python-software-properties": ensure => installed }
+
+exec { "/usr/bin/add-apt-repository ppa:mathiaz/puppet-backports":
+    creates => "/etc/apt/sources.list.d/mathiaz-puppet-backportslucid.
+    list",
+    require => Package["python-software-properties"],
+}
+----
+
+2. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1304773240'
+notice: /Stage[main]//Node[cookbook]/Exec[/usr/bin/add-aptrepository
+ppa:mathiaz/puppet-backports]/returns: executed
+successfully
+notice: Finished catalog run in 5.97 seconds
+....
+
+==== How it works…
+
+1. The +python-software-properties+ package provides the command `add-apt-repository`,
+   which simplifies the process of adding extra repositories as follows:
++
+----
+package { "python-software-properties": ensure => installed }
+----
+
+2. We then call this command in the +exec+ resource to add the required configuration:
++
+----
+exec { "/usr/bin/add-apt-repository ppa:mathiaz/puppet-backports":
+----
+
+3. To ensure that the +exec+ resource is not run every time Puppet runs, we specify a file
+   that the command creates, so that Puppet will skip +exec+ if this file already exists:
++
+--
+----
+creates => "/etc/apt/sources.list.d/mathiaz-puppet-backports-lucid.list",
+----
+
+You might want to combine this with purging unwanted repository definitions in
++/etc/apt/sources.list.d+, as described in the section on recursive file resources.
+--
+
+==== There's more…
+
+This method of repository handling is specific to Debian and Ubuntu systems, which as we've
+said is our reference platform for the book. If you're on a RedHat-based system, you can use
++yumrepo+ resources to manage RPM repositories directly.
+
+==== See also
+
+- <<ch06sec09,Distributing directory trees>> in Chapter 6

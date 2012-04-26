@@ -1,0 +1,159 @@
+﻿[[ch09sec03]]
+=== Generating manifests from shell sessions
+
+[quote, Bobby Fischer,]
+I object to being called a chess genius, because I consider myself to be an all around
+genius who just happens to play chess, which is rather different.
+
+We're not all geniuses. If you know exactly what needs to be done to install some application
+or service, you can create the Puppet manifest right away. Often, though, you need to
+experiment a little bit first, to find out what packages you need to install, what config files need
+to be edited, and so on. You can record your shell session using the +script+ command and
+then work from the session file to develop the Puppet manifest, and this can be very helpful.
+
+But wouldn't it be wonderful if there was a tool that could read your session file and generate
+the Puppet manifest for you? It so happens that *cft* (pronounced 'sift') does just this. Once
+you activate it, `cft` watches your shell session and remembers any packages you install, any
+services that you configure, any files that you create or edit, and so on. When you're done, it
+generates a complete Puppet manifest that will reproduce all the changes you just made.
+
+==== Getting ready…
+
+1. Currently full +cft+ support is only available for Red Hat / CentOS distributions; a port
+   to Debian / Ubuntu is in progress, though, and should soon be completed. If you're
+   using Red Hat or CentOS, then, installation is easy:
++
+....
+# yum install cft
+....
+
+2. For Debian / Ubuntu systems, follow the instructions here: http://fmtyewtk.blogspot.com/2011/01/porting-cft-to-debian.html.
+
+
+==== How to do it…
+
+1. In this example we'll use +cft+ to monitor the installation of the NTP package,
+   and then generate a manifest to do the same thing.
++
+....
+# cft begin ntp
+# apt-get install ntp
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+Suggested packages:
+  ntp-doc
+The following NEW packages will be installed:
+  ntp
+0 upgraded, 1 newly installed, 0 to remove and 385 not upgraded.
+
+Need to get 517kB of archives.
+After this operation, 1,323kB of additional disk space will be used.
+Get:1 http://us.archive.ubuntu.com/ubuntu/ lucid/main ntp
+1:4.2.4p8+dfsg-1ubuntu2 [517kB]
+Fetched 517kB in 5s (101kB/s)
+Selecting previously deselected package ntp.
+(Reading database ... 135278 files and directories currently
+installed.)
+Unpacking ntp (from .../ntp_1%3a4.2.4p8+dfsg-1ubuntu2_i386.deb)
+...
+Processing triggers for man-db ...
+Processing triggers for ureadahead ...
+ureadahead will be reprofiled on next reboot
+Setting up ntp (1:4.2.4p8+dfsg-1ubuntu2) ...
+ * Starting NTP server ntpd
+
+# vi /etc/ntp.conf
+# service ntp restart
+ * Stopping NTP server ntpd
+[ OK ]
+ * Starting NTP server ntpd
+
+# cft finish ntp
+# cft manifest ntp
+
+class ntp {
+    package { 'ntp':
+        ensure => '1:4.2.4p8+dfsg-1ubuntu2'
+    }
+
+    service { 'ntp':
+        enable => 'true',
+        ensure => 'running'
+    }
+
+    file { '/etc/ntp.conf':
+        group  => 'root',
+        owner  => 'root',
+        mode   => '0644',
+        source => '/tmp/cft/ntp/after/etc/ntp.conf'
+    }
+}
+....
+
+
+
+==== How it works…
+
+The first line tells `cft` to start recording changes to the system, and store them in a session
+named ntp -- `cft begin ntp`.
+
+Then, when you install the +ntp+ package, +cft+ records this fact. The package install scripts
+start the service and configure it to start at boot, so +cft+ records this too. Finally, it notices
+that you edited the file +/etc/ntp.conf+, and saves a copy of this for later.
+
+When you run the command `cft finish ntp` it stops recording changes. You can now
+generate the manifest, which is the Puppet equivalent of your console session with
+the command `cft manifest ntp`.
+
+As you can see, the generated manifest contains the package declaration (triggered by
+`apt-get install ntp`):
+
+----
+package { 'ntp':
+    ensure => '1:4.2.4p8+dfsg-1ubuntu2'
+}
+----
+
+It also contains the service declaration that reproduces the effect of the package install
+scripts, starting the service and enabling it on boot:
+
+----
+service { 'ntp':
+    enable => 'true',
+    ensure => 'running'
+}
+----
+
+This declaration would also have been generated if you configured the service manually, with
+the following command:
+
+....
+# service ntp start
+# update-rc.d ntp defaults
+....
+
+The final part of the manifest encapsulates the changes to the +ntp.conf+ file. `cft` doesn't
+know what changes you made, but only that the file was changed, so it takes a copy of the
+whole file and makes this available for you to distribute from Puppet:
+
+----
+file { '/etc/ntp.conf':
+    group  => 'root',
+    owner  => 'root',
+    mode   => '0644',
+    source => '/tmp/cft/ntp/after/etc/ntp.conf'
+}
+----
+
+When you add this manifest to Puppet, you will need to also copy the +ntp.conf+ file from the
+path shown (+/tmp/cft/ntp/after/etc/ntp.conf+), place this somewhere appropriate in
+your module tree, and then update the +source+ parameter accordingly.
+
+
+==== There's more…
+
+`cft` is a powerful tool for quickly prototyping Puppet manifests. You could take a newly built
+box, work on it all day under `cft` getting everything installed and working, and then generate
+the Puppet manifest that encodes your entire session. This will need some editing, of course,
+but it's much faster than writing the manifests from scratch.

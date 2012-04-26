@@ -1,0 +1,130 @@
+﻿[[ch05sec08]]
+=== Setting up a gem repository
+
+It's every system administrator's dream: yet another incompatible packaging system. If
+you manage Ruby or Rails applications, you'll need to deal with Rubygems. Maintaining
+your own **gem repository** has many of the same advantages as having an APT repository.
+You can control availability and package versions, and you can also use it to distribute your
+own gems if you need to.
+
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/modules/repo/manifests/gem-server.pp+ with
+   the following contents:
++
+----
+class repo::gem-server {
+    include apache
+
+    file { "/etc/apache2/sites-available/gemrepo":
+        source  => "puppet:///modules/repo/gemrepo.conf",
+        require => Package["apache2-mpm-worker"],
+        notify  => Service["apache2"],
+    }
+
+    file { "/etc/apache2/sites-enabled/gemrepo":
+        ensure  => symlink,
+        target  => "/etc/apache2/sites-available/gemrepo",
+        require => File["/etc/apache2/sites-available/gemrepo"],
+        notify  => Service["apache2"],
+    }
+
+    file { "/var/gemrepo":
+        ensure => directory,
+    }
+}
+----
+
+2. Create the file +/etc/puppet/modules/repo/files/gemrepo.conf+ with the
+   following contents:
++
+[source,apache]
+------
+<VirtualHost *:80>
+    ServerAdmin john@bitfieldconsulting.com
+    ServerName gems.bitfieldconsulting.com
+    ErrorLog logs/gems.bitfieldconsulting.com-error_log
+    CustomLog logs/gems.bitfieldconsulting.com-access_log common
+
+    Alias / /var/gemrepo/
+    <Location />
+        Options Indexes
+    </Location>
+</VirtualHost>
+------
+
+3. Add the following to your manifest:
++
+----
+node cookbook {
+    include repo::gem-server
+}
+----
+
+4. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1304949279'
+
+notice: /Stage[main]/Repo::Gem-server/File[/etc/apache2/
+sites-available/gemrepo]/ensure: defined content as '{md5}
+ae1fd948098f14503de02441d02a825d'
+
+info: /Stage[main]/Repo::Gem-server/File[/etc/apache2/sitesavailable/
+gemrepo]: Scheduling refresh of Service[apache2]
+
+notice: /Stage[main]/Repo::Gem-server/File[/etc/apache2/sitesenabled/
+gemrepo]/ensure: created
+
+info: /Stage[main]/Repo::Gem-server/File[/etc/apache2/sitesenabled/
+gemrepo]: Scheduling refresh of Service[apache2]
+
+notice: /Stage[main]/Apache/Service[apache2]: Triggered 'refresh'
+from 2 events
+
+notice: /Stage[main]/Repo::Gem-server/File[/var/gemrepo]/ensure:
+created
+
+notice: Finished catalog run in 6.52 seconds
+....
+
+
+==== How it works…
+
+The principle is exactly the same as in the APT repository example. We define a directory
+where the gem repository will live, and a virtual host definition in Apache to enable it to
+serve requests for +gems.bitfieldconsulting.com+.
+
+==== There's more…
+
+Again, your gem repository will be more useful if you put something in it. We'll find out how to
+do that in the following text. We will also show you how to configure your nodes to access the
+gem repository.
+
+===== Adding gems
+
+Adding new gems to your repository is simple. Put the gem file in +/var/gemrepo/gems+ and
+run this command in the +/var/gemrepo+ directory:
+
+....
+# gem generate_index
+....
+
+===== Using the gem repo
+
+As with the APT repository, make sure that your nodes know about the hostname
++gems.bitfieldconsulting.com+, either by deploying a host entry with Puppet, or configuring
+it in DNS.
+
+Then you can specify a package in Puppet as follows:
+
+----
+package { "json":
+    provider => "gem",
+    source => "http://gems.bitfieldconsulting.com ",
+}
+----

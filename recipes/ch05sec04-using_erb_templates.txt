@@ -1,0 +1,105 @@
+﻿[[ch05sec04]]
+=== Using ERB templates
+
+A *template* is a text file with a college degree. It can do calculations, execute Ruby code, or
+reference the values of variables from your Puppet manifests. Anywhere you might deploy a
+text file using Puppet, you can use a template instead. In the simplest case, a template can
+just be a static text file. More usefully, you can insert variables into it using *ERB*
+(*embedded Ruby*) syntax. For example:
+
+----
+    <%= name %>, this is a very large drink.
+----
+
+If the template is used in a context where the variable +$name+ contains 
++Zaphod Beeblebrox+, the template will evaluate as follows:
+
+----
+    Zaphod Beeblebrox, this is a very large drink.
+----
+
+This simple technique is very useful for generating lots of files that only differ in the values
+of one or two variables such as virtual hosts -- and for inserting values into a script such
+as database names and passwords. In this example, we'll use an ERB template to insert a
+password into a backup script.
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/modules/admin/templates/backup-mysql.sh+
+   with the following content:
++
+[source,bash]
+----
+#!/bin/sh
+/usr/bin/mysqldump -uroot -p<%= mysql_password %> --all-databases \
+| /bin/gzip > /backup/mysql/all-databases.sql.gz
+----
+
+2. Add the following to your manifest:
++
+----
+$mysql_password = "secret"
+    file { "/usr/local/bin/backup-mysql":
+    content => template("admin/backup-mysql.sh"),
+    mode    => "755",
+}
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1308670971'
+notice: /Stage[main]//Node[cookbook]/File[/usr/local/bin/backupmysql]/
+ensure: defined content as '{md5}5853b6d4dd72420e341fa7ecb8
+91ad43'
+notice: Finished catalog run in 0.96 seconds
+....
+
+4. Check that Puppet has correctly inserted the password into the template:
++
+--
+....
+# cat /usr/local/bin/backup-mysql
+....
+
+[source,bash]
+----
+#!/bin/sh
+/usr/bin/mysqldump -uroot -psecret --all-databases \
+| /bin/gzip > /backup/mysql/all-databases.sql.gz
+----
+--
+
+==== How it works…
+
+Wherever a variable is referenced in the template, such as +<%= mysql_password %>+
+Puppet will replace it with the corresponding value: +secret+.
+
+==== There's more…
+
+In the example, we only used one variable in the template, but you can have as many as you
+like. These can also be facts, such as the following:
+
+----
+ServerName <%= fqdn %>
+----
+
+or Ruby expressions such as:
+
+----
+MAILTO=<%= emails.join(',') %>
+----
+
+or any Ruby code you want such as:
+
+----
+ServerAdmin <%= sitedomain == 'coldcomfort.com' ? 'seth@coldcomfort.com'
+ : 'flora@poste.com' %>
+----
+
+==== See also
+
+- <<ch05sec05,Using array iteration in templates>> in this chapter

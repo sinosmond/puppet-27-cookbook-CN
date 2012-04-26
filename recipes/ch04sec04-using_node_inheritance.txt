@@ -1,0 +1,117 @@
+﻿[[ch04sec04]]
+=== Using node inheritance
+
+It's a brave (or foolish) sysadmin who puts all her servers in one basket. Let's say you have
+dedicated servers hosted with three different providers: WreckSpace, GoDodgy, and VerySlow.
+They have different data centers and geographical locations, so you will need to make small
+modifications to your config for servers hosted with each provider. You have several different
+types of servers, but they are distributed randomly across the three providers.
+
+One way to implement this in Puppet would be to set a variable in the node definition that tells
+the node where it is:
+
+----
+node webserver127 {
+    $provider = "VerySlow"
+    include admin::basics
+    include admin::ssh
+    include admin::ntp
+    include puppet::client
+    include backup::client
+    include webserver
+}
+
+node loadbalancer5 {
+    $provider = "WreckSpace"
+    include admin::basics
+    include admin::ssh
+    include admin::ntp
+    include puppet::client
+    include backup::client
+    include loadbalancer
+}
+----
+
+As you can see, this results in a lot of duplication. It would be much easier if we simply
+defined a kind of node that is a +WreckSpace+ server, for example, and then we could create
+nodes which *inherit* from that node, including only the classes that determine what it does:
++loadbalancer+ or +webserver+.
+
+==== How to do it…
+
+1. Create a base class for all your nodes, which contains only the classes that every
+   node has as follows:
++
+----
+node server {
+    include admin::basics
+    include admin::ssh
+    include admin::ntp
+    include puppet::client
+    include backup::client
+}
+----
+
+2. Create three different subclasses of this +server+ node, each with the appropriate
+   +provider+ variable:
++
+----
+node wreckspace_server inherits server {
+    $provider = "WreckSpace"
+}
+
+node gododgy_server inherits server {
+    $provider = "GoDodgy"
+}
+
+node veryslow_server inherits server {
+    $provider = "VerySlow"
+}
+----
+
+3. Now, let's say you need to create a new web server in +VerySlow+. To do this, just
+   inherit from +veryslow_server+:
++
+----
+node webserver904 inherits veryslow_server {
+    include webserver
+}
+----
+
+==== How it works…
+
+When one node inherits from another, it picks up the entire configuration that the parent node
+had. You can then add anything which makes this particular node different.
+
+You can have a node inherit from a node that inherits from another node, and so on. You can't
+inherit from more than one node though -- so you can't have, for example:
+
+----
+node movable_server inherits gododgy_server, veryslow_server,
+wreckspace_server {
+    # This won't work
+}
+----
+
+==== There's more…
+
+Just as with a normal node definition, you can specify a list of node names that will all inherit
+the same definition:
+
+----
+node webserver1, webserver2, webserver3 inherits wreckspace_server {
+    ...
+}
+----
+
+Alternatively, you can also have a regular expression that will match multiple servers:
+
+----
+node /webserver\d+.veryslow.com/ inherits veryslow_server {
+    ...
+}
+----
+
+==== See also
+
+- <<ch04sec05,Using class inheritance and overriding>> in this chapter

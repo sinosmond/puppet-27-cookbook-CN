@@ -1,0 +1,45 @@
+﻿[[ch04sec01]]
+=== Using arrays of resources
+
+Anything you can do to a resource, you can do to an array of resources. Use this idea to refactor
+your manifests to make them shorter and clearer.
+
+==== How to do it…
+
+1. Identify a class in your manifest where you have several instances of the same kind
+   of resource -- for example, packages:
++
+----
+package { "sudo" : ensure => installed }
+package { "unzip" : ensure => installed }
+package { "locate" : ensure => installed }
+package { "lsof" : ensure => installed }
+package { "cron" : ensure => installed }
+package { "rubygems" : ensure => installed }
+----
+
+2. Group them together and replace them with a single +package+ resource using an
+   array as follows:
++
+----
+package { [ "cron",
+            "locate",
+            "lsof",
+            "rubygems"
+            "screen",
+            "sudo"
+            "unzip" ]:
+    ensure => installed,
+}
+----
+
+==== How it works…
+
+Most of Puppet's resource types can accept an array instead of a single name, and will
+create one instance for each of the elements in the array. All the parameters you provide for
+the resource (for example, +ensure => installed+) will be assigned to each of the new
+resource instances.
+
+==== See also
+
+- <<ch03sec06,Iterating over multiple items>> in Chapter 3

@@ -1,0 +1,59 @@
+﻿[[ch06sec14]]
+=== Managing timezones
+
+[quote, Ashleigh Brilliant,]
+I try to take one day at a time, but sometimes several days attack at once.
+
+Sooner or later, you'll encounter a weird problem, which you'll eventually track down to servers
+having different time zones. It's wise to avoid this kind of issue by making sure that all your
+servers use the same time zone, whatever their geographical location (GMT is the logical
+choice).
+
+Unless a server is solar powered, I can't think of any reason for it to care about the time zone
+it's in.
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/modules/admin/manifests/gmt.pp+ with the
+   following contents:
++
+----
+class admin::gmt
+{
+    file { "/etc/localtime":
+        ensure => link,
+        target => "/usr/share/zoneinfo/GMT",
+    }
+}
+----
+
+2. Add the following to all nodes:
++
+----
+include admin::gmt
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1304955158'
+
+info: FileBucket adding /etc/localtime as {md5}02b73b0cf0d96e2f75c
+ae56b178bf58e
+
+info: /Stage[main]/Admin::Gmt/File[/etc/localtime]: Filebucketed /
+etc/localtime to puppet with sum 02b73b0cf0d96e2f75cae56b178bf58e
+
+notice: /Stage[main]/Admin::Gmt/File[/etc/localtime]/ensure:
+ensure changed 'file' to 'link'
+
+notice: Finished catalog run in 1.94 seconds
+....
+
+==== There's more…
+
+If you want to use a different timezone, choose the appropriate file in
++/usr/share/zoneinfo+: for example, +US/Eastern+.

@@ -1,0 +1,190 @@
+﻿[[ch06sec06]]
+=== Running a command when a file is updated
+
+It's a very common pattern to have Puppet take some action whenever a particular file is
+updated. For example, in the +rsync+ config snippet example, each snippet file called an +exec+
+to update the main +rsyncd.conf+ file when it changed.
+
+An +exec+ resource will normally be run every time Puppet runs, unless you specify one of the
+following parameters:
+
+- creates
+- onlyif
+- unless
+- refreshonly => true
+
+The +refreshonly+ parameter means that the +exec+ should only be run if it receives a
++notify+ from another resource (such as a file, for example).
+
+==== Getting ready…
+
+Install the +nginx+ package (actually, we just want the stock config file, but this is the easiest
+way to get it):
+
+....
+
+# apt-get install nginx
+....
+
+==== How to do it…
+
+1. Create a new module +nginx+ with the usual directory structure as follows:
++
+....
+# mkdir /etc/puppet/modules/nginx
+# mkdir /etc/puppet/modules/nginx/files
+# mkdir /etc/puppet/modules/nginx/manifests
+....
+
+2. Create the file +/etc/puppet/modules/nginx/manifests/nginx.pp+ with the
+   following contents:
++
+----
+class nginx {
+    package { "nginx": ensure => installed }
+
+    service { "nginx":
+        enable => true,
+        ensure => running,
+    }
+
+    exec { "reload nginx":
+        command     => "/usr/sbin/service nginx reload",
+        require     => Package["nginx"],
+        refreshonly => true,
+    }
+
+    file { "/etc/nginx/nginx.conf":
+        source  => "puppet:///modules/nginx/nginx.conf",
+        notify  => Exec["reload nginx"],
+        require => Package["nginx"],
+    }
+}
+----
+
+3. Copy the +nginx.conf+ file into the new module:
++
+....
+cp /etc/nginx/nginx.conf /etc/puppet/modules/nginx/files
+....
+
+4. Add the following to your manifest:
++
+----
+include nginx
+----
+
+5. Make a test change to Puppet's copy of the +nginx.conf+ file:
++
+....
+# echo \# >>/etc/puppet/modules/nginx/files/nginx.conf
+....
+
+6. Run Puppet:
++
+....
+# puppet agent --test
+
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303745502'
+
+--- /etc/nginx/nginx.conf 2010-02-15 00:16:47.000000000 -0700
++++ /tmp/puppet-file20110425-31239-158xcst-0 2011-04-25
+09:39:49.586322042 -0600
+@@ -48,3 +48,4 @@
+ #         proxy       on;
+ #     }
+ # }
++#
+
+info: FileBucket adding /etc/nginx/nginx.conf as {md5}7bf139588b5e
+cd5956f986c9c1442d44
+
+info: /Stage[main]/Nginx/File[/etc/nginx/nginx.conf]:
+Filebucketed /etc/nginx/nginx.conf to puppet with sum
+7bf139588b5ecd5956f986c9c1442d44
+
+notice: /Stage[main]/Nginx/File[/etc/nginx/nginx.conf]/content:
+content changed '{md5}7bf139588b5ecd5956f986c9c1442d44' to '{md5}
+d28d08925174c3f6917a78797c4cd3cc'
+
+info: /Stage[main]/Nginx/File[/etc/nginx/nginx.conf]: Scheduling
+refresh of Exec[reload nginx]
+
+notice: /Stage[main]/Nginx/Exec[reload nginx]: Triggered 'refresh'
+from 1 events
+
+notice: Finished catalog run in 1.69 seconds
+....
+
+
+==== How it works…
+
+With most services, you'd simply define a service resource, which gets a +notify+ from the
++config+ file. This causes Puppet to restart the service, so that it can pick up the changes.
+
+However, +nginx+ sometimes doesn't restart properly, especially when restarted by Puppet, and
+so I cooked up this remedy for one site to have Puppet run `/etc/init.d/nginx reload`
+instead of restarting it. Here's how it works.
+
+The +exec+ resource has the +refreshonly+ parameter set to true as follows:
+
+----
+exec { "reload nginx":
+    command     => "/usr/sbin/service nginx reload",
+    require     => Package["nginx"],
+    refreshonly => true,
+}
+----
+
+So, it will only run if it receives a notify.
+
+The +config+ file resource supplies the necessary +notify+ if it's changed:
+
+----
+file { "/etc/nginx/nginx.conf":
+    source => "puppet:///modules/nginx/nginx.conf",
+    notify => Exec["reload nginx"],
+}
+----
+
+Whenever Puppet needs to update this file, it will also run the exec, which will call the
+following command to pick up the changes.:
+
+....
+/usr/sbin/service nginx reload
+....
+
+If a service supports the +reload+ command, this will send the +daemon+ a signal to re-read its
++config+ files without interrupting service.
+
+In fact, in this example, it would be better to define a new +restart+ command for the +nginx+
+service, such as the following:
+
+----
+service { "nginx":
+    restart => "/etc/init.d/nginx reload",
+}
+----
+
+But I wanted to share with you some real code that I wrote which demonstrates the 
++notify -> Exec+ technique, and at the time either I didn't know about +restart+ or it didn't exist yet.
+As a general pattern, though, you'll find it useful for any situation, where an action needs to be
+taken when a file is updated.
+
+
+==== There's more…
+
+You can use a similar pattern anywhere some action needs to be taken every time a resource
+is updated. Possible uses might include the following:
+
+- Triggering service reloads
+- Running a syntax check before restarting a service
+- Concatenating +config+ snippets
+- Running tests
+- Chaining execs
+
+If you have several commands that all need to be run when a single file is updated, it might be
+easier to have all the commands +subscribe+ to the file, rather than have the file +notify+ the
+commands. The effect is the same.

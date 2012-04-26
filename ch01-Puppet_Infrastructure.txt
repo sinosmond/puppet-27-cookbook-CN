@@ -1,0 +1,73 @@
+﻿[[chapter01]]
+== Puppet Infrastructure
+
+[quote, Popular Mechanics (1949), ]
+Computers in the future may have as few as 1,000 vacuum tubes and weigh
+only 1.5 tons.
+
+In this chapter, we will cover:
+
+- Using version control
+- Using commit hooks
+- Deploying changes with Rake
+- Configuring Puppet's file server
+- Running Puppet from cron
+- Using autosign
+- Pre-signing certificates
+- Retrieving files from Puppet's filebucket
+- Scaling Puppet using Passenger
+- Creating a decentralized Puppet architecture
+
+Some of the recipes in this book represent best practices as agreed upon by the Puppet
+community. Others are tips and tricks that will make it easier for you to work with Puppet, or
+introduce you to features that you may not have been previously aware of. Some recipes are
+short cuts which I wouldn't recommend you use as standard operating procedure, but may be
+useful in emergencies. Finally, there are some experimental recipes that you may like to try, but
+are only useful or applicable in very large infrastructures or otherwise unusual circumstances.
+
+
+I hope that, by reading through and thinking about the recipes presented here, you will gain a
+deeper and broader understanding of how Puppet works and how you can use it to help you
+build better infrastructures. Only you can decide whether a particular recipe is appropriate
+for you and your organization, but I hope this collection will inspire you to experiment, find out
+more, and most of all -- have fun using Puppet!
+
+[TIP]
+===============
+You'll see that throughout the examples in this book, most of the commands
+are run as the root user. If you prefer to administer systems with a normal
+user account and sudo, please do it this way instead.
+===============
+
+Because Linux distributions such as Ubuntu, Red Hat, and CentOS differ in the specific
+details of package names, configuration file paths, and many other things, I have decided
+that for reasons of space and clarity the best approach for this book is to pick one distribution
+(Ubuntu 10.04 Lucid) and stick with it. However, Puppet runs on almost every operating
+system there is, so you should have very little trouble adapting the recipes to your own
+favored OS and distribution.
+
+At the time of writing this book, Puppet 2.7 was the latest stable version available, and
+consequently I have chosen that as the reference version of Puppet used. However, the
+syntax of Puppet commands changes every so often; so be aware that while older versions
+of Puppet are still perfectly usable, they may not support all of the features and syntax
+described in this book.
+
+include::recipes/ch01sec01-using_version_control.txt[]
+
+include::recipes/ch01sec02-using_commit_hooks.txt[]
+
+include::recipes/ch01sec03-deploying_changes_with_rake.txt[]
+
+include::recipes/ch01sec04-configuring_puppets_file_server.txt[]
+
+include::recipes/ch01sec05-running_puppet_from_cron.txt[]
+
+include::recipes/ch01sec06-using_autosign.txt[]
+
+include::recipes/ch01sec07-pre-signing_certificates.txt[]
+
+include::recipes/ch01sec08-retrieving_files_from_puppets_filebucket.txt[]
+
+include::recipes/ch01sec09-scaling_puppet_using_passenger.txt[]
+
+include::recipes/ch01sec10-creating_a_decentralized_puppet_architecture.txt[]

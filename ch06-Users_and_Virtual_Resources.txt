@@ -1,0 +1,70 @@
+﻿[[chapter06]]
+== Users and Virtual Resources
+
+[quote, Kent Beck,]
+How good the design is doesn't matter near as much as whether the design is
+getting better or worse. If it is getting better, day by day, I can live with it forever.
+If it is getting worse, I will die.
+
+In this chapter, we will cover the following topics:
+
+- Using virtual resources
+- Managing users with virtual resources
+- Managing users' SSH access
+- Managing users' customization files
+- Efficiently distributing cron jobs
+- Running a command when a file is updated
+- Using host resources
+- Using multiple file sources
+- Distributing directory trees
+- Cleaning up old files
+- Using schedules with resources
+- Auditing resources
+- Temporarily disabling resources
+- Managing timezones
+
+Users can be a real pain. I don't mean the people, though doubtless that's sometimes true.
+But keeping UNIX user accounts and file permissions in sync across a network of machines,
+some of them running different operating systems, can be very challenging without some kind
+of centralized configuration management.
+
+Consider a situation where a new developer has joined the organization. He needs an account
+on every machine along with `sudo` privileges and group memberships, and also needs his
+SSH key authorized for a bunch of different accounts. The sysadmin who has to take care of
+this manually, will be at the job all day. A sysadmin who uses Puppet will be done in minutes,
+heading out for an early lunch.
+
+In this chapter, we'll look at some handy patterns and techniques for managing users and
+their associated resources. We'll also see how to schedule resources in Puppet, how to
+spread cron jobs around the clock for efficiency, how to handle time zones and +/etc/hosts+
+entries, and how to have Puppet collect audit data, so you know when someone's messing
+with your machines.
+
+
+include::recipes/ch06sec01-using_virtual_resources.txt[]
+
+include::recipes/ch06sec02-managing_users_with_virtual_resources.txt[]
+
+include::recipes/ch06sec03-managing_users_ssh_access.txt[]
+
+include::recipes/ch06sec04-managing_users_customization_files.txt[]
+
+include::recipes/ch06sec05-efficiently_distributing_cron_jobs.txt[]
+
+include::recipes/ch06sec06-running_a_command_when_a_file_is_updated.txt[]
+
+include::recipes/ch06sec07-using_host_resources.txt[]
+
+include::recipes/ch06sec08-using_multiple_file_sources.txt[]
+
+include::recipes/ch06sec09-distributing_directory_trees.txt[]
+
+include::recipes/ch06sec10-cleaning_up_old_files.txt[]
+
+include::recipes/ch06sec11-using_schedules_with_resources.txt[]
+
+include::recipes/ch06sec12-auditing_resources.txt[]
+
+include::recipes/ch06sec13-temporarily_disabling_resources.txt[]
+
+include::recipes/ch06sec14-managing_timezones.txt[]

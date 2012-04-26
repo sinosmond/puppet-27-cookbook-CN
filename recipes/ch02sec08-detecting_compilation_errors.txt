@@ -1,0 +1,40 @@
+﻿[[ch02sec08]]
+=== Detecting compilation errors
+
+[quote, Steven Wright,]
+My mechanic told me, 'I couldn't repair your brakes, so I made your horn louder.
+
+Usually, when there's a problem, we'll want to stop and fix it before continuing. However,
+when running in daemon mode, Puppet will ignore any compilation errors in the manifest
+and just apply the last known working version from its cache. This behavior is governed by
+the +usecacheonfailure+ config setting, and its default setting, true:
+
+......
+# puppet --genconfig |grep usecacheonfailure
+  # usecacheonfailure = true
+......
+
+It's worth noting that when you apply manifests by hand using `puppet agent --test`,
+this doesn't happen: Puppet will complain and refuse to do anything if there is an error in
+the manifest. That's because the `--test` switch is shorthand for the following options:
+
+......
+# puppet agent --onetime --verbose --ignorecache --no-daemonize --no-usecacheonfailure
+......
+
+Because +usecacheonfailure+ is on when Puppet runs as a daemon, sometimes you won't
+notice mistakes in a manifest for a while, as Puppet keeps on silently running an old version
+of the manifest instead of complaining.
+
+==== How to do it…
+
+If you want to change this behavior, set the following value in +puppet.conf+:
+
+----
+    usecacheonfailure = false
+----
+
+==== How it works…
+
+With this option set, Puppet will immediately complain about errors and refuse to run until
+they are corrected.

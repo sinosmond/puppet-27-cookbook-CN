@@ -1,0 +1,76 @@
+﻿[[ch03sec08]]
+=== Using regular expressions in if statements
+
+[quote, Jamie Zawinski,]
+Some people, when confronted with a problem think; 'I know, I'll use regular
+expressions.' Now they have two problems.
+
+Another kind of expression you can test in +if+ statements and other conditionals is the
+*regular expression*. A regular expression is a powerful way of comparing strings using
+pattern matching.
+
+==== How to do it…
+
+Add the following to your manifest:
+
+----
+if $lsbdistdescription =~ /LTS/ {
+    notice("Looks like you are using a Long Term Support version of 
+    Ubuntu.")
+} else {
+    notice("You might want to upgrade to a Long Term Support version
+    of Ubuntu...")
+}
+----
+
+==== How it works…
+
+Puppet treats the text supplied between the forward slashes as a regular expression that
+specifies what the text to be matched is. If the match as a whole succeeds, the +if+ expression
+will be true and so the code between the first set of curly braces will be executed.
+
+If you wanted instead to do something and the text does not match, use +!\~+ rather than +=~+
+as shown in the following code snippet:
+
+----
+if $lsbdistdescription !~ /LTS/ {
+----
+
+==== There's more…
+
+As Jamie Zawinski hinted, regular expressions are very powerful, but can be difficult to
+understand and debug. If you find yourself using a regular expression so complex that
+you can't see what it does at a glance, think about simplifying your design to make it
+easier. However, one particularly useful feature of regular expressions is the ability to
+capture patterns.
+
+===== Capturing patterns
+
+You can not only match text using a regular expression, but also capture the matched text
+and store it in a variable:
+
+----
+$input = "Puppet is better than manual configuration"
+if $input =~ /(.*) is better than (.*)/ {
+    notice("You said '$0'. Looks like you're comparing $1 to $2!")
+}
+----
+
+....
+You said 'Puppet is better than manual configuration'. Looks like you're
+comparing Puppet to manual configuration!
+....
+
+The variable +$0+ stores the whole matched text (assuming the overall match succeeded).
+If you put brackets around any part of the regular expression, that creates a *group* and any
+matched groups will also be stored in variables. The first matched group will be +$1+, the
+second +$2+, and so on, as in the preceding example.
+
+===== Regular expression syntax
+
+Puppet uses a subset of Ruby's regular expression syntax, so the following link may be
+helpful if you're not already familiar with regular expressions: http://gnosis.cx/publish/programming/regular_expressions.html.
+
+==== See also
+
+- <<ch03sec11,Using regular expression substitutions>> in this chapter

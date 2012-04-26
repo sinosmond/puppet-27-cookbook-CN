@@ -1,0 +1,184 @@
+﻿[[ch07sec04]]
+=== Creating MySQL databases and users
+
+MySQL is a very widely used database server, and it's fairly certain you'll need to install and
+configure a MySQL server at some point. This recipe will show you how to do that, as well as
+how to automatically create databases and users for applications.
+
+==== Getting ready…
+
+1. If you don't already have a MySQL module, let's create one:
++
+....
+# mkdir /etc/puppet/modules/mysql
+# mkdir /etc/puppet/modules/manifests
+# mkdir /etc/puppet/modules/files
+....
+
+2. Create the file +/etc/puppet/modules/mysql/manifests/server.pp+ with the
+   following contents:
++
+----
+class mysql::server {
+    package { "mysql-server": ensure => installed }
+
+    service { "mysql":
+        enable => true,
+        ensure => running,
+        require => Package["mysql-server"],
+    }
+
+    file { "/etc/mysql/my.cnf":
+        owner => "mysql", group => "mysql",
+        source => "puppet:///mysql/my.cnf",
+        notify => Service["mysql"],
+        require => Package["mysql-server"],
+    }
+
+    exec { "set-mysql-password":
+        unless => "/usr/bin/mysqladmin -uroot -p${mysql_password}
+         status",
+        command => "/usr/bin/mysqladmin -uroot password ${mysql_
+         password}",
+        require => Service["mysql"],
+    }
+}
+----
+
+3. Create the file +/etc/puppet/modules/mysql/files/my.cnf+ with the following
+   contents:
++
+----
+[client]
+port = 3306
+socket = /var/run/mysqld/mysqld.sock
+
+[mysqld_safe]
+socket = /var/run/mysqld/mysqld.sock
+nice = 0
+
+[mysqld]
+user = mysql
+socket = /var/run/mysqld/mysqld.sock
+port = 3306
+datadir = /var/lib/mysql
+
+!includedir /etc/mysql/conf.d/
+----
+
+4. Add this to +/etc/puppet/manifests/site.pp+:
++
+----
+$mysql_password = "secret"
+----
+
+5. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1309448283'
+
+notice: /Stage[main]/Mysql::Server/Package[mysql-server]/ensure:
+ensure changed 'purged' to 'present'
+
+notice: /Stage[main]/Mysql::Server/File[/etc/mysql/my.cnf]/owner:
+owner changed 'root' to 'mysql'
+
+notice: /Stage[main]/Mysql::Server/File[/etc/mysql/my.cnf]/group:
+group changed 'root' to 'mysql'
+
+info: /Stage[main]/Mysql::Server/File[/etc/mysql/my.cnf]:
+Scheduling refresh of Service[mysql]
+
+info: /Stage[main]/Mysql::Server/File[/etc/mysql/my.cnf]:
+Scheduling refresh of Service[mysql]
+
+notice: /Stage[main]/Mysql::Server/Service[mysql]/enable: enable
+changed 'false' to 'true'
+
+notice: /Stage[main]/Mysql::Server/Service[mysql]: Triggered
+'refresh' from 2 events
+
+notice: Finished catalog run in 61.78 seconds
+....
+
+==== How to do it…
+
+1. Add the following to +/etc/puppet/modules/mysql/manifests/server.pp+:
++
+----
+define db( $user, $password ) {
+    include mysql::server
+
+    exec { "create-${name}-db":
+        unless  => "/usr/bin/mysql -u${user} -p${password}${name}",
+        command => "/usr/bin/mysql -uroot -p${mysql_password} -e
+         \"create database ${name}; grant all on ${name}.* to
+         ${user}@localhost identified by '$password'; flush
+         privileges;\"",
+        require => Service["mysql"],
+    }
+}
+----
+
+2. Add this to a node as follows:
++
+----
+mysql::server::db { "johnstest":
+    user => "john",
+    password => "johnstest",
+}
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1309449259'
+
+notice: /Stage[main]//Node[cookbook]/Mysql::Server::Db[johnstest]/
+Exec[create-johnstest-db]/returns: executed successfully
+
+notice: Finished catalog run in 1.61 seconds
+....
+
+4. Check that the database has been created with the correct user and permissions:
++
+....
+# mysql -ujohn -pjohnstest johnstest
+
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Welcome to the MySQL monitor. Commands end with ; or \g.
+Your MySQL connection id is 36
+Server version: 5.1.41-3ubuntu12.10 (Ubuntu)
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current
+input statement.
+
+mysql>
+....
+
+==== How it works…
+
+The +mysql::server+ class installs and configures MySQL with a root password that you can
+set in your +site.pp+ file. The +define+ function, +mysql::server::db+ allows us to create a
+database with a given name, and an associated MySQL user that can access the database.
+For example, a typical web application might have a database named after the application,
+and a special username the application will use to log in to the database.
+
+==== There's more…
+
+To create more databases, just add more +mysql::server::db+ instances:
+
+----
+mysql::server::db { [ "test1", "test2", "test3" ]:
+    user => "john",
+    password => "johnstest",
+}
+----

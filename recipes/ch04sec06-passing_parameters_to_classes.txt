@@ -1,0 +1,102 @@
+﻿[[ch04sec06]]
+=== Passing parameters to classes
+
+Sometimes it's very useful to *parameterize* some aspect of a class. For example, you might
+need to manage different versions of a +gem+ package, and rather than making separate
+classes for each that differ only in the version number, or using inheritance and overrides,
+you can pass in the version number as a parameter.
+
+
+==== How to do it…
+
+1. Declare the parameter as part of the class definition as follows:
++
+----
+class eventmachine( $version ) {
+    package { "eventmachine":
+        provider => gem,
+        ensure   => $version,
+    }
+}
+----
+
+2. Then use the following syntax to include the class on a node:
++
+----
+class { "eventmachine": version => "0.12.8" }
+----
+
+==== How it works…
+
+The class definition:
+
+----
+class eventmachine( $version ) {
+----
+
+is just like a normal class definition except it specifies that the class takes one parameter:
++$version+. Inside the class, we've defined a +package+ resource as follows:
+
+----
+package { "eventmachine":
+    provider => gem,
+    ensure   => $version,
+}
+----
+
+This is a +gem+ package, and we're requesting to install version +$version+.
+
+When you include the class on a node, instead of the usual syntax:
+
+----
+include eventmachine
+----
+
+there's a +class+ statement as follows:
+
+----
+class { "eventmachine": version => "0.12.8" }
+----
+
+This has the same effect, but also sets a value for the parameter +$version+.
+
+==== There's more…
+
+You can specify multiple parameters for a class:
+
+----
+class mysql( $package, $socket, $port ) {
+----
+
+and supply them in the same way:
+
+----
+class { "mysql":
+    package => "percona-sql-server-5.0",
+    socket  => "/var/run/mysqld/mysqld.sock",
+    port    => "3306",
+}
+----
+
+You can also give default values for some of your parameters:
+
+----
+class mysql( $package, $socket, $port = "3306" ) {
+----
+
+or all, as shown in the following code snippet:
+
+----
+class mysql(
+    package = "percona-sql-server-5.0",
+    socket = "/var/run/mysqld/mysqld.sock",
+    port = "3306" ) {
+----
+
+Unlike a define, only one instance of a parameterized class can exist on a node. So where
+you need to have several different instances of the resource, use a +define+ instead.
+
+==== See also
+
+- <<ch04sec04,Using node inheritance>> in this chapter
+- <<ch04sec05,Using class inheritance and overriding>> in this chapter

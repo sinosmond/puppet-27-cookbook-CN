@@ -1,0 +1,27 @@
+﻿[[ch02sec12]]
+=== Inspecting configuration settings
+
+Pop quiz, hotshot!. You already know that Puppet's configuration settings are stored in
+puppet.conf, but any parameter not mentioned in that file will take a default value. How can
+you see the value of any configuration parameter, regardless of whether or not it's explicitly set
+in +puppet.conf+? The answer is to use Puppet's `--genconfig` switch.
+
+==== How to do it…
+
+Run the following command:
+
+......
+# puppet --genconfig
+......
+
+==== How it works…
+
+This will output every configuration parameter and its value (and there are lots of them). It
+does, however, include helpful comments explaining what each parameter does.
+
+To find the specific value you're interested in, you can use `grep` in the following manner:
+
+....
+# puppet --genconfig |grep "reportdir ="
+    reportdir = /var/lib/puppet/reports
+....

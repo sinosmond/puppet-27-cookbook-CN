@@ -1,0 +1,154 @@
+﻿[[ch04sec03]]
+=== Using dependencies
+
+[quote, Instructions on 7-11 muffin packaging,]
+Remove wrapper, open mouth, insert muffin, eat.
+
+To make sure things happen in the right order, you can specify in Puppet that one resource
+depends on another; for example, you need to install package X before you can start the
+service it provides, so you would mark the service as dependent on the package. Puppet will
+sort out the required order to meet all the dependencies.
+
+In some configuration management systems, resources are applied in the order you write
+them - in other words, the ordering is implicit. That's not the case with Puppet, where
+resources are applied in a more or less random (but consistent) order unless you state an
+explicit ordering using dependencies. Some people prefer the implicit approach, because you
+can write the resource definitions in the order that they need to be done, and that's the way
+they'll be executed.
+
+On the other hand, in many cases the ordering of resources doesn't matter. With an implicitstyle
+system, you can't tell whether resource B is listed after resource A because B depends
+on A, or because it just happens to have been written in that order. That makes refactoring
+more difficult, as moving resources around may break some implicit dependency.
+
+Puppet makes you do a little more work by specifying the dependencies up front, but the
+resulting code is clearer and easier to maintain. Let's look at an example.
+
+
+==== How to do it…
+
+1. Create a new file +/etc/puppet/modules/admin/manifests/ntp.pp+ with the
+   following contents:
++
+----
+class admin::ntp {
+    package { "ntp":
+        ensure => installed,
+    }
+
+    service { "ntp":
+        ensure  => running,
+        require => Package["ntp"],
+    }
+
+    file { "/etc/ntp.conf":
+        source  => "puppet:///modules/admin/ntp.conf",
+        notify  => Service["ntp"],
+        require => Package["ntp"],
+    }
+}
+----
+
+2. Copy your existing +ntp.conf+ file into Puppet as follows:
++
+....
+# cp /etc/ntp.conf /etc/puppet/modules/admin/files
+....
+
+3. Add the +admin::ntp+ class to your server in +nodes.pp+:
++
+----
+node cookbook {
+    include admin::ntp
+}
+----
+
+4. Now remove the existing ntp.conf file:
++
+....
+# rm /etc/ntp.conf
+....
+
+5. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1302960655'
+notice: /Stage[main]/Admin::Ntp/File[/etc/ntp.conf]/ensure:
+defined content as '{md5}3386aaad98dd5e0b28428966dac9e1f5'
+info: /Stage[main]/Admin::Ntp/File[/etc/ntp.conf]: Scheduling
+refresh of Service[ntp]
+notice: /Stage[main]/Admin::Ntp/Service[ntp]: Triggered 'refresh'
+from 1 events
+notice: Finished catalog run in 2.36 seconds
+....
+
+
+==== How it works…
+
+This example demonstrates two kinds of dependencies: +require+, and +notify+. In the first
+case, the +ntp+ service requires the +ntp+ package to be applied first:
+
+----
+service { "ntp":
+    ensure  => running,
+    require => Package["ntp"],
+}
+----
+
+In the second case, the NTP config file is set to +notify+ the +ntp+ service; in other words, if the
+file changes, Puppet should restart the +ntp+ service to pick up its new configuration:
+
+----
+file { "/etc/ntp.conf":
+    source  => "puppet:///modules/admin/ntp.conf",
+    notify  => Service["ntp"],
+    require => Package["ntp"],
+}
+----
+
+This implies that the service depends on the file as well as on the package, and so Puppet will
+be able to apply all three resources in the correct order as follows:
+
+----
+Package["ntp"] -> File["/etc/ntp.conf"] ~> Service["ntp"]
+----
+
+In fact, this is another way to specify the same dependency chain. Adding the preceding
+line to your manifest will have the same effect as the +require+ and +notify+ parameters in
+our example (the +->+ means +require+, while +~>+ means +notify+). However, I prefer to use
++require+ and +notify+ because the dependencies are defined as part of the resource, so it's
+easier to see what's going on. For complex chains of dependencies, though, you may want to
+use the +->+ notation instead.
+
+==== There's more…
+
+You can also specify that a resource depends on a certain class:
+
+----
+require => Class["my-apt-repo"]
+----
+
+You can specify dependencies not just between resources and classes, but between
+*collections*:
+
+----
+Yumrepo <| |> -> Package <| provider == yum |>
+----
+
+is a powerful way to express that all +yumrepo+ resources should be applied before all
++package+ resources whose +provider+ is +yum+.
+
+[NOTE]
+.Historical note:
+===================
+In versions of Puppet prior to 2.7, the catalog was applied
+in a non-deterministic way, which means that resources could be applied in
+a different order every time Puppet runs. This could cause some interesting
+issues, as a Puppet manifest that worked without errors on one machine
+could fail on another. This is no longer the case, and as Puppet Labs put it,
+Puppet will now "either succeed reliably, or fail reliably". If you are using an
+earlier version and having this problem, upgrading should fix it.
+===================

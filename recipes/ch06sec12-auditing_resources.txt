@@ -1,0 +1,70 @@
+﻿[[ch06sec12]]
+=== Auditing resources
+
+Not every problem has a technical answer. I once had to diagnose a server that was failing to
+respond to +`ping`+, SSH, or console connections. I wasn't sure whether it was a hardware or
+a network failure.
+
+The mystery was solved when I called the site where the machine was located. They informed
+me that two unidentified men had arrived earlier, gone straight to the server room, unplugged
+the machine, and simply walked out of the building with it. We later found that there had been
+a spate of computer thefts in the area with the same M.O.
+
+The message here is that it's good to know who's doing what to your servers.
+
+Dry-run mode, using the +--noop+ switch, is a simple way to audit any changes to a machine
+under Puppet's control. However, Puppet also has a dedicated audit feature, which can report
+changes to resources or specific attributes.
+
+
+==== How to do it…
+
+Define a resource with the audit metaparameter as follows:
+
+----
+file { "/etc/passwd":
+    audit => [ owner, mode ],
+}
+----
+
+==== How it works…
+
+The +audit+ metaparameter (a *metaparameter* is a parameter which can be applied to any
+resource, not just to specific types) tells Puppet that you want to record and monitor certain
+things about the resource. The value can be a list of the parameters you want to audit.
+
+In this case, when Puppet runs, it will now record the owner and mode of the +/etc/passwd+
+file. If either of these change, for example, if you run:
+
+....
+# chmod 666 /etc/passwd
+....
+
+Puppet will pick up this change and log it on the next run:
+
+....
+notice: /Stage[main]//Node[cookbook]/File[/etc/passwd]/mode: audit
+change: previously recorded value 644 has been changed to 666
+....
+
+==== There's more…
+
+This feature is very useful for auditing large networks for any changes to the machines, either
+malicious or accidental. You can use the +tagmail+ reports feature to automatically send
+audit change notices by e-mail. It's also very handy for keeping an eye on things that aren't
+managed by Puppet, for example application code on production servers. You can read more
+about Puppet's auditing capability here: 
+http://www.puppetlabs.com/blog/allabout-auditing-with-puppet/.
+
+If you just want to audit everything about a resource, use the following:
+
+----
+file { "/etc/passwd":
+    audit => all,
+}
+----
+
+==== See also
+
+- <<ch02sec06,Testing your Puppet manifests>> in Chapter 2
+- <<ch02sec02,E-mailing log messages containing specific tags>> in Chapter 2

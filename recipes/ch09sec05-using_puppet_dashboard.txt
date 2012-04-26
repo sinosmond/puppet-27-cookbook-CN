@@ -1,0 +1,136 @@
+﻿[[ch09sec05]]
+=== Using Puppet Dashboard
+
+*Puppet Dashboard* is a useful tool for managing Puppet installations, especially large ones,
+and being able to see node information and reports through a web interface. It can show you
+which of your nodes have run Puppet recently, how long the runs took, whether any nodes are
+reporting errors, and whether any nodes have not run Puppet in a while.
+
+==== Getting ready…
+
+1. Download the Puppet Dashboard package from the Puppet Labs site at
+   http://www.puppetlabs.com/misc/download-options/ and unpack it.
+   The installation instructions are contained in a +README.markdown+ file inside
+   the package, but you will probably need to install some or all of the following
+   dependencies:
++
+....
+# apt-get install -y build-essential irb libmysql-ruby
+libmysqlclient-dev libopenssl-ruby libreadline-ruby mysql-server
+rake rdoc ri ruby ruby-dev
+....
+
+2. Create a MySQL database and user for the Puppet Dashboard application (use a
+   different password):
++
+....
+# mysql -uroot
+Welcome to the MySQL monitor. Commands end with ; or \g.
+Your MySQL connection id is 39
+Server version: 5.1.41-3ubuntu12.9 (Ubuntu)
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current
+input statement.
+
+mysql> create database dashboard;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> grant all on dashboard.* to dashboard@localhost identified
+by 'topsecret';
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+....
+
+3. Copy the example +database.yml+ file supplied with Puppet Dashboard to reflect
+   these settings as follows:
++
+--
+....
+# cd puppetlabs-puppet-dashboard-071acf4
+# cp config/database.yml.example config/database.yml
+# vi config/database.yml
+....
+
+----
+production:
+  database: dashboard
+  username: dashboard
+  password: topsecret
+  encoding: utf8
+  adapter: mysql
+----
+--
+
+4. Use the included Rake task to build the initial database as follows:
++
+....
+# rake RAILS_ENV=production db:migrate
+....
+
+==== How to do it…
+
+1. Start the built-in webserver:
++
+....
+# script/server -e production
+=> Booting WEBrick
+=> Rails 2.3.5 application starting on http://0.0.0.0:3000
+=> Call with -d to detach
+=> Ctrl-C to shutdown server
+[2011-02-21 09:54:32] INFO WEBrick 1.3.1
+[2011-02-21 09:54:32] INFO ruby 1.8.7 (2010-01-10) [i486-linux]
+[2011-02-21 09:54:37] INFO WEBrick::HTTPServer#start: pid=16570
+port=3000
+
+Using a web browser, connect to localhost:3000
+....
+
+2. You should see the Puppet Dashboard interface, as shown in the following
+   screenshot:
++
+image::image/ch09sec05_1.png[]
+
+3. You now need to configure your Puppetmaster to send reports to Puppet Dashboard.
+   To do this, add the +http+ report type to the +reports+ setting in +puppet.conf+:
++
+----
+reports = http,log
+----
+
+4. Restart the Puppet server to enable the new report.
+5. Run Puppet on a node:
++
+....
+# puppet agent --test
+....
+
+6. Click the *Nodes* link in Puppet Dashboard. You should see a green bar on the graph
+   indicating a successful Puppet run as shown in the following screenshot:
++
+image::image/ch09sec05_2.png[]
+
+==== How it works…
+
+When Puppet runs on a node, it sends a report to Puppet Dashboard using the reporting
+facility. Puppet Dashboard then stores this data and uses it to display graphs and summaries
+of Puppet activity on all your nodes.
+
+==== There's more…
+
+You can also use Puppet Dashboard to create new nodes and classes, and control which
+classes are included on which nodes. In effect, it becomes a web interface for your Puppet
+manifests so that you can edit them through a web browser rather than having to edit the text
+files directly. This is an attractive feature, especially if you want people in other teams and
+departments to be able to manage their own Puppet configurations.
+
+To get this functionality in Puppet Dashboard, you need to configure Puppet to use it as an
+*external node classifier*; which we'll cover in the section on using an external node classifier
+to manage nodes.
+
+==== See also
+
+- <<ch02sec01,Generating reports>> in Chapter 2
+- <<ch02sec03,Creating graphical reports>> in Chapter 2
+- <<ch09sec09,Using an external node classifier>> in this chapter

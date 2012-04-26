@@ -1,0 +1,100 @@
+﻿[[ch04sec02]]
+=== Using define resources
+
+[quote, 'Hard Times',]
+Girl number twenty unable to define a horse!" said Mr. Gradgrind.—Charles
+Dickens.
+
+Unless you know how to define what you want, you won't get it. In the preceding example, we
+saw how to reduce redundant code by grouping identical resources into arrays. However, this
+technique is limited to resources where all the parameters are the same. When you have a set
+of resources that have some parameters in common and some different, you need to use a
++define+ resource to group them together.
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+define tmpfile() {
+    file { "/tmp/$name":
+        content => "Hello, world",
+    }
+}
+
+tmpfile { ["a", "b", "c"]: }
+----
+
+2. Run Puppet:
++
+....
+notice: /Stage[main]//Node[cookbook]/Tmpfile[a]/File[/tmp/a]/
+ensure: defined content as '{md5}bc6e6f16b8a077ef5fbc8d59d0b931b9'
+notice: /Stage[main]//Node[cookbook]/Tmpfile[b]/File[/tmp/b]/
+ensure: defined content as '{md5}bc6e6f16b8a077ef5fbc8d59d0b931b9'
+notice: /Stage[main]//Node[cookbook]/Tmpfile[c]/File[/tmp/c]/
+ensure: defined content as '{md5}bc6e6f16b8a077ef5fbc8d59d0b931b9'
+....
+
+==== How it works…
+
+You can think of a *define* as being like a cookie-cutter. It describes a pattern that Puppet
+can use to create lots of similar resources. Any time you declare a +tmpfile+ instance in your
+manifest, Puppet will insert all the resources contained in the +tmpfile+ definition.
+
+In our example, the definition of +tmpfile+ contains a single +file+ resource, whose +content+
+is +"Hello, world"+, and whose +path+ is +/tmp/${name}+. If you declared an instance of
++tmpfile+ with the name +foo+ as follows:
+
+----
+tmpfile { "foo": }
+----
+
+then, Puppet would create a file with the path +/tmp/foo+. In other words, +${name}+ in
+the definition will be replaced by the name of any actual instance that Puppet is asked to
+create. It's almost as though we created a new kind of resource: a +tmpfile+, which has one
+parameter: its name.
+
+Just like with regular resources, we don't have to pass just one name: we can provide an array of
+names and Puppet will create a number of +tmpfile+ instances, as in the preceding example.
+
+==== There's more…
+
+In the preceding example, we created a +define+ where the only parameter that varies
+between instances is the name. But we can add whatever parameters we want, so long
+as we declare them in the definition:
+
+----
+define tmpfile( $greeting ) {
+    file { "/tmp/$name":
+        content => $greeting,
+    }
+}
+----
+
+and pass values to them when we declare an instance of the resource as follows:
+
+----
+tmpfile{ "foo": greeting => "Hello, world" }
+----
+
+You can declare multiple parameters as a comma-separated list:
+
+----
+define webapp( $domain, $path, $platform ) {
+    ...
+}
+
+webapp { "mywizzoapp":
+    domain   => "mywizzoapp.com",
+    path     => "/var/www/apps/mywizzoapp",
+    platform => "Rails",
+}
+----
+
+This is a powerful technique for abstracting out everything that's common to certain
+resources, and keeping it in one place so that you *Don't Repeat Yourself*. In the preceding
+example, there might be many individual resources contained within +webapp:+ packages,
+config files, source code checkouts, virtual hosts, and so on. But all of them are the same for
+every instance of +webapp+ except the parameters we provide. These might be referenced in a
+template, for example, to set the domain for a virtual host.

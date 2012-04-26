@@ -1,0 +1,66 @@
+﻿[[ch05sec10]]
+=== Comparing package versions
+
+Package version numbers are odd things. They look like decimal numbers, but they're not -- a
+version number is often in the form +2.6.4+, for example. If you need to compare one version
+number with another, you can't do a straightforward string comparison: +2.6.4+ would be
+interpreted as greater than +2.6.12+. A numeric comparison won't work because they're not
+valid numbers.
+
+Puppet's +versioncmp+ function comes to the rescue. If you pass it two things that look like
+version numbers, it will compare them and return a value indicating which is the greater:
+
+----
+    versioncmp( A, B )
+----
+
+returns the following:
+
+- 0 if A and B are equal
+- Greater than 1 if A is higher than B
+- Less than 0 if A is less than B
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+$app_version = "1.2.2"
+$min_version = "1.2.10"
+
+if versioncmp( $app_version, $min_version ) >= 0 {
+    notify { "Version OK": }
+} else {
+    notify { "Upgrade needed": }
+}
+----
+
+2. Run Puppet:
++
+....
+notice: Upgrade needed
+....
+
+3. Now change the value of +$app_version+:
++
+----
+$app_version = "1.2.14"
+----
+
+4. Run Puppet again:
++
+....
+notice: Version OK
+....
+
+
+==== How it works…
+
+We've specified that the minimum acceptable version (+$min_version+) is 1.2.10. So in
+the preceding example, we want to compare it with an +$app_version+ of 1.2.2. A simple
+alphabetic comparison of these two strings (in Ruby, for example) would give the wrong result,
+but +versioncmp+ correctly determines that +1.2.2+ is less than +1.2.10+ and alerts us that we
+need to upgrade.
+
+In the second example, +$app_version+ is now +1.2.14+ which +versioncmp+ correctly
+recognizes as greater than +$min_version+ and so we get the message +Version OK+.

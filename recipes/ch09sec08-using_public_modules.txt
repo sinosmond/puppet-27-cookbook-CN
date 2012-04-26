@@ -1,0 +1,129 @@
+﻿[[ch09sec08]]
+=== Using public modules
+
+[quote, Tom Lehrer, 'Lobachevsky']
+Plagiarize, plagiarize, plagiarize / Only be sure always to call it, please 'research'.
+
+If in doubt, steal. In many cases when you write a Puppet module to manage some software or
+service, you don't have to start from scratch. Community-contributed modules are available at
+the *Puppet Forge* site for many popular applications. Sometimes, a community module will be
+exactly what you need and you can download and start using it right away. In other cases, you
+will need to make some modifications to suit your particular needs and environment.
+
+If you are new to Puppet, it can be a great help to have some existing code to start with.
+On the other hand, community modules are often written to be as general and portable as
+possible, and the extra code required can make them harder to understand.
+
+In general I would not recommend treating Puppet Forge as a source of 'drop-in' modules
+that you can deploy without reading or understanding the code. This introduces an external
+dependency to your Puppet infrastructure, and doesn't help advance your understanding and
+experience of Puppet. Rather, I would use it as a source of inspiration, help, and examples. A
+module taken from Puppet Forge should be a jumping-off point for you to develop and improve
+your own modules.
+
+Be aware that a given module may not work on your Linux distribution. Check the +README+ file
+that comes with the module to see if your operating system is supported.
+
+==== Getting ready...
+
+1. The easiest way to use Puppet Forge modules is to install the +puppet-module+ tool:
++
+....
+# gem install puppet-module
+Fetching: puppet-module-0.3.2.gem (100%)
+******************************************************************
+
+Thank you for installing puppet-module from Puppet Labs!
+* Usage instructions: read "README.markdown" or run `puppetmodule
+  usage`
+* Changelog: read "CHANGES.markdown" or run `puppet-module
+  changelog`
+* Puppet Forge: visit http://forge.puppetlabs.com/
+
+******************************************************************
+
+Successfully installed puppet-module-0.3.2
+1 gem installed
+Installing ri documentation for puppet-module-0.3.2...
+Installing RDoc documentation for puppet-module-0.3.2...
+....
+
+2. Run +puppet-module+ to see the available commands:
++
+....
+# puppet-module
+Tasks:
+  puppet-module build [PATH_TO_MODULE]
+    # Build amodule for release
+  puppet-module changelog
+    # Display the changelog for this tool
+  puppet-module changes [PATH_TO_MODULE]
+    # Show modified files in an installed m...
+  puppet-module clean
+    # Clears module cache for all repositories
+  puppet-module generate USERNAME-MODNAME
+    # Generate boilerplate for a new module
+  puppet-module help [TASK]
+    # Describe available tasks or one speci...
+  puppet-module install MODULE_NAME_OR_FILE [OPTIONS]
+    # Install a module (eg, 'user-modname')...
+  puppet-module repository
+    # Show currently configured repository
+  puppet-module search TERM
+    # Search the module repository for a mo...
+  puppet-module usage
+    # Display detailed usage documentation ...
+  puppet-module version
+    # Show the version information for this...
+
+Options:
+  -c, [--config=CONFIG] # Configuration file
+                        # Default: /etc/puppet/puppet.conf
+....
+
+==== How to do it…
+
+In this example, we'll use +puppet-module+ to find and install a module to manage the Tomcat
+application server.
+
+1. Search for a suitable module as follows:
++
+....
+# puppet-module search tomcat
+=====================================
+Searching http://forge.puppetlabs.com
+-------------------------------------
+2 found.
+--------
+camptocamp/tomcat (0.0.1)
+jeffmccune/tomcat (1.0.1)
+....
+
+2. In this example we'll install the Jeff McCune version:
++
+....
+# cd /etc/puppet/modules
+# puppet-module install jeffmccune/tomcat
+Installed "jeffmccune-tomcat-1.0.1" into directory:
+jeffmccune-tomcat
+....
+
+3. The module is now ready to use in your manifests: looking at the source code will
+   show you how to do this.
+
+==== How it works…
+
+The +puppet-module+ tool simply automates the process of searching and downloading
+modules from the Puppet Forge site. You can browse the site to see what's available at:
+http://forge.puppetlabs.com/.
+
+==== There's more…
+
+Not all publically available modules are on Puppet Forge. Some other great places to look are
+on GitHub:
+
+  - https://github.com/camptocamp
+  - https://github.com/example42
+
+Dean Wilson maintains an excellent repository of Puppet patterns, tips, and recipes, at the
+Puppet Cookbook website: http://puppetcookbook.com/.

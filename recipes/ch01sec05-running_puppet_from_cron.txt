@@ -1,0 +1,48 @@
+﻿[[ch01sec05]]
+=== Running Puppet from cron
+
+Is your Puppet sleeping on the job? By default, when you run the Puppet agent on a client,
+it will become a daemon (background process), waking up every 30 minutes to check for
+any manifest updates and apply them (optionally after a randomized delay using the +splay+
+setting +in puppet.conf+). If you want more control over when Puppet runs, you can trigger it
+using +cron+ instead.
+
+For example, if you have many Puppet clients, you may want to deliberately stagger the Puppet
+run times to spread the load on the Puppetmaster. A simple way to do this is to set the minute
+or hour of the +cron+ job time using a hash of the client hostname.
+
+==== How to do it…
+
+Use Puppet's +inline_template+ function, which allows you to execute Ruby code:
+
+----
+cron { "run-puppet":
+    command => "/usr/sbin/puppet agent --test",
+    minute => inline_template("<%= hostname.hash.abs % 60 %>"),
+}
+service { "puppet":
+    ensure => stopped,
+    enable => false,
+}
+----
+
+==== How it works…
+
+Because each hostname produces a unique hash value, each client will run Puppet at a
+different minute past the hour. This hashing technique is useful for randomizing any +cron+
+jobs to improve the odds that they won't interfere with each other.
+
+==== There's more…
+
+You may find that running Puppet as a daemon leaks memory over time, or that occasionally
+Puppet can get into a stuck state when communicating with the master. Running Puppet from
++cron+ should also fix these problems.
+
+There are other ways to trigger Puppet runs, including the *MCollective* tool, which we'll cover
+in detail elsewhere in this book.
+
+==== See also
+
+- <<ch06sec05,Efficiently distributing cron jobs>> section in Chapter 6
+- <<ch03sec04,Using embedded Ruby>> section in Chapter 3
+- <<ch09sec07,Using MCollective>> section in Chapter 9

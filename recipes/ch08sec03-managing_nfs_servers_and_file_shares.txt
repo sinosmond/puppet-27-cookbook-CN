@@ -1,0 +1,162 @@
+﻿[[ch08sec03]]
+=== Managing NFS servers and file shares
+
+[quote, Guy Almes,]
+There are three kinds of death in this world. There's heart death, there's brain
+death, and there's being off the network.
+
+*NFS* (the *Network File System*) is a way of mounting a shared directory from a remote server.
+For example, a pool of web servers might all mount the same NFS share to serve static assets
+such as images and stylesheets. Although NFS is old technology, it's still widely used, so
+here's a recipe that will show you how to create an NFS server and share files from it.
+
+==== How to do it…
+
+1. Create an +nfs+ module:
++
+....
+# mkdir /etc/puppet/modules/nfs
+# mkdir /etc/puppet/modules/nfs/manifests
+....
+
+2. Create the file +/etc/puppet/modules/nfs/manifests/init.pp+ with the
+   following contents:
++
+----
+class nfs {
+    package { "nfs-kernel-server": ensure => installed }
+
+    service { "nfs-kernel-server":
+        ensure     => running,
+        enable     => true,
+        hasrestart => true,
+        require    => Package["nfs-kernel-server"],
+    }
+
+    file { "/etc/exports.d":
+        ensure => directory,
+    }
+
+    exec { "update-etc-exports":
+        command     => "/bin/cat /etc/exports.d/* >/etc/exports",
+        notify      => Service["nfs-kernel-server"],
+        refreshonly => true,
+    }
+
+    define share( $path, $allowed, $options = "" ) {
+        include nfs
+        file { $path:
+            ensure => directory,
+        }
+
+        file { "/etc/exports.d/${name}":
+            content => "${path} ${allowed}(${options})\n",
+            notify  => Exec["update-etc-exports"],
+        }
+    }
+}
+----
+
+3. Add the following to the node you want to export an NFS share from (change the IP
+   address range to one suitable for your network):
++
+----
+nfs::share { "data":
+    path    => "/data",
+    allowed => "10.0.2.0/24",
+    options => "rw,sync,no_root_squash",
+}
+
+nfs::share { "data2":
+    path    => "/data2",
+    allowed => "10.0.2.0/24",
+    options => "rw,sync,no_root_squash",
+}
+----
+
+4. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1311526219'
+notice: /Stage[main]/Nfs/Package[nfs-kernel-server]/ensure:
+
+created
+notice: /Stage[main]/Nfs/Service[nfs-kernel-server]/ensure: ensure
+changed 'stopped' to 'running'
+
+notice: /Stage[main]//Node[cookbook]/Nfs::Share[data2]/File[/
+data2]/ensure: created
+
+notice: /Stage[main]//Node[cookbook]/Nfs::Share[data2]/File[/etc/
+exports.d/data]/ensure: defined content as '{md5}408f8b40815ff4b6e
+ec2f324ca7eafc4'
+
+info: /Stage[main]//Node[cookbook]/Nfs::Share[data]/File[/etc/
+exports.d/data]: Scheduling refresh of Exec[update-etc-exports]
+
+notice: /Stage[main]//Node[cookbook]/Nfs::Share[data2]/
+File[/etc/exports.d/data2]/ensure: defined content as '{md5}
+ec2f324ca7eafc4408f8b40815ff4b6e'
+
+info: /Stage[main]//Node[cookbook]/Nfs::Share[data2]/File[/etc/
+exports.d/data2]: Scheduling refresh of Exec[update-etc-exports]
+
+notice: /Stage[main]/Nfs/Exec[update-etc-exports]: Triggered
+'refresh' from 2 events
+
+info: /Stage[main]/Nfs/Exec[update-etc-exports]: Scheduling
+refresh of Service[nfs-kernel-server]
+
+notice: /Stage[main]/Nfs/Service[nfs-kernel-server]/ensure: ensure
+changed 'stopped' to 'running'
+
+notice: /Stage[main]/Nfs/Service[nfs-kernel-server]: Triggered
+'refresh' from 1 events
+
+notice: Finished catalog run in 3.13 seconds
+....
+
+5. Test the export settings by mounting one of the shares from another server as
+   follows:
++
+....
+# mkdir /mnt/data
+# mount cookbook:/data /mnt/data
+# ls /mnt/data
+....
+
+
+==== How it works…
+
+The +nfs+ class installs and starts the +nfs-kernel-server+ service, which listens for network
+connections to the file share. It also defines the +nfs::share+ resource, which you can use
+anywhere in your manifests to export a directory via NFS:
+
+----
+nfs::share { "data":
+    path    => "/data",
+    allowed => "10.0.2.0/24",
+    options => "rw,sync,no_root_squash",
+}
+----
+
+The +name+ of the resource is whatever label you want to give it: +data+, in this case. The +path+
+specifies the directory to share. The +allowed+ parameter can be a CIDR network address
+(as here), an IP address, a hostname, or a whitespace-separated list of addresses and
+hostnames. Only the specified hosts will be allowed to mount the resource.
+
+The +options+ parameter specifies the options to NFS (as they appear in the +/etc/exports+
+file; see `man exports` for precise details).
+
+Note that we use the same snippet pattern as we did in the +rsyncd.conf+ example. Any
+instance of +nfs::share+ creates a file snippet in +/etc/exports.d+, which also triggers an
++exec+ to concatenate all the snippets into +/etc/exports+ and bounce the NFS service to pick
+up the changes.
+
+==== There's more…
+
+NFS shares should only be used for data that's not critical to your application, because the NFS
+server creates a single point of failure. For a clustered file system, check out GlusterFS instead.

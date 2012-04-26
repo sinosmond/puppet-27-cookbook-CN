@@ -1,0 +1,129 @@
+﻿[[ch03sec09]]
+=== Using selectors and case statements
+
+[quote, Sign,]
+Smarts is the most exclusive club in town. Everyone welcome.
+
+Sometimes it's important to be selective. Although you could write any conditional statement
+using +if+, Puppet provides a couple of extra forms to help you express conditionals more
+easily such as the selector and the case statement.
+
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+$systemtype = $operatingsystem ? {
+    "Ubuntu" => "debianlike",
+    "Debian" => "debianlike",
+    "RedHat" => "redhatlike",
+    "Fedora" => "redhatlike",
+    "CentOS" => "redhatlike",
+    default => "redhatlike",
+}
+
+notify { "You have a ${systemtype} system": }
+----
+
+2. Next, add the following to your manifest:
++
+----
+class debianlike {
+    notify { "Special manifest for Debian-like systems": }
+}
+
+class redhatlike {
+    notify { "Special manifest for RedHat-like systems": }
+}
+
+case $operatingsystem {
+    "Ubuntu",
+    "Debian": {
+        include debianlike
+    }
+    "RedHat",
+    "Fedora",
+    "CentOS": {
+        include redhatlike
+    }
+}
+----
+
+==== How it works…
+
+Our example demonstrates both the selector and the +case+ statement, so let's see in detail
+how each of them works.
+
+- *Selector*
++
+In the first example, we used a selector (the +?+ operator) to choose a value for the 
++$systemtype+ variable depending on the value of +$operatingsystem+. This is
+similar to the ternary operator in C or Ruby, but instead of choosing between two
+possible values, you can have as many values as you like.
++
+Puppet will compare the value of +$operatingsystem+ to each of the possible
+values we have supplied such as Ubuntu, Debian, and so on. These values could
+be regular expressions (for a partial string match, or to use wildcards, for example),
+but in our case we have just used literal strings. As soon as it finds a match, the
+selector expression returns whatever value is associated with the matching string.
+If the value of +$operatingsystem+ is Fedora, for example, the selector expression
+will return the string +redhatlike+ and so this will be assigned to the variable
++$systemtype+.
+
+- *Case* statement
++
+Unlike selectors, the +case+ statement does not return a value. +case+ statements
+are handy when you want to execute different code depending on the value of
+some expression. In our second example, we used the +case+ statement to include
+either the class +debianlike+, or the class +redhatlike+, depending on the value
+of +$operatingsystem+.
++
+Again, Puppet compares the value of +$operatingsystem+ to a list of potential
+matches. These could be regular expressions, or strings, or as in our example,
+comma-separated lists of strings. When it finds a match, the associated code
+between curly braces is executed. So if the value of +$operatingsystem+ is
++Ubuntu+, then the code +include debianlike+ will be executed.
+
+
+==== There's more…
+
+Once you've got to grips with basic use of selectors and +case+ statements, you may find the
+following tips useful.
+
+===== Regular expressions
+
+As with +if+ statements, you can use regular expressions with selectors and +case+ statements,
+and you can also capture the values of matched groups and refer to them using +$1+, +$2+, and
+so on.
+
+----
+case $lsbdistdescription {
+    /Ubuntu (.+)/: {
+        notify { "You have Ubuntu version $1": }
+    }
+    /CentOS (.+)/: {
+        notify { "You have CentOS version $1": }
+    }
+}
+----
+
+===== Defaults
+
+Both selectors and +case+ statements let you specify a +default+ value, which is chosen if
+none of the other options match:
+
+----
+$lunch = "Sausage and chips"
+$lunchtype = $lunch ? {
+    /chips/ => "unhealthy",
+    /salad/ => "healthy",
+    default => "unknown",
+}
+
+notify { "Your lunch was ${lunchtype}": }
+----
+
+....
+Your lunch was unhealthy
+....

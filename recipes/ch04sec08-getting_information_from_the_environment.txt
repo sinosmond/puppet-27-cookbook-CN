@@ -1,0 +1,67 @@
+﻿[[ch04sec08]]
+=== Getting information about the environment
+
+[quote, Mark Twain,]
+In Paris they simply stared when I spoke to them in French. I never did succeed in
+making those idiots understand their language.
+
+Local knowledge can be very useful. Often in a Puppet manifest, you need to know some
+local information about the machine you're on. *Facter* is the tool that accompanies Puppet to
+provide a standard way of getting information ('facts') from the environment about things like:
+
+- Operating system
+- Memory size
+- Architecture
+- Processor count
+
+[NOTE]
+=========
+To see a complete list of the facts available on your system, run the command: 
+
+----
+# facter
+----
+
+While it can be handy to get this information from the command line,
+the real power of Facter lies in being able to access these facts in your
+Puppet manifests.
+=========
+
+==== How to do it…
+
+1. Reference a Facter fact in your manifest like any other variable as follows:
++
+----
+notify { "This is $operatingsystem version
+$operatingsystemrelease, on $architecture architecture, kernel
+version $kernelversion": }
+----
+
+2. When Puppet runs, it will fill in the appropriate values for the current node:
++
+......
+notice: This is Ubuntu version 10.04, on i386 architecture,
+kernel version 2.6.32
+......
+
+==== How it works…
+
+Facter provides an abstraction layer for Puppet, and a standard way for manifests to get
+information about their environment. When you refer to a fact in a manifest, Puppet will query
+Facter to get the current value, and insert it into the manifest.
+
+==== There's more…
+
+You can also use facts in *ERB* templates. For example, you might want to insert the node's
+hostname into a file, or change a config setting for an application based on the memory size
+of the node. When you use fact names in templates, remember that they don't need a dollar
+sign, because this is Ruby, not Puppet:
+
+----
+$KLogPath <%= case kernelversion when "2.6.31" then "/var/run/rsyslog/
+kmsg" else "/proc/kmsg" end %>
+----
+
+==== See also
+
+- <<ch09sec01,Creating custom Facter facts>> in Chapter 9

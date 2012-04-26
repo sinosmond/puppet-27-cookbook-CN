@@ -1,0 +1,739 @@
+﻿[[ch07sec06]]
+=== Managing Rails applications
+
+*Rails* is an enormously popular web app framework (in the sense that it's widely used, rather
+than that people like it). So it's probable that you'll be called upon to manage it at some point.
+The recipe presented here contains most of what you'll need to prepare a server to have a
+Rails application installed on it. This recipe assumes that you'll be using Nginx and *Passenger*
+as the web server, though you can easily modify the recipe to use Apache instead.
+
+==== How to do it…
+
+1. Create the directory structure for a +rails+ module:
++
+....
+# mkdir /etc/puppet/modules/rails
+# mkdir /etc/puppet/modules/rails/manifests
+# mkdir /etc/puppet/modules/rails/templates
+# mkdir /etc/puppet/modules/rails/files
+....
+
+2. Create the file +/etc/puppet/modules/rails/manifests/init.pp+ with
+   the following contents:
++
+----
+class rails {
+    include rails::passenger
+
+    package { "bundler":
+        provider => gem,
+        ensure => installed,
+    }
+
+    define app( $sitedomain ) {
+        include rails
+
+        file { "/opt/nginx/sites-available/${name}.conf":
+          content => template("rails/app.conf.erb"),
+          require => File["/opt/nginx/sites-available"],
+        }
+
+        file { "/opt/nginx/sites-enabled/${name}.conf":
+          ensure => link,
+          target => "/opt/nginx/sites-available/${name}.conf",
+          require => File["/opt/nginx/sites-enabled"],
+          notify => Exec["reload-nginx"],
+        }
+
+        file { "/opt/nginx/conf/includes/${name}.conf":
+          source => [ "puppet:///modules/rails/${name}.conf",
+                      "puppet:///modules/rails/empty.conf" ],
+          notify => Exec["reload-nginx"],
+        }
+
+        file { [ "/var/www",
+                 "/var/www/${name}",
+                 "/var/www/${name}/releases",
+                 "/var/www/${name}/shared",
+                 "/var/www/${name}/shared/config",
+                 "/var/www/${name}/shared/log",
+                 "/var/www/${name}/shared/system" ]:
+            ensure => directory,
+            mode   => 775,
+            owner  => "www-data",
+            group  => "www-data",
+        }
+    }
+}
+----
+
+3. Create the file +/etc/puppet/modules/rails/manifests/passenger.pp+ with
+   the following contents:
++
+----
+class rails::passenger {
+    $passenger_version = "3.0.7"
+    $passenger_dependencies = [ "build-essential",
+                                "libcurl4-openssl-dev",
+                                "libssl-dev",
+                                "ruby",
+                                "rubygems" ]
+
+    package { $passenger_dependencies: ensure => installed }
+        exec { "install-passenger":
+        command => "/usr/bin/gem install passenger
+         --version=${passenger_version}",
+         unless => "/usr/bin/gem list | /bin/grep passenger |/bin/
+         grep ${passenger_version}",
+        require => [ Package["rubygems"], Package[$passenger_
+         dependencies] ],
+        timeout => "-1",
+    }
+
+    exec { "install-passenger-nginx-module":
+        command => "/usr/lib/ruby/gems/1.8/gems/passenger-
+         ${passenger_version}/bin/passenger-install-nginx-module
+         --auto --auto-download --prefix=/opt/nginx",
+        creates => "/opt/nginx/sbin/nginx",
+        require => Exec["install-passenger"],
+        timeout => "-1",
+    }
+
+    file { [ "/opt/nginx",
+             "/opt/nginx/conf",
+             "/opt/nginx/conf/includes",
+             "/opt/nginx/sites-enabled",
+             "/opt/nginx/sites-available",
+             "/var/log/nginx" ]:
+        ensure => directory,
+        owner => "www-data",
+        group => "www-data",
+    }
+
+    file { "/opt/nginx/sites-enabled/default":
+        ensure => absent,
+        require => Exec["install-passenger-nginx-module"],
+    }
+
+    file { "/opt/nginx/conf/nginx.conf":
+        content => template("rails/nginx.conf.erb"),
+        notify  => Exec["reload-nginx"],
+        require => Exec["install-passenger-nginx-module"],
+    }
+
+    file { "/etc/init.d/nginx":
+        source  => "puppet:///modules/rails/nginx.init",
+        mode    => "700",
+        require => Exec["install-passenger-nginx-module"],
+    }
+
+    service { "nginx":
+        enable => true,
+        ensure => running,
+        require => File["/etc/init.d/nginx"],
+    }
+
+    exec { "reload-nginx":
+        command     => "/opt/nginx/sbin/nginx -t && /etc/init.d/
+         nginx reload",
+        refreshonly => true,
+        require     => Exec["install-passenger-nginx-module"],
+    }
+}
+----
+
+4. Create the file +/etc/puppet/modules/rails/templates/app.conf.erb+
+   with the following contents:
++
+----
+server {
+    listen 80;
+    root /var/www/<%= name %>/current/public;
+    server_name <%= sitedomain %>;
+    access_log /var/log/nginx/<%= name %>.access.log;
+    error_log /var/log/nginx/<%= name %>.error.log;
+
+    passenger_enabled on;
+    passenger_min_instances 1;
+}
+
+passenger_pre_start http://<%= sitedomain %>;
+----
+
+5. Create the file +/etc/puppet/modules/rails/templates/nginx.conf.erb+
+   with the following contents:
++
+----
+events {
+  worker_connections 1024;
+  use epoll;
+}
+
+http {
+  passenger_root /usr/lib/ruby/gems/1.8/gems/passenger-<%=
+  passenger_version %>;
+
+  server_names_hash_bucket_size 64;
+
+  sendfile on;
+  tcp_nopush on;
+  tcp_nodelay off;
+  client_body_temp_path /var/spool/nginx-client-body 1 2;
+
+  client_max_body_size 100m;
+
+  include /opt/nginx/conf/mime.types;
+  default_type application/octet-stream;
+
+  log_format main '$remote_addr - $remote_user [$time_local] '
+          $request" $status $body_bytes_sent "$http_referer" '
+          '"$http_user_agent" "$http_x_forwarded_for"' ;
+
+  access_log /var/log/nginx/access.log main;
+
+  gzip on;
+  gzip_http_version 1.0;
+  gzip_comp_level 2;
+  gzip_proxied any;
+  gzip_min_length 1100;
+  gzip_buffers 16 8k;
+  gzip_types text/plain text/html text/css application/x-javascript
+   text/xml application/xml application/xml+rss text/javascript;
+  gzip_disable "MSIE [1-6].(?!.*SV1)";
+  gzip_vary on;
+
+  include /opt/nginx/sites-enabled/*;
+}
+----
+
+6. Create the file +/etc/puppet/modules/rails/files/nginx.init+ with the
+   following contents:
++
+----
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides: nginx
+# Required-Start: $all
+# Required-Stop: $all
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: starts the nginx web server
+# Description: starts nginx using start-stop-daemon
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/opt/nginx/sbin/nginx
+NAME=nginx
+DESC=nginx
+
+test -x $DAEMON || exit 0
+
+# Include nginx defaults if available
+if [ -f /etc/default/nginx ] ; then
+   . /etc/default/nginx
+fi
+
+set -e
+
+# Return LSB status, grabbed from a newer lsb-base
+status_of_proc () {
+    local pidfile daemon name status
+
+    pidfile=
+    OPTIND=1
+    while getopts p: opt ; do
+        case "$opt" in
+            p) pidfile="$OPTARG";;
+        esac
+    done
+
+    shift $(($OPTIND - 1))
+
+    if [ -n "$pidfile" ]; then
+        pidfile="-p $pidfile"
+    fi
+
+    daemon="$1"
+    name="$2"
+
+    status="0"
+    pidofproc $pidfile $daemon >/dev/null || status="$?"
+    if [ "$status" = 0 ]; then
+        log_success_msg "$name is running"
+        return 0
+    else
+        log_failure_msg "$name is not running"
+        return $status
+    fi
+}
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+    echo -n "Starting $DESC: "
+    start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
+     --exec $DAEMON -- $DAEMON_OPTS || true
+    echo "$NAME."
+    ;;
+  stop)
+    echo -n "Stopping $DESC: "
+    start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+     --exec $DAEMON || true
+    echo "$NAME."
+    ;;
+  restart|force-reload)
+    echo -n "Restarting $DESC: "
+    start-stop-daemon --stop --quiet --pidfile \
+     /var/run/$NAME.pid --exec $DAEMON || true
+    sleep 1
+    start-stop-daemon --start --quiet --pidfile \
+     /var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS || true
+    echo "$NAME."
+    ;;
+  reload)
+    echo -n "Reloading $DESC configuration: "
+    start-stop-daemon --stop --signal HUP --quiet --pidfile \
+     /var/run/$NAME.pid --exec $DAEMON || true
+    echo "$NAME."
+    ;;
+  status)
+    status_of_proc -p /var/run/$NAME.pid "$DAEMON" nginx \
+     && exit 0 || exit $?
+    ;;
+  *)
+    N=/etc/init.d/$NAME
+    echo "Usage: $N {start|stop|restart|reload|forcereload|
+     status}" >&2
+    exit 1
+    ;;
+esac
+exit 0
+----
+
+7. Add the following to a node:
++
+----
+rails::app { "furiouspigs":
+    sitedomain => "furiouspigs.com",
+}
+----
+
+8. Run Puppet:
++
+..................
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1309960678'
+
+notice: /Stage[main]/Rails::Passenger/File[/opt/nginx]/ensure:
+created
+
+notice: /Stage[main]/Rails::Passenger/File[/opt/nginx/sitesenabled]/
+ensure: created
+
+notice: /Stage[main]//Node[cookbook]/Rails::App[furiouspigs]/
+File[/opt/nginx/sites-enabled/furiouspigs.conf]/ensure: created
+
+notice: /Stage[main]/Rails::Passenger/File[/opt/nginx/conf]/
+ensure: created
+
+notice: /Stage[main]/Rails::Passenger/File[/opt/nginx/conf/
+includes]/ensure: created
+
+notice: /Stage[main]//Node[cookbook]/Rails::App[furiouspigs]/
+File[/opt/nginx/conf/includes/furiouspigs.conf]/ensure: defined
+content as '{md5}d41d8cd98f00b204e9800998ecf8427e'
+
+notice: /Stage[main]/Rails::Passenger/File[/opt/nginx/sitesavailable]/
+ensure: created
+
+notice: /Stage[main]//Node[cookbook]/Rails::App[furiouspigs]/
+File[/opt/nginx/sites-available/furiouspigs.conf]/ensure: defined
+content as '{md5}c1a4c2bc4e7381b1c2f88dfee004a594'
+
+notice: /Stage[main]/Rails::Passenger/Exec[install-passenger]/
+returns: executed successfully
+
+notice: /Stage[main]/Rails::Passenger/Exec[install-passengernginx-
+module]/returns: executed successfully
+--- /opt/nginx/conf/nginx.conf 2011-07-06 14:04:33.231999538
++0000
++++ /tmp/puppet-file20110706-5343-k8ouds-0 2011-07-06
+14:04:34.246867124 +0000
+...
+
+info: /Stage[main]/Rails::Passenger/File[/opt/nginx/conf/nginx.
+conf]: Filebucketed /opt/nginx/conf/nginx.conf to puppet with sum
+34d60856b6570e9d59cd6eecde5da000
+
+notice: /Stage[main]/Rails::Passenger/File[/opt/nginx/conf/nginx.
+conf]/content: content changed '{md5}34d60856b6570e9d59cd6eecde5
+da000' to '{md5}72132deeb45e6ee5b83cd246dffefc5f'
+info: /Stage[main]/Rails::Passenger/File[/opt/nginx/conf/nginx.
+conf]: Scheduling refresh of Exec[reload-nginx]
+notice: /Stage[main]/Rails::Passenger/Exec[reload-nginx]:
+Triggered 'refresh' from 1 events
+notice: Finished catalog run in 398.73 seconds
+..................
+
+==== How it works…
+
+This is a longer and more complicated recipe than many in this book and hence is explained
+in greater detail. If you find this tiresome, just go ahead and use the recipe without worrying
+about how it works. You can come back to the explanation later when you want to learn more.
+
+The aim of all the preceding code is to enable you to write this:
+
+----
+rails::app { "furiouspigs":
+    sitedomain => "furiouspigs.com",
+}
+----
+
+That requires quite a bit of work behind the scenes. We have to install Nginx with the
+Passenger module, configure it, add a virtual host for the application, include any applicationspecific
+configuration such as redirects and asset servers, install Ruby and Rubygems,
+Bundler, and create all the directories required for the application to be deployed.
+
+===== Nginx and Passenger
+
+Here's a breakdown of the +passenger.pp+ file, that takes care of installing everything relating
+to Nginx and Passenger. It's worth recalling that Nginx doesn't have the concept of dynamic
+modules like Apache does, so you can't just install the distribution Nginx and some package
+that adds Passenger capability. Nginx has to be compiled together with any modules that you
+want to include in it.
+
+Fortunately, the nice people at *Phusion* have provided a script to do that for us (
+`passengerinstall-nginx-module`). Once you've installed the Passenger gem, this script will take
+care of the rest. So the first thing we need to do is install the Passenger *gem* as follows:
+
+----
+class rails::passenger {
+    $passenger_version = "3.0.7"
+    $passenger_dependencies = [ "build-essential",
+                                "libcurl4-openssl-dev",
+                                "libssl-dev",
+                                "ruby",
+                                "rubygems" ]
+    package { $passenger_dependencies: ensure => installed }
+
+    exec { "install-passenger":
+        command => "/usr/bin/gem install passenger
+        --version=${passenger_version}",
+        unless => "/usr/bin/gem list | /bin/grep passenger \
+         |/bin/grep ${passenger_version}",
+        require => [ Package["rubygems"], Package[$passenger_
+         dependencies] ],
+        timeout => "-1",
+    }
+----
+
+We set the Passenger version to be installed in +$passenger_version+ because Nginx needs
+to know the path where Passenger is installed, and that varies with the version number. So we
+will refer back to the +$passenger_version+ variable in the template for +nginx.conf+.
+
+The next step is to run the +passenger-install-nginx-module+ script:
+
+----
+    exec { "install-passenger-nginx-module":
+        command => "/usr/lib/ruby/gems/1.8/gems/passenger-${passenger_
+         version}/bin/passenger-install-nginx-module --auto --autodownload
+         --prefix=/opt/nginx",
+
+        creates => "/opt/nginx/sbin/nginx",
+        require => Exec["install-passenger"],
+        timeout => "-1",
+    }
+----
+
+[NOTE]
+==============
+You'll notice that the path to the *gem* is hard-wired here to 
++/usr/lib/ruby/gems/1.8/gems+. That's a bit fragile -- in most of my production
+infrastructures I use *RVM* for managing Ruby versions and *gemsets*, and
+that takes care of things like this. However, adding RVM makes this recipe
+even more complicated, so I've supplied it as a side dish, in the 
+_There's more..._ section. Once you're familiar with this recipe, 
+you can start adapting it to your own purposes, including RVM integration.
+==============
+
+It also means that this recipe won't work if you're using +Ruby 1.9+, which by the time you
+read this you may well be. If so, or if you run into other problems with this part of the recipe,
+just run `gem contents passenger` by hand and see where the `passenger-installnginx-module` script ends up.
+
+Next, we create some of the directory structure for the Nginx configuration files:
+
+----
+file { [ "/opt/nginx",
+         "/opt/nginx/conf",
+         "/opt/nginx/conf/includes",
+         "/opt/nginx/sites-enabled",
+         "/opt/nginx/sites-available",
+         "/var/log/nginx" ]:
+    ensure => directory,
+    owner  => "www-data",
+    group  => "www-data",
+}
+----
+
+We want to remove the default Nginx virtual host, which otherwise might interfere with the
+virtual hosts we're going to create. This is done as follows:
+
+----
+file { "/opt/nginx/sites-enabled/default":
+    ensure  => absent,
+    require => Exec["install-passenger-nginx-module"],
+}
+----
+
+In fact, this isn't necessary when you build Nginx from source, or via Passenger as we do
+here, but if you want to adapt this recipe to use the distribution Nginx package, this will
+come in useful.
+
+Next is the main Nginx configuration file:
+
+----
+file { "/opt/nginx/conf/nginx.conf":
+    content => template("rails/nginx.conf.erb"),
+    notify  => Exec["reload-nginx"],
+    require => Exec["install-passenger-nginx-module"],
+}
+----
+
+This is made into a template in +nginx.conf.erb+ because we need to insert the Passenger
+version we defined earlier on as follows:
+
+----
+passenger_root /usr/lib/ruby/gems/1.8/gems/passenger-<%= passenger_
+version %>;
+----
+
+Otherwise, it's a reasonably standard Nginx configuration, and you can add in any special
+parameters that you might need for your server.
+
+Because we're not using the distro package, we need to supply an +init+ script (minimally
+adapted from the Ubuntu version):
+
+----
+file { "/etc/init.d/nginx":
+    source  => "puppet:///modules/rails/nginx.init",
+    mode    => "700",
+    require => Exec["install-passenger-nginx-module"],
+}
+----
+
+We want the Nginx service to run as follows:
+
+----
+service { "nginx":
+    enable  => true,
+    ensure  => running,
+    require => File["/etc/init.d/nginx"],
+}
+----
+
+And to make sure broken configuration changes won't bring the server down, there's a
+configuration-check-and-reload resource that is notified by the configuration files:
+
+----
+exec { "reload-nginx":
+    command     => "/opt/nginx/sbin/nginx -t \
+     && /etc/init.d/nginx reload",
+    refreshonly => true,
+    require     => Exec["install-passenger-nginx-module"],
+}
+----
+
+===== Rails 
+
+Having set up Passenger and Nginx, we can go on to the requirements for *Rails*:
+
+----
+class rails {
+    include rails::passenger
+
+    package { "bundler":
+        provider => gem,
+        ensure => installed,
+    }
+}
+----
+
+*Bundler* is a tool for managing an application or gem's dependencies. Instead of having to
+specify and install all the dependent gems manually or via Puppet, a better way is to have
+Bundler do this as part of your Rails deployment. For example, note that we don't install
+the +rails+ gem; it will usually either be supplied ready-frozen in the applications +vendor+
+directory, or installed by Bundler. If you're not using Bundler, or you have some extra
+dependencies for your Rails setup, install them here.
+
+The main part of the +rails+ class is the +define+ function app, which will be instantiated once
+for each application that you want to manage:
+
+----
+define app( $sitedomain ) {
+    include rails
+----
+
+The first thing that's installed is the Nginx virtual host file for the app, which is generated from
+the +app.conf.erb+ template:
+
+----
+    file { "/opt/nginx/sites-available/${name}.conf":
+        content => template("rails/app.conf.erb"),
+        require => File["/opt/nginx/sites-available"],
+    }
+
+    file { "/opt/nginx/sites-enabled/${name}.conf":
+        ensure => link,
+        target => "/opt/nginx/sites-available/${name}.conf",
+        require => File["/opt/nginx/sites-enabled"],
+        notify => Exec["reload-nginx"],
+    }
+----
+
+The virtual host template is pretty minimal:
+
+----
+server {
+    listen 80;
+    root /var/www/<%= name %>/current/public;
+    server_name <%= sitedomain %>;
+    access_log /var/log/nginx/<%= name %>.access.log;
+    error_log /var/log/nginx/<%= name %>.error.log;
+
+    passenger_enabled on;
+    passenger_min_instances 1;
+}
+
+passenger_pre_start http://<%= sitedomain %>;
+----
+
+Often an app will need specific Nginx directives, such as redirects. You can include these by
+adding a file called +files/furiouspigs.conf+ in the Rails module. This bit of code will
+find such a file and include it:
+
+----
+    file { "/opt/nginx/conf/includes/${name}.conf":
+        source => [ "puppet:///modules/rails/${name}.conf",
+                    "puppet:///modules/rails/empty.conf" ],
+        notify => Exec["reload-nginx"],
+    }
+----
+
+Note the use of multiple sources for this file, with the second source being +empty.conf+. This
+makes sure that if there isn't an app-specific config file present, Puppet won't complain.
+
+Finally we make sure that the standard Rails directory structure is in place ready for deployment
+with the appropriate permissions for the +www-data+ user. If you deploy the application and run
+Nginx as a different user, replace +www-data+ with your username throughout.
+
+----
+       file { [ "/var/www",
+                "/var/www/${name}",
+                "/var/www/${name}/releases",
+                "/var/www/${name}/shared",
+                "/var/www/${name}/shared/config",
+                "/var/www/${name}/shared/log",
+                "/var/www/${name}/shared/system" ]:
+            ensure => directory,
+            mode   => 775,
+            owner  => "www-data",
+            group  => "www-data",
+        }
+    }
+}
+----
+
+==== There's more…
+
+Here are a few other things you might like to consider when managing Rails applications
+with Puppet.
+
+===== RVM
+
+As I mentioned, RVM can be a great solution to the problem of managing multiple Rubies,
+multiple gemsets, smoothly upgrading Ruby, and so on. Of course, it brings its own interesting
+problems with it -- among them that RVM is under active development and subject to change.
+However, on balance it cures more pain than it causes. It is recommended that you use RVM
+for production Rails sites, perhaps with something similar to this:
+
+----
+class rails::rvm {
+  package { [ "autoconf",
+              "bison",
+              "curl",
+              "libreadline-dev",
+              "subversion",
+              "zlib1g-dev" ]:
+      ensure => installed
+  }
+
+  file { "/usr/local/bin/rvm-install-system-wide":
+      source => "puppet:///modules/rails/rvm-install-system-wide",
+      mode   => "700",
+  }
+
+  exec { "install-rvm":
+      command => "/usr/local/bin/rvm-install-system-wide",
+      creates => "/usr/local/bin/rvm",
+      require => [ Package["curl"], Package["subversion"], 
+                   File["/usr/local/bin/rvm-install-system-wide"] ],
+      logoutput => on_failure,
+  }
+
+  append_if_no_such_line { "setup-rvm-shell-environment":
+      file => "/etc/bash.bashrc",
+      line => "[[ -s /usr/local/rvm/scripts/rvm ]] \
+               && . /usr/local/rvm/scripts/rvm",
+  }
+}
+----
+
+The `rvm-install-system-wide` script comes from the RVM website: 
+https://rvm.beginrescueend.com/install/rvm.
+
+===== Log rotation
+
+In production you'll probably want to add `logrotate` snippets to take care of the logs
+generated by Nginx and Rails, to make sure they don't gradually fill up your disks. They
+have been omitted in this recipe, again for reasons of simplicity and space.
+
+===== Databases
+
+This recipe doesn't create any databases or users for the Rails application; depending on
+whether your developers are using MySQL, Postgres, MongoDB, or something else, you'll need to
+add that yourself. If it's MySQL, you can adapt the recipe
+<<ch07sec04,Creating MySQL databases and users>>.
+
+===== SSL certificates
+
+Some applications will require an SSL certificate and *vhost* for secure URLs, for example,
+to handle payments. These are outside the scope of this recipe, but you shouldn't find it
+too difficult to add the necessary code. You could add an optional parameter to the define
+function +rails::app+, for instance:
+
+----
+define app( $sitedomain, $ssl = false ) {
+----
+
+and then handle it as follows:
+
+----
+if $ssl {
+   file { "/etc/ssl/certs/${name}.crt":
+       source => "puppet:///modules/rails/${name}.crt",
+   }
+}
+----
+
+Then, just instantiate your application with the following:
+
+----
+rails::app { "irritatedbadgers":
+    sitedomain => "irritatedbadgers.com",
+    ssl        => true,
+}
+----

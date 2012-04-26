@@ -1,0 +1,106 @@
+﻿[[ch06sec04]]
+=== Managing users' customization files
+
+Users, like cats, often feel the need to mark their territory. Unlike cats, users tend to
+customize their shell environments, terminal colors, aliases, and so on. This is usually
+achieved by a number of dotfiles in their home directory: for example, +.bash_profile+.
+
+You can add this to your Puppet-based user management by modifying the
++user::virtual::ssh_user+ class, so that it can optionally include any dotfiles that are
+present in the Puppet repository.
+
+==== How to do it…
+
+1. Modify the user::virtual class as follows:
++
+----
+class user::virtual
+{
+  define user_dotfile( $username )
+  {
+    file { "/home/${username}/.${name}":
+      source => "puppet:///modules/user/${username}-${name}",
+      owner  => $username,
+      group  => $username,
+    }
+  }
+
+  define ssh_user( $key, $dotfile = false )
+  {
+    user { $name:
+      ensure     => present,
+      managehome => true,
+    }
+
+    ssh_authorized_key { "${name}_key":
+      key  => $key,
+      type => "ssh-rsa",
+      user => $name,
+    }
+
+    if $dotfile {
+      user_dotfile { $dotfile:
+          username => $name,
+      }
+    }
+  }  
+
+  @ssh_user { "john":
+    key => "AAAAB3NzaC1yc2EAAAABIwAAAIEA3ATqENg
+    +GWACa2BzeqTdGnJhNoBer8x6pfWkzNzeM8Zx7/2Tf2pl7kHdbsi
+    TXEUawqzXZQtZzt/j3Oya+PZjcRpWNRzprSmd2UxEEPTqDw9LqY5S2B8
+    og/NyzWaIYPsKoatcgC7VgYHplcTbzEhGu8BsoEVBGYu3IRy5RkAcZik=",
+    dotfile => [ "bashrc", "bash_profile" ],
+  }
+}
+----
+
+2. Create the file +/etc/puppet/modules/user/files/john-bashrc+ with the
+   following contents:
++
+----
+export PATH=$PATH:/var/lib/gems/1.8/bin
+----
+
+3. Create the file +/etc/puppet/modules/user/files/john-bash_profile+
+   with the following contents:
++
+----
+. ~/.bashrc
+----
+
+4. Run Puppet.
+
+
+==== How it works…
+
+We've added a new define, +user_dotfile+. This will be called once for each +dotfile+
+that the user wants to have. In the example, +john+ has two dotfiles: +.bashrc+ and 
++.bash_profile+. These are declared as follows:
+
+----
+@ssh_user { "john":
+    key => ...
+    dotfile => [ "bashrc", "bash_profile" ],
+}
+----
+
+You can supply either a single +dotfile+, or a list of them in array form, as shown previously.
+
+For each +dotfile+, +user_dotfile+ will look for a corresponding source file in the 
++modules/user/files+ directory. For example, with the +bashrc+ +dotfile+, Puppet will look for the
+following:
+
+----
+modules/user/files/john-bashrc
+----
+
+This will be copied to the node as the following:
+
+----
+/home/john/.bashrc
+----
+
+==== See also
+
+- <<ch06sec02,Managing users with virtual resources>> in this chapter.

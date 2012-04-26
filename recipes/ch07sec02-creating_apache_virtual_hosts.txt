@@ -1,0 +1,165 @@
+﻿[[ch07sec02]]
+=== Creating Apache virtual hosts
+
+Virtual hosts are a great application for ERB templates, because they generally use similar
+boilerplate code for every instance, with just one or two variables. Obviously, for certain sites
+or applications you will need specific options in the virtual host definition, and this template
+won't apply -- but it should save you some trouble for simple sites.
+
+==== How to do it…
+
+1. Add this to +/etc/puppet/modules/apache/manifests/init.pp+:
++
+----
+define site( $sitedomain = "", $documentroot = "" ) {
+    include apache
+
+    if $sitedomain == "" {
+        $vhost_domain = $name
+    } else {
+        $vhost_domain = $sitedomain
+    }
+
+    if $documentroot == "" {
+        $vhost_root = "/var/www/${name}"
+    } else {
+        $vhost_root = $documentroot
+    }
+
+    file { "/etc/apache2/sites-available/${vhost_domain}.conf":
+        content => template("apache/vhost.erb"),
+        require => File["/etc/apache2/conf.d/name-basedvhosts.conf"],
+        notify => Exec["enable-${vhost_domain}-vhost"],
+    }
+
+    exec { "enable-${vhost_domain}-vhost":
+        command     => "/usr/sbin/a2ensite ${vhost_domain}.conf",
+        require     => [ File["/etc/apache2/sites-available/${
+          vhost_domain}.conf"], Package["apache2-mpm-prefork"] ],
+        refreshonly => true,
+        notify      => Service["apache2"],
+    }
+}
+----
+
+2. Create the file +/etc/puppet/modules/apache/templates/vhost.erb+ with the
+   following contents:
++
+----
+<VirtualHost *:80>
+    ServerName <%= vhost_domain %>
+    ServerAdmin admin@<%= vhost_domain %>
+    DocumentRoot <%= vhost_root %>
+    ErrorLog logs/<%= vhost_domain %>-error_log
+    CustomLog logs/<%= vhost_domain %>-access_log common
+
+    <Directory /var/www/<%= vhost_domain %>>
+        Allow from all
+        Options +Includes +Indexes +FollowSymLinks
+        AllowOverride all
+    </Directory>
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName www.<%= vhost_domain %>
+    Redirect 301 / http://<%= vhost_domain %>/
+</VirtualHost>
+----
+
+3. Add this to a node:
++
+----
+apache::site { "keithlard.com": }
+----
+
+4. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1309190720'
+
+notice: /Stage[main]//Node[cookbook]/Apache::Site[keithlard.com]/
+File[/etc/apache2/sites-available/keithlard.com.conf]/ensure:
+defined content as '{md5}f2a558c02beeaed4beb7da250821b663'
+
+info: /Stage[main]//Node[cookbook]/Apache::Site[keithlard.com]/
+File[/etc/apache2/sites-available/keithlard.com.conf]: Scheduling
+refresh of Exec[enable-keithlard.com-vhost]
+
+notice: /Stage[main]//Node[cookbook]/Apache::Site[keithlard.com]/
+Exec[enable-keithlard.com-vhost]: Triggered 'refresh' from 1
+events
+
+info: /Stage[main]//Node[cookbook]/Apache::Site[keithlard.
+com]/Exec[enable-keithlard.com-vhost]: Scheduling refresh of
+Service[apache2]
+
+notice: /Stage[main]/Apache/Service[apache2]: Triggered 'refresh'
+from 2 events
+notice: Finished catalog run in 3.79 seconds
+....
+
+
+==== How it works…
+
+The +define+ function +apache::site+ uses the +vhost.erb+ template to generate an Apache
+virtual host definition. By default, the domain of the site is assumed to be the same as the
+name of the site instance, in this case, +keithlard.com+. So when Puppet sees the following:
+
+----
+apache::site { "keithlard.com": }
+----
+
+it will use +keithlard.com+ as the site domain. If you want to specify a domain, add the
++sitedomain+ parameter:
+
+----
+apache::site { "networkr_production":
+    sitedomain => "networkr.com",
+}
+
+apache::site { "networkr_staging":
+    sitedomain => "staging.networkr.com",
+}
+----
+
+The beauty of the template system is that if you want to make a slight change to the
+configuration for all sites (for example, changing the admin e-mail address) you can do
+it once in the template and Puppet will update all virtual hosts accordingly.
+
+Similarly, if you need to specify a different +DocumentRoot+ for the virtual host than the
+default (+/var/www/${name}+), just add a +documentroot+ parameter as follows:
+
+----
+apache::site { "communitysafety.org":
+    documentroot => "/var/apps/commsafe",
+}
+----
+
+==== There's more…
+
+In the preceding example, we only used one variable in the template, but you can have as
+many as you like. These can also be *facts* such as:
+
+----
+ServerName <%= fqdn %>
+----
+
+or Ruby expressions:
+
+----
+ServerAdmin<%= emails["admin"] %>
+----
+
+or any Ruby code you want such as:
+
+----
+ServerAdmin <%= vhost_domain == 'coldcomfort.com' ? 'seth@coldcomfort.
+com' : 'flora@poste.com' %>
+----
+
+==== See also
+
+- <<ch05sec05,Using array iteration in templates>> in Chapter 5

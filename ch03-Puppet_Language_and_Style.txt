@@ -1,0 +1,55 @@
+﻿[[chapter03]]
+== Puppet Language and Style
+
+[quote, Larry Wall,]
+Computer language design is just like a stroll in the park. Jurassic Park, that is.
+
+In this chapter we will cover the following topics:
+
+- Using community Puppet style
+- Using modules
+- Using standard naming conventions
+- Using embedded Ruby
+- Writing manifests in pure Ruby
+- Iterating over multiple items
+- Writing powerful conditional statements
+- Using regular expressions in if statements
+- Using selectors and case statements
+- Testing if values are contained in strings
+- Using regular expression substitutions
+
+
+[quote, Edsger W. Dijkstra,]
+Elegance is not a dispensable luxury, but a factor that decides between success
+and failure.
+
+In this chapter you'll learn to write elegant Puppet manifests. By elegant in this context I mean
+readable, efficient, and consistent code which conforms to community usage.
+
+We'll look at how to organize and structure your code into modules following community
+conventions, so that other people will find it easy to read and maintain your code. I'll also
+show you some powerful features of the Puppet language which will let you write concise,
+yet expressive, manifests.
+
+
+include::recipes/ch03sec01-using_community_puppet_style.txt[]
+
+include::recipes/ch03sec02-using_modules.txt[]
+
+include::recipes/ch03sec03-using_standard_naming_conventions.txt[]
+
+include::recipes/ch03sec04-using_embedded_ruby.txt[]
+
+include::recipes/ch03sec05-writing_manifests_in_pure_ruby.txt[]
+
+include::recipes/ch03sec06-iterating_over_multiple_items.txt[]
+
+include::recipes/ch03sec07-writing_powerful_conditional_statements.txt[]
+
+include::recipes/ch03sec08-using_regular_expressions_in_if_statements.txt[]
+
+include::recipes/ch03sec09-using_selectors_and_case_statements.txt[]
+
+include::recipes/ch03sec10-testing_if_values_are_contained_in_strings.txt[]
+
+include::recipes/ch03sec11-using_regular_expression_substitutions.txt[]

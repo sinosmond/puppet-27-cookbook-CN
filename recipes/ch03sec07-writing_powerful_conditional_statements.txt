@@ -1,0 +1,110 @@
+﻿[[ch03sec07]]
+=== Writing powerful conditional statements
+
+Life is full of choices. Puppet's +if+ statement allows you to change the manifest based on the
+value of a variable or an expression. With it, you can apply different resources or parameter
+values depending on certain facts about the node such as the operating system, or the
+memory size. You can also set variables within the manifest that can change the behavior
+of included classes. For example, nodes in data center A might need to use different DNS
+servers as compared to nodes in data center B, or you might need to include one set of
+classes for an Ubuntu system, and a different set for other systems.
+
+==== How to do it…
+
+Add the following code to your manifest:
+
+----
+if $lsbdistid == "Ubuntu" {
+    notice("Running on Ubuntu")
+} else {
+    notice("Non-Ubuntu system detected. Please upgrade to Ubuntu 
+immediately.")
+}
+----
+
+==== How it works…
+
+Puppet treats whatever follows the +if+ keyword as an expression and evaluates it. If the
+expression is evaluated as +true+, Puppet will execute the code within the curly braces.
+
+Optionally, you can add an +else+ branch, which will be executed if the expression is evaluated
+as +false+.
+
+==== There's more…
+
+You can write very complicated +if+ statements in Puppet, but I recommend you don't. Very
+often, it's better to change your design (for example, using a template) rather than use +if+.
+While looking through some of my production manifests for examples, I was surprised to find
+that I haven't used +if+ at all in many thousands of lines of code. Still, your mileage may vary,
+so here are some more tips on using +if+.
+
+===== elsif
+
+You can add further tests using the +elsif+ keyword, as follows:
+
+----
+if $lsbdistid == "Ubuntu" {
+    notice("Running on Ubuntu")
+} elsif $lsbdistid == "Debian" {
+    notice("Close enough…")
+} else {
+    notice("Non-Ubuntu system detected. Please upgrade to Ubuntu
+immediately.")
+}
+----
+
+===== Comparisons
+
+You can check if two values are equal using the +==+ syntax, as in our example:
+
+----
+if $lsbdistid == "Ubuntu" {
+    ...
+}
+----
+
+Or, you can check if they are not equal using +!=+ as follows:
+
+----
+if $lsbdistid != "CentOS" {
+    ...
+}
+----
+
+You can also compare numeric values using +<+ and +>+ as follows:
+
+----
+if $uptime_days > 365 {
+    notice("Really .. there have been kernel security patches out
+there for ages, you will so be 0wned!")
+}
+----
+
+To test if a value is greater (or less) than or equal to another value, use +<=+ or +>=+:
+
+----
+if $lsbmajdistrelease <= 9 {
+    ...
+}
+----
+
+===== Combining expressions
+
+You can put together the kind of simple expressions described in the preceding code snippets
+into more complex, logical expressions using +and+, +or+, and +not+ as follows:
+
+----
+if ($uptime_days > 365) and ($lsbdistid == "Ubuntu") {
+     ...
+}
+
+if ($role == "webserver") and ( ($datacenter == "A") or ($datacenter == "B") ) {
+     ...
+}
+----
+
+==== See also
+
+- <<ch03sec08,Using regular expressions in if statements>> in this chapter
+- <<ch03sec10,Testing whether values are contained in strings>> in this chapter
+- <<ch03sec09,Using selectors and case statements>> in this chapter

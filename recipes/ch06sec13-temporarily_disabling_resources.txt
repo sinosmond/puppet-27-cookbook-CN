@@ -1,0 +1,68 @@
+﻿[[ch06sec13]]
+=== Temporarily disabling resources
+
+Sometimes, you want to disable a resource for the time being, so that it doesn't interfere with
+other work. For example, you might want to tweak a configuration file on the server, until you
+have the exact settings you want, before checking it into Puppet. You don't want Puppet to
+overwrite it with an old version in the meantime, so you can set the +noop+ metaparameter on
+the resource as follows:
+
+----
+    noop => true,
+----
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+file { "/tmp/test.cfg":
+    content => "Hello, world!\n",
+    noop => true,
+}
+----
+
+2. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1306159566'
+
+notice: /Stage[main]//Node[cookbook]/File[/tmp/test.cfg]/ensure:
+is absent, should be file (noop)
+
+notice: Finished catalog run in 0.53 seconds
+....
+
+3. Now, remove the +noop+ parameter:
++
+----
+file { "/tmp/test.cfg":
+    content => "Hello, world!\n",
+}
+----
+
+4. Run Puppet again:
++
+....
+# puppet agent --test
+
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1306159705'
+
+notice: /Stage[main]//Node[cookbook]/File[/tmp/test.cfg]/ensure:
+defined content as '{md5}746308829575e17c3331bbcb00c0898b'
+
+notice: Finished catalog run in 0.52 seconds
+....
+
+==== How it works…
+
+The first time we ran Puppet, the +noop+ metaparameter was set to true, so for this particular
+resource, it's as if you had run Puppet with the ++--noop++ flag. Puppet noted that the resource
+would have been applied, but otherwise did nothing.
+
+In the second case, with +noop+ removed, the resource is applied as normal.

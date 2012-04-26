@@ -1,0 +1,587 @@
+﻿[[ch08sec01]]
+=== Deploying a Nagios monitoring server
+
+[quote, Steven Wright,]
+My roommate lost his pet elephant. It's in the apartment somewhere.
+
+
+We can't keep an eye on everything. Question: How do you know when one of your servers
+goes down? The wrong answer is, "My client calls me and tells me the server is down." But
+you'd be surprised how many organizations don't have any kind of automated monitoring of
+their systems. It's very simple to set up. There are several excellent free and open-source
+monitoring tools available, including Nagios, Icinga, Zabbix, and Zenoss. Nagios has been
+around the longest and is among the most sophisticated, although it has a (partly deserved)
+reputation for being difficult to configure.
+
+This recipe will show you how to build a Nagios-based monitoring server using Puppet and
+also how to have Puppet configure each of your boxes to be monitored by Nagios.
+
+==== Getting ready…
+
+You'll need the apache module that we created in the section <<ch07sec01,Managing Apache servers>>
+in Chapter 7.
+
+==== How to do it…
+
+1. Create a nagios module:
++
+....
+# mkdir /etc/puppet/modules/nagios
+# mkdir /etc/puppet/modules/nagios/files
+# mkdir /etc/puppet/modules/nagios/manifests
+....
+
+2. Create the file +/etc/puppet/modules/nagios/manifests/server.pp+ with the
+   following contents:
++
+----
+class nagios::server {
+    include apache
+
+    package { [ "nagios3",
+                "nagios-images",
+                "nagios-nrpe-plugin" ]:
+        ensure => installed,
+    }
+
+    service { "nagios3":
+        ensure => running,
+        enable => true,
+        require => Package["nagios3"],
+    }
+
+    exec { "nagios-config-check":
+        command => "/usr/sbin/nagios3 -v /etc/nagios3/nagios.
+         cfg && /usr/sbin/service nagios3 restart",
+        refreshonly => true,
+    }
+
+    file { "/etc/apache2/sites-available/nagios.conf":
+        source  => "puppet:///modules/nagios/nagios.conf",
+        notify  => Service["apache2"],
+        require => Package["apache2-mpm-prefork"],
+    }
+
+    file { "/etc/apache2/sites-enabled/nagios.conf":
+        ensure  => symlink,
+        target  => "/etc/apache2/sites-available/nagios.conf",
+        require => Package["apache2-mpm-prefork"],
+    }
+
+    file { [ "/etc/nagios3/generic-service_nagios2.cfg",
+             "/etc/nagios3/services_nagios2.cfg",
+             "/etc/nagios3/hostgroups_nagios2.cfg",
+             "/etc/nagios3/extinfo_nagios2.cfg",
+             "/etc/nagios3/localhost_nagios2.cfg",
+             "/etc/nagios3/contacts_nagios2.cfg",
+             "/etc/nagios3/conf.d"
+           ]:
+        ensure => absent,
+        force  => true,
+    }
+
+    define nagios-config() {
+        file { "/etc/nagios3/${name}":
+            source  => "puppet:///modules/nagios/${name}",
+            require => Package["nagios3"],
+            notify => Exec["nagios-config-check"],
+        }
+    }
+
+    nagios-config { [ "htpasswd.nagios",
+                      "nagios.cfg",
+                      "cgi.cfg",
+                      "hostgroups.cfg",
+                      "hosts.cfg",
+                      "host_templates.cfg",
+                      "service_templates.cfg",
+                      "services.cfg",
+                      "timeperiods.cfg",
+                      "contacts.cfg",
+                      "commands.cfg" ]: }
+
+    file { "/var/lib/nagios3": 
+        # see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=478889
+        mode    => 751,
+        require => Package["nagios3"],
+        notify  => Service["nagios3"],
+    }
+
+    file { "/var/lib/nagios3/rw": 
+        # see http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=478889
+        mode    => 2710,
+        require => Package["nagios3"],
+        notify  => Service["nagios3"],
+    }
+}
+----
+
+3. Create the file +/etc/puppet/modules/nagios/files/nagios.cfg+ with the
+   following contents:
++
+----
+# Config files to read
+cfg_file=/etc/nagios3/commands.cfg
+cfg_file=/etc/nagios3/service_templates.cfg
+cfg_file=/etc/nagios3/host_templates.cfg
+cfg_file=/etc/nagios3/timeperiods.cfg
+cfg_file=/etc/nagios3/contacts.cfg
+cfg_file=/etc/nagios3/hostgroups.cfg
+cfg_file=/etc/nagios3/hosts.cfg
+cfg_file=/etc/nagios3/services.cfg
+
+# Nagios settings
+log_file=/var/log/nagios3/nagios.log
+illegal_macro_output_chars=`~$&|'"<>
+check_result_path=/var/lib/nagios3/spool/checkresults
+nagios_user=nagios
+nagios_group=nagios
+command_file=/var/lib/nagios3/rw/nagios.cmd
+lock_file=/var/run/nagios3/nagios3.pid
+p1_file=/usr/lib/nagios3/p1.pl
+check_external_commands=1
+resource_file=/etc/nagios3/resource.cfg
+----
+
+4. Create the file +/etc/puppet/modules/nagios/files/service_templates.cfg+
+   with the following contents:
++
+----
+define service{
+    name                         generic_service 
+     ; The 'name' of this service template
+    active_checks_enabled        1
+     ; Active service checks are enabled
+    passive_checks_enabled       1
+     ; Passive service checks are enabled/accepted
+    parallelize_check            1
+     ; Active service checks should be parallelized
+     ; (disabling this can lead to major performance problems)
+    obsess_over_service          1
+     ; We should obsess over this service (if necessary)
+    check_freshness              0
+     ; Default is to NOT check service 'freshness'
+    notifications_enabled        1
+     ; Service notifications are enabled
+    event_handler_enabled        1
+     ; Service event handler is enabled
+    flap_detection_enabled       1
+     ; Flap detection is enabled
+    failure_prediction_enabled   1
+     ; Failure prediction is enabled
+    process_perf_data            1
+     ; Process performance data
+    retain_status_information    1
+     ; Retain status information across program restarts
+    retain_nonstatus_information 1
+     ; Retain non-status information across program restarts
+    notification_interval        0
+     ; Only send notifications on status change by default.
+    is_volatile                  0
+    check_period                 24x7
+    normal_check_interval        5
+    retry_check_interval         2
+    max_check_attempts           3
+    notification_period          24x7
+    notification_options         c,r
+    contact_groups               sysadmin
+    register                     0
+     ; DONT REGISTER THIS DEFINITION
+     ;   - ITS NOT A REAL SERVICE, JUST A TEMPLATE!
+}
+
+# Defaults
+define service {
+    name                         every_5_mins
+    normal_check_interval        5
+    use                          generic_service
+    register                     0
+}
+
+define service {
+    name                         every_hour
+    normal_check_interval        60
+    use                          generic_service
+    register                     0
+}
+
+define service {
+    name                         every_day
+    normal_check_interval        1440
+    use                          generic_service
+    register                     0
+}
+----
+
+5. Create the file +/etc/puppet/modules/nagios/files/services.cfg+ with the
+   following contents:
++
+----
+define service {
+    hostgroup_name               all
+    service_description          Disk
+    check_command                check_nrpe!check_all_disks!20%!10%
+    use                          every_day
+}
+
+define service {
+    hostgroup_name               all
+    service_description          Load
+    check_command                check_nrpe!check_load!10,10,10!15,15,15
+    use                          every_hour
+}
+----
+
+6. Create the file +/etc/puppet/modules/nagios/files/cgi.cfg+ with the
+   following contents:
++
+----
+main_config_file=/etc/nagios3/nagios.cfg
+physical_html_path=/usr/share/nagios3/htdocs
+url_html_path=/nagios3
+show_context_help=1
+use_pending_states=1
+nagios_check_command=/usr/lib/nagios/plugins/check_nagios 
+ /var/cache/nagios3/status.dat 5 '/usr/sbin/nagios3'
+use_authentication=1
+use_ssl_authentication=0
+authorized_for_system_information=nagios
+authorized_for_configuration_information=nagios
+authorized_for_system_commands=nagios
+authorized_for_all_services=nagios
+authorized_for_all_hosts=nagios
+authorized_for_all_service_commands=nagios
+authorized_for_all_host_commands=nagios
+default_statusmap_layout=5
+default_statuswrl_layout=4
+ping_syntax=/bin/ping -n -U -c 5 $HOSTADDRESS$
+refresh_rate=90
+escape_html_tags=1
+action_url_target=_blank
+notes_url_target=_blank
+lock_author_names=1
+----
+
+7. Create the file +/etc/puppet/modules/nagios/files/host_templates.cfg+
+   with the following contents:
++
+----
+define host{
+    name                          generic_host
+    check_command                 check-host-alive
+    max_check_attempts            3
+    checks_enabled                1
+    failure_prediction_enabled    1
+    retain_status_information     1
+    retain_nonstatus_information  1
+    notification_interval         0
+    notification_options          d,u,r
+    check_interval                300
+    contact_groups                sysadmin
+    register                      0
+}
+----
+
+8. Create the file +/etc/puppet/modules/nagios/files/contacts.cfg+ with the
+   following contents (use your own e-mail address, or at least that of someone who
+   won't mind getting a lot of e-mail from your monitoring server):
++
+----
+define contact {
+    contact_name                    helen
+    alias Helen                     Highwater
+    service_notification_period     24x7
+    host_notification_period        24x7
+    service_notification_options    w,u,c,r
+    host_notification_options       d,r
+    service_notification_commands   notify-service-by-email
+    host_notification_commands      notify-host-by-email
+    email                           helen@example.com
+}
+
+define contactgroup {
+    contactgroup_name               sysadmin
+    alias                           Sysadmins
+    members                         helen
+}
+----
+
+9. Create the file +/etc/puppet/modules/nagios/files/hostgroups.cfg+ with
+   the following contents:
++
+----
+define hostgroup {
+    hostgroup_name                   all
+    alias                            All Servers
+    members                          *
+}
+----
+
+10. Create the file +/etc/puppet/modules/nagios/files/timeperiods.cfg+ with
+    the following contents:
++
+----
+define timeperiod {
+    timeperiod_name      24x7
+    alias                24 Hours A Day, 7 Days A Week
+    sunday               00:00-24:00
+    monday               00:00-24:00
+    tuesday              00:00-24:00
+    wednesday            00:00-24:00
+    thursday             00:00-24:00
+    friday               00:00-24:00
+    saturday             00:00-24:00
+}
+----
+
+11. Create the file +/etc/puppet/modules/nagios/files/hosts.cfg+ with the
+    following contents (replace with your own server details):
++
+----
+define host {
+    host_name           cookbook
+    address             cookbook.bitfieldconsulting.com
+    use                 generic_host
+}
+----
+
+12. Create the file +/etc/puppet/modules/nagios/files/commands.cfg+ with the
+    following contents:
++
+----
+define command {
+    command_name   check_nrpe
+    command_line   $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
+     -a $ARG2$ $ARG3$ $ARG4$ $ARG5$
+}
+
+define command{
+    command_name  check-host-alive
+    command_line  $USER1$/check_ping -H '$HOSTADDRESS$' -w
+     5000,100% -c 5000,100% -p 1
+}
+
+define command{
+    command_name  check_all_disks
+    command_line  /usr/lib/nagios/plugins/check_disk -w '$ARG1$'
+     -c '$ARG2$' -e
+}
+
+define command{
+    command_name   notify-host-by-email
+    command_line   /usr/bin/printf "%b" "***** Nagios *****\n\
+     nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\
+     nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo:
+     $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail
+     -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is
+     $HOSTSTATE$ **" $CONTACTEMAIL$
+}
+
+define command{
+    command_name  notify-service-by-email
+    command_line  /usr/bin/printf "%b" "***** Nagios
+     *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService:
+     $SERVICEDESC$\nHost: $HOSTALIAS$\nAddress: $HOSTADDRESS$\
+     nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\
+     nAdditional Info:\n\n$SERVICEOUTPUT$" | /usr/bin/mail -s "**
+     $NOTIFICATIONTYPE$ Service Alert: $HOSTALIAS$/$SERVICEDESC$ is
+     $SERVICESTATE$ **" $CONTACTEMAIL$
+}
+----
+
+13. Create the file +/etc/puppet/modules/nagios/files/nagios.conf+ with the
+    following contents (replace the ServerName with your own server):
++
+----
+ScriptAlias /cgi-bin/nagios3 /usr/lib/cgi-bin/nagios3
+ScriptAlias /nagios3/cgi-bin /usr/lib/cgi-bin/nagios3
+
+Alias /nagios3/stylesheets /etc/nagios3/stylesheets
+Alias /nagios3 /usr/share/nagios3/htdocs
+Alias / /usr/share/nagios3/htdocs/
+
+<DirectoryMatch (/usr/share/nagios3/htdocs|/usr/lib/cgi-bin/
+nagios3|/etc/nagios3/stylesheets)>
+
+    Options FollowSymLinks
+
+    DirectoryIndex index.html
+
+    AllowOverride AuthConfig
+
+    Order Allow,Deny
+    Allow From All
+
+    AuthName "Nagios Access"
+    AuthType Basic
+    AuthUserFile /etc/nagios3/htpasswd.nagios
+    require valid-user
+</DirectoryMatch>
+
+<VirtualHost *:80>
+    ServerName nagios.bitfieldconsulting.com
+    ErrorLog /var/log/apache2/nagios-error_log
+    CustomLog /var/log/apache2/nagios-access_log common
+    DocumentRoot /usr/share/nagios3
+</VirtualHost>
+----
+
+14. Create the password file to control access to the Nagios web interface:
++
+....
+# htpasswd -c /etc/puppet/modules/nagios/files/htpasswd.nagios
+nagios
+Password: (type password)
+....
+
+15. If the program htpasswd isn't on your system, run the following command:
++
+....
+# apt-get install apache2-utils
+....
+
+16. Create an +/etc/hosts+ entry or DNS record for the +ServerName+ you specified in the
+    preceding code; in this case:
++
+----
+nagios.bitfieldconsulting.com
+----
+
+17. Include the following in the node definition for your Nagios server:
++
+----
+include nagios::server
+----
+
+18. Create the file +/etc/puppet/modules/nagios/files/nrpe.cfg+ with the
+    following contents (replace the +allowed_hosts+ setting with the name or IP address
+    of your monitoring server):
++
+----
+log_facility=daemon
+pid_file=/var/run/nagios/nrpe.pid
+server_port=5666
+nrpe_user=nagios
+nrpe_group=nagios
+allowed_hosts=cookbook.bitfieldconsulting.com
+dont_blame_nrpe=1
+debug=0
+command_timeout=60
+connection_timeout=300
+command[check_load]=/usr/lib/nagios/plugins/check_load -w $ARG1$
+ -c $ARG2$
+command[check_all_disks]=/usr/lib/nagios/plugins/check_disk -w
+ $ARG1$ -c $ARG2$ -e -A -i '.gvfs'
+----
+
+19. Create the file +/etc/puppet/modules/nagios/manifests/target.pp+ with the
+    following contents:
++
+----
+class nagios::target {
+    package { [ "nagios-nrpe-server",
+                "nagios-plugins",
+                "nagios-plugins-basic",
+                "nagios-plugins-standard",
+                "nagios-plugins-extra" ]:
+        ensure => installed,
+    }
+
+    service { "nagios-nrpe-server":
+        enable  => true,
+        ensure  => running,
+        pattern => "/usr/sbin/nrpe",
+        require => Package["nagios-nrpe-server"],
+    }
+
+    file { "/etc/nagios/nrpe.cfg":
+        source  => "puppet:///modules/nagios/nrpe.cfg",
+        require => Package["nagios-nrpe-server"],
+        notify  => Service["nagios-nrpe-server"],
+    }
+}
+----
+
+20. Include this class on the nodes you want to monitor (this should also include the
+    Nagios server itself):
++
+----
+include nagios::target
+----
+
+21. Run Puppet on the Nagios server as follows:
++
+....
+# puppet agent --test
+....
+
+22. Go to the web interface in your browser (log in with the username +nagios+ and the
+    password you set in the preceding code) and check that you see the Nagios welcome
+    screen as shown in the following screenshot:
++
+image::image/ch08sec01_1.png[]
+
+23. Go to the *Host detail* screen and you should see your target nodes listed.
+24. Click on the name of a node and then select "Schedule a check of all services on this
+    host" from the *Host commands* menu.
+25. Tick the box that says "Force check" and click "Commit". It will take a few seconds for
+    Nagios to run the checks. Go to the "Service detail" screen and you should see the
+    services listed in green like this:
++
+image::image/ch08sec01_2.png[]
+
+==== How it works…
+
+Although this recipe is quite a lengthy one, the Puppet manifest itself is pretty simple; there's
+nothing here that we haven't used already in other recipes.
+
+Essentially, what we're doing is installing the Nagios package itself, configuring a virtual host
+for Apache to serve it, and deploying a bunch of config files for Nagios that tell it what hosts to
+check, which services to check, and other assorted things.
+
+On the client side, each node that's monitored by Nagios needs the +nagios-nrpe-server+
+package installed (*NRPE* is the protocol that Nagios uses to securely execute commands
+on remote servers) and a configuration file that tells the NRPE server which commands are
+allowed to be executed.
+
+[NOTE]
+====================
+You should be aware that the +dont_blame_nrpe+ setting in +nrpe.cfg+ is
+a potential security hole, as it allows remote execution of commands with
+user-supplied arguments. This is a very useful feature, as it means you can
+alter alert thresholds or other parameters without having to reconfigure
+every monitored machine. However, if you don't need this feature, it's safer to
+disable +dont_blame_nrpe+.
+====================
+
+==== There's more…
+
+The tricky thing with Nagios is getting it set up and running in the first place. Although the
+monitoring configuration presented here is very basic (just disk space and CPU load checking),
+you can use this working Nagios setup as a starting point to add more service checks and
+more hosts. Here are some things that you might like to add:
+
+- Host groups (for example, web servers or database servers): You can configure a
+  check to apply to all members of a host group automatically.
+- Website checks: The +check_http plugin+ that comes with Nagios is quite
+  sophisticated, and can handle redirects, SSL, authentication, and matching text from
+  a web page.
+- Process checks: It's common to want to monitor a specific process on a box. Use the
+  +check_procs+ plugin for this.
+- Different check frequencies: I've defined the service templates +every_hour+,
+  +every_day+, and +every_5_mins+ in +service_templates.cfg+; you may want to
+  add some new ones.
+- New time periods: Currently the only one defined in +timeperiods.cfg+ is 24x7,
+  but you may want to create your own. For example, if your database maintenance
+  jobs run from midnight to 1 a.m., you could define a time period that excludes those
+  hours, so that you don't get false alarms on the database server.
+
+To find out more about how to configure Nagios, have a look at the documentation at
+http://nagios.sourceforge.net/docs/nagioscore/3/en/toc.html.
+
+There is also some built-in support for Nagios in Puppet; you can have Puppet generate host
+and service definitions automatically from your manifests, which is a powerful and useful
+feature. Although I use this on some production sites, I have had to regretfully exclude
+coverage of it from this book for space reasons. If you want to find out about this, check
+the official Puppet documentation and also Mike Gurski's excellent article on the subject:
+http://blog.gurski.org/index.php/2010/01/28/automatic-monitoring-with-puppet-and-nagios/.

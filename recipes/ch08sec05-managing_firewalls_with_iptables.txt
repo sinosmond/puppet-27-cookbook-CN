@@ -1,0 +1,463 @@
+﻿[[ch08sec05]]
+=== Managing firewalls with iptables
+
+[quote, Kreitzberg and Shneiderman,]
+Programming can be fun, so can cryptography; however they should not be
+combined.
+
+The programming language C has been described as a 'write-only' language; it's so terse and
+efficient that it can be difficult to understand even code that you've written yourself. The same
+might be said of iptables, the Linux kernel's built-in packet filtering firewall. Raw `iptables`
+rules look something like this:
+
+....
+iptables -A INPUT -d 10.0.2.15/32 -p tcp -m tcp --dport 80 -j ACCEPT
+....
+
+Unless you derive a sense of machismo from mastering apparently meaningless strings of line
+noise, which admittedly is an occupational disease of UNIX sysadmins, it would be nice to be
+able to express firewall rules in a more symbolic and readable way. Puppet can help, because
+we can use it to abstract away some of the implementation detail of `iptables` and define
+firewall rules by reference to the services they control:
+
+----
+iptables::role { "web-server": }
+----
+
+==== Getting ready…
+
+You will need the +append_if_no_such_line+ utility function we created in the section,
+<<ch05sec01,Making quick edits to config files>> in Chapter 5.
+
+==== How to do it…
+
+1. Create an iptables module:
++
+....
+# mkdir /etc/puppet/modules/iptables
+# mkdir /etc/puppet/modules/iptables/manifests
+# mkdir /etc/puppet/modules/iptables/files
+....
+
+2. Create the file +/etc/puppet/modules/iptables/manifests/init.pp+ with
+   the following contents:
++
+----
+class iptables {
+    file { [ "/root/iptables",
+             "/root/iptables/hosts",
+             "/root/iptables/roles" ]:
+        ensure => directory,
+    }
+
+    file { "/root/iptables/roles/common":
+        source => "puppet:///modules/iptables/common.role",
+        notify => Exec["run-iptables"],
+    }
+
+    file { "/root/iptables/names":
+        source => "puppet:///modules/iptables/names",
+        notify => Exec["run-iptables"],
+    }
+
+    file { "/root/iptables/iptables.sh":
+        source => "puppet:///modules/iptables/iptables.sh",
+        mode   => "755",
+        notify => Exec["run-iptables"],
+    }
+
+    file { "/root/iptables/hosts/${hostname}":
+        content => "export MAIN_IP=${ipaddress}\n",
+        replace => false,
+        require => File["/root/iptables/hosts"],
+        notify  => Exec["run-iptables"],
+    }
+
+    exec { "run-iptables":
+        cwd         => "/root/iptables",
+        command     => "/usr/bin/test -f hosts/${hostname} && /
+         root/iptables/iptables.sh && /sbin/iptables-save >/etc/
+         iptables.rules",
+        refreshonly => true,
+    }
+
+    append_if_no_such_line { "restore iptables rules":
+        file => "/etc/network/interfaces",
+        line => "pre-up iptables-restore < /etc/iptables.rules",
+    }
+
+    define role() {
+        include iptables
+
+        file { "/root/iptables/roles/${name}":
+            source  => "puppet:///modules/iptables/${name}.role",
+            replace => false,
+            require => File["/root/iptables/roles"],
+            notify  => Exec["run-iptables"],
+        }
+
+        append_if_no_such_line { "${name} role":
+            file    => "/root/iptables/hosts/${hostname}",
+            line    => ". `dirname \$0`/roles/${name}",
+            require => File["/root/iptables/hosts/${hostname}"],
+            notify => Exec["run-iptables"],
+        }
+    }
+}
+----
+
+3. Create the file +/etc/puppet/modules/iptables/files/iptables.sh+ with the
+   following contents:
++
+[source,bash]
+----
+# Server names and ports
+. `dirname $0`/names
+
+# Interfaces (override in host-specific file if necessary)
+export EXT_INTERFACE=eth0
+
+# Flush and remove all chains
+iptables -P INPUT ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -F
+iptables -X
+
+# Allow all traffic on loopback interface
+iptables -I INPUT 1 -i lo -j ACCEPT
+iptables -I OUTPUT 1 -o lo -j ACCEPT
+
+# Allow established and related connections
+iptables -I INPUT 2 -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -I OUTPUT 2 -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Include machine specific settings
+HOST_RULES=`dirname $0`/hosts/`hostname -s`
+[ -f ${HOST_RULES} ] && . ${HOST_RULES}
+[ "${MAIN_IP}" == "" ] && ( echo No MAIN_IP was set, \
+ please set the primary IP address in ${HOST_RULES}. ; exit 1 )
+
+# Include common settings
+. `dirname $0`/roles/common
+
+# Drop all non-matching packets
+iptables -A INPUT -j LOG --log-prefix "INPUT: "
+iptables -A INPUT -j DROP
+iptables -A OUTPUT -j LOG --log-prefix "OUTPUT: "
+iptables -A OUTPUT -j DROP
+
+echo -e "Test remote login and then:\n iptables-save \
+ >/etc/iptables.rules"
+----
+
+4. Create the file +/etc/puppet/modules/iptables/files/names+ with
+   the following contents:
++
+----
+# Servers
+export PUPPETMASTER=10.0.2.15
+
+# Well-known ports
+export DNS=53
+export FTP=21
+export GIT=9418
+export HEARTBEAT=694
+export IMAPS=993
+export IRC=6667
+export MONIT=2828
+export MYSQL=3306
+export MYSQL_MASTER=3307
+export NRPE=5666
+export NTP=123
+export POSTGRES=5432
+export PUPPET=8140
+export RSYNCD=873
+export SMTP=25
+export SPHINX=3312
+export SSH=22
+export STARLING=3307
+export SYSLOG=514
+export WEB=80
+export WEB_SSL=443
+export ZABBIX=10051
+----
+
+5. Create the file +/etc/puppet/modules/iptables/files/common.role+ with
+   the following contents:
++
+----
+# Common rules for all hosts
+iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} --dport ${SSH} -j ACCEPT
+
+iptables -A INPUT -p ICMP --icmp-type echo-request -j ACCEPT
+iptables -A OUTPUT -p ICMP --icmp-type echo-request -j ACCEPT
+
+iptables -A OUTPUT -p tcp --dport ${SSH} -j ACCEPT
+iptables -A OUTPUT -p tcp --dport ${SMTP} -j ACCEPT
+iptables -A OUTPUT -p udp --dport ${NTP} -j ACCEPT
+iptables -A OUTPUT -p tcp --dport ${NTP} -j ACCEPT
+iptables -A OUTPUT -p udp --dport ${DNS} -j ACCEPT
+iptables -A OUTPUT -p tcp --dport ${WEB} -j ACCEPT
+iptables -A OUTPUT -p tcp --dport ${WEB_SSL} -j ACCEPT
+iptables -A OUTPUT -p tcp -d ${PUPPETMASTER} --dport ${PUPPET} -j ACCEPT
+iptables -A OUTPUT -p tcp --dport ${MYSQL} -j ACCEPT
+
+# Drop some commonly probed ports
+iptables -A INPUT -p tcp --dport 23 -j DROP # telnet
+iptables -A INPUT -p tcp --dport 135 -j DROP # epmap
+iptables -A INPUT -p tcp --dport 139 -j DROP # netbios
+iptables -A INPUT -p tcp --dport 445 -j DROP # Microsoft DS
+iptables -A INPUT -p udp --dport 1433 -j DROP # SQL server
+iptables -A INPUT -p tcp --dport 1433 -j DROP # SQL server
+iptables -A INPUT -p udp --dport 1434 -j DROP # SQL server
+iptables -A INPUT -p tcp --dport 1434 -j DROP # SQL server
+iptables -A INPUT -p tcp --dport 2967 -j DROP # SSC-agent
+----
+
+6. Create the file +/etc/puppet/modules/iptables/files/web-server.role+
+   with the following contents:
++
+----
+# Access to web
+iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${WEB} -j ACCEPT
+
+# Send mail from web applications
+iptables -A OUTPUT -p tcp --dport ${SMTP} -j ACCEPT
+----
+
+7. Create the file +/etc/puppet/modules/iptables/files/puppet-server.role+
+   with the following contents:
++
+----
+# Access to puppet
+iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${PUPPET} -j ACCEPT
+----
+
+8. Include the following on your Puppetmaster node:
++
+----
+iptables::role { "web-server": }
+iptables::role { "puppet-server": }
+----
+
+9. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1311682880'
+
+notice: /Stage[main]/Iptables/File[/root/iptables]/ensure: created
+notice: /Stage[main]/Iptables/File[/root/iptables/names]/ensure:
+defined content as '{md5}9bb004a7d2c6d70616b149d044c22669'
+
+info: /Stage[main]/Iptables/File[/root/iptables/names]: Scheduling
+refresh of Exec[run-iptables]
+
+notice: /Stage[main]/Iptables/File[/root/iptables/hosts]/ensure:
+created
+
+notice: /Stage[main]/Iptables/File[/root/iptables/hosts/cookbook]/
+ensure: defined content as '{md5}d00bc730514bbb74cdef3dad70058a81'
+
+info: /Stage[main]/Iptables/File[/root/iptables/hosts/cookbook]:
+Scheduling refresh of Exec[run-iptables]
+
+notice: /Stage[main]//Node[cookbook]/Iptables::Role[web-server]/
+Append_if_no_such_line[web-server role]/Exec[/bin/echo '. `dirname
+$0`/roles/web-server' >> '/root/iptables/hosts/cookbook']/returns:
+executed successfully
+
+info: /Stage[main]//Node[cookbook]/Iptables::Role[web-server]/
+Append_if_no_such_line[web-server role]/Exec[/bin/echo '. `dirname
+$0`/roles/web-server' >> '/root/iptables/hosts/cookbook']:
+Scheduling refresh of Exec[run-iptables]
+
+notice: /Stage[main]//Node[cookbook]/Iptables::Role[puppetserver]/
+Append_if_no_such_line[puppet-server role]/Exec[/bin/echo
+'. `dirname $0`/roles/puppet-server' >> '/root/iptables/hosts/
+cookbook']/returns: executed successfully
+
+info: /Stage[main]//Node[cookbook]/Iptables::Role[puppet-server]/
+Append_if_no_such_line[puppet-server role]/Exec[/bin/echo '.
+`dirname $0`/roles/puppet-server' >> '/root/iptables/hosts/
+cookbook']: Scheduling refresh of Exec[run-iptables]
+
+notice: /Stage[main]/Iptables/File[/root/iptables/roles]/ensure:
+created
+
+notice: /Stage[main]//Node[cookbook]/Iptables::Role[puppetserver]/
+File[/root/iptables/roles/puppet-server]/ensure: defined
+content as '{md5}c30a13f7792525c181e14e78c9a510cd'
+
+info: /Stage[main]//Node[cookbook]/Iptables::Role[puppet-server]/
+File[/root/iptables/roles/puppet-server]: Scheduling refresh of
+Exec[run-iptables]
+
+notice: /Stage[main]//Node[cookbook]/Iptables::Role[web-server]/
+File[/root/iptables/roles/web-server]/ensure: defined content as
+'{md5}11e5747cb2737903ffc34133f5fe2452'
+
+info: /Stage[main]//Node[cookbook]/Iptables::Role[web-server]/
+File[/root/iptables/roles/web-server]: Scheduling refresh of
+Exec[run-iptables]
+
+notice: /Stage[main]/Iptables/File[/root/iptables/roles/common]/
+ensure: defined content as '{md5}116f57d4e31f3e0b351da6679dca15e3'
+
+info: /Stage[main]/Iptables/File[/root/iptables/roles/common]:
+Scheduling refresh of Exec[run-iptables]
+
+notice: /Stage[main]/Iptables/File[/root/iptables/iptables.sh]/
+ensure: defined content as '{md5}340ff9fb5945e9fc7dd78b21f45dd823'
+
+info: /Stage[main]/Iptables/File[/root/iptables/iptables.sh]:
+Scheduling refresh of Exec[run-iptables]
+
+notice: /Stage[main]/Iptables/Exec[run-iptables]: Triggered
+'refresh' from 8 events
+
+notice: /Stage[main]/Iptables/Append_if_no_such_line[restore
+iptables rules]/Exec[/bin/echo 'pre-up iptables-restore < /etc/
+iptables.rules' >> '/etc/network/interfaces']/returns: executed
+successfully
+
+notice: Finished catalog run in 4.86 seconds
+....
+
+10. Check that the required rules have been installed as follows:
++
+....
+# iptables -nL
+Chain INPUT (policy ACCEPT)
+target prot opt source     destination
+ACCEPT all  --  0.0.0.0/0  0.0.0.0/0
+ACCEPT all  --  0.0.0.0/0  0.0.0.0/0    state RELATED,ESTABLISHED
+ACCEPT tcp  --  0.0.0.0/0  10.0.2.15    tcp dpt:80
+ACCEPT tcp  --  0.0.0.0/0  10.0.2.15    tcp dpt:8140
+ACCEPT tcp  --  0.0.0.0/0  10.0.2.15    tcp dpt:22
+ACCEPT icmp --  0.0.0.0/0  0.0.0.0/0    icmp type 8
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:23
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:135
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:139
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:445
+DROP   udp  --  0.0.0.0/0  0.0.0.0/0    udp dpt:1433
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:1433
+DROP   udp  --  0.0.0.0/0  0.0.0.0/0    udp dpt:1434
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:1434
+DROP   tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:2967
+LOG    all  --  0.0.0.0/0  0.0.0.0/0    LOG
+  flags 0 level 4 prefix `INPUT: '
+DROP   all  --  0.0.0.0/0  0.0.0.0/0  
+
+Chain FORWARD (policy ACCEPT)
+target prot opt source destination
+Chain OUTPUT (policy ACCEPT)
+target prot opt source     destination
+ACCEPT all  --  0.0.0.0/0  0.0.0.0/0
+ACCEPT all  --  0.0.0.0/0  0.0.0.0/0    state RELATED,ESTABLISHED
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:25
+ACCEPT icmp --  0.0.0.0/0  0.0.0.0/0    icmp type 8
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:22
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:25
+ACCEPT udp  --  0.0.0.0/0  0.0.0.0/0    udp dpt:123
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:123
+ACCEPT udp  --  0.0.0.0/0  0.0.0.0/0    udp dpt:53
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:80
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:443
+ACCEPT tcp  --  0.0.0.0/0  10.0.2.15    tcp dpt:8140
+ACCEPT tcp  --  0.0.0.0/0  0.0.0.0/0    tcp dpt:3306
+LOG    all  --  0.0.0.0/0  0.0.0.0/0    LOG
+ flags 0 level 4 prefix `OUTPUT: '
+DROP   all  --  0.0.0.0/0  0.0.0.0/0
+....
+
+==== How it works…
+
+In order to create a suitable set of firewall rules, we need to know the main IP address of the
+machine in question, and also what services it is running. We also want to add some common
+rules that all machines will have (allow SSH, for example), and to run a series of `iptables`
+commands that will activate the rules we've generated. Having done this, we want to save the
+rules so that they can be reactivated at boot time. So here's how it's all done.
+
+First, we create a +names+ file that defines shell variables for some commonly-used ports. This
+means when we define firewall rules we can refer to a named variable like +${MYSQL}+ instead
+of the numeric value +3306+ for the MySQL port.
+
+The +common.role+ file contains some useful rules for all machines. Modify these to suit your
+own installation (for example, you might allow SSH access only from specific IP ranges).
+
+The +web-server.role+ and +puppet-server.role+ files contain rules for these specific
+roles. Add more files to define the roles you need on your network: for example, database
+servers, application workers, DNS servers, and so on. The rules are in the following format:
+
+----
+iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${WEB} -j ACCEPT
+----
+
+Usually, the only part you need to modify is the +${WEB}+: substitute another named port such
+as +${POSTGRES}+, defined in the +names+ file. Add more definitions to the +names+ file if you
+need them.
+
+The +iptables.sh+ script reads all of these other files and executes the required `iptables`
+commands. Puppet executes this script whenever any of the dependent files change, so all
+you need to do to refresh the firewall is to check in a change and run Puppet.
+
+Puppet also saves the current ruleset to +/etc/iptables.rules+. In order to reload the
+ruleset when the machine boots, Puppet adds a line to the +/etc/network/interfaces+
+file to do this:
+
+----
+pre-up iptables-restore < /etc/iptables.rules
+----
+
+What all this means is that you can create a suitable firewall for a machine simply by including
+a line like this in the relevant module:
+
+----
+iptables::role { "web-server": }
+----
+
+Once the firewall is activated, any packets that don't match the rules will be blocked and logged
+in +/var/log/messages+. Check this file to help troubleshoot any problems with the firewall.
+
+==== There's more…
+
+If you have certain specific machines that will be referenced in your rules (for example, your
+monitoring server) you can add it to the +names+ file like this:
+
+----
+MONITOR=10.0.2.15
+----
+
+Then in a suitable place (such as +common.role+) you can allow access from this machine to,
+for example, the NRPE port:
+
+----
+iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} -s ${MONITOR} --dport
+ ${NRPE} -j ACCEPT
+----
+
+You can also do this for database servers and anything else where you need to reference a
+specific address, network, or IP range in a +.role+ file.
+
+Dynamically generating the firewall ruleset like this can be very useful for cloud infrastructures
+where the list of servers is constantly changing as new ones are created and destroyed. All
+you need to do to have any resource trigger a firewall rebuild is to add:
+
+----
+notify => Exec["run-iptables"],
+----
+
+So you might have a "master server list" that you maintain in version control or update
+automatically from a cloud API such as Rackspace or Amazon EC2. This list might be a +file+
+resource in Puppet that can trigger a firewall rebuild, so every time you check in a change
+to the master list, every machine that runs Puppet will update its firewall accordingly.
+
+Of course, such a high degree of automation means that you need to be quite careful about
+what you check in, or you can take your whole infrastructure offline by mistake.
+
+A good way to test changes is to use a Git branch for your Puppet manifests, which is only
+applied on one or two servers. Once you have verified that the changes are good you can
+merge them into the master branch and roll them out.

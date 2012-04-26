@@ -1,0 +1,78 @@
+﻿[[ch04sec11]]
+=== Passing arguments to shell commands
+
+If you need to insert values into a command line, they often need to be quoted, especially if
+they contain spaces. The +shellquote+ function will take any number of arguments, including
+arrays, and quote each of the arguments and return them all as a space-separated string that
+you can pass to commands.
+
+In this example, we would like to set up an +exec+ resource which will rename a file, but both
+the source and the target name contain spaces, so they need to be correctly quoted in the
+command line.
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+$source = "Hello Jerry"
+$target = "Hello... Newman"
+$argstring = shellquote( $source, $target )
+$command = "/bin/mv ${argstring}"
+notify { $command: }
+----
+
+2. Run Puppet:
++
+....
+notice: /bin/mv "Hello Jerry" "Hello... Newman"
+....
+
+==== How it works…
+
+1. First we define the +$source+ and +$target+ variables, which are the two filenames we
+   want to use in the command line as follows:
++
+----
+$source = "Hello Jerry"
+$target = "Hello... Newman"
+----
+
+2. Then we call +shellquote+ to concatenate these variables into a quoted, space-separated
+   string.
++
+----
+$argstring = shellquote( $source, $target )
+----
+
+3. Then we put together the final command line:
++
+----
+$command = "/bin/mv ${argstring}"
+----
+
+4. The result is:
++
+....
+/bin/mv "Hello Jerry" "Hello... Newman"
+....
+
+5. This command line can now be run with an +exec+ resource.What would happen if
+   we didn't use +shellquote+?
++
+--
+----
+$source = "Hello Jerry"
+$target = "Hello... Newman"
+$command = "/bin/mv ${source} ${target}"
+notify { $command: }
+----
+
+....
+notice: /bin/mv Hello Jerry Hello... Newman
+....
+
+This won't work because `mv` expects space-separated arguments, so will interpret
+this as a request to move three files +Hello, Jerry+, and +Hello...+ into a directory
+named +Newman+, which probably isn't what we want.
+--

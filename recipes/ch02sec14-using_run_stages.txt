@@ -1,0 +1,111 @@
+﻿[[ch02sec14]]
+=== Using run stages
+
+[quote, Louis Saaberda,]
+What do you get when you play country music backwards? You get your girl back,
+your dog back, your pick-up back, and you stop drinking.
+
+It's important to do things in the right order. A common requirement is to apply a certain
+resource before all others (for example, installing a package repository), or after all others (for
+example, deploying an application once its dependencies are installed). Puppet's *run stages*
+allow you to do this.
+
+==== How to do it…
+
+1. Add the following to your manifest:
++
+----
+class install_repos {
+    notify { "This will be done first": }
+}
+
+class deploy_app {
+    notify { "This will be done last": }
+}
+
+stage { "first": before => Stage["main"] }
+stage { "last": require => Stage["main"] }
+
+class { "install_repos": stage => "first" }
+class { "deploy_app": stage => "last" }
+----
+
+2. Run Puppet as follows:
++
+......
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303127505'
+notice: This will be done first
+notice: /Stage[first]/Beginning/Notify[This will be done first]/
+message: defined 'message' as 'This will be done first'
+notice: This will be done last
+notice: /Stage[last]/End/Notify[This will be done last]/message:
+defined 'message' as 'This will be done last'
+notice: Finished catalog run in 0.59 seconds
+......
+
+
+==== How it works…
+
+1. We declared the classes for the things we want done first and last.
++
+----
+class install_repos {
+    notify { "This will be done first": }
+}
+
+class deploy_app {
+    notify { "This will be done last": }
+}
+----
+
+2. Then we created a run stage named first:
++
+----
+stage { "first": before => Stage["main"] }
+----
++
+The parameter +before+ specifies that everything in stage +first+ must be done before
+anything in stage +main+ (the default stage).
+
+3. Then we created a run stage named last:
++
+----
+stage { "last": require => Stage["main"] }
+----
++
+The parameter +require+ specifies that stage +main+ must be completed before any
+resource in stage last.
+
+4. Finally, we included the two classes +install_repos+ and +deploy_app+, specifying
+   that they should be part of stages +first+ and +last+ respectively:
++
+----
+class { "install_repos": stage => "first" }
+class { "deploy_app": stage => "last" }
+----
++
+Note that we used the keyword class, rather than include, just like when we were
+passing parameters to classes. You can think of +stage+ as a parameter that can
+always be passed to any class.
+
+5. Puppet will now apply the stages in the following order:
++
+----
+i. first
+ii. main
+iii. last
+----
+
+==== There's more…
+
+In fact, you can define as many run stages as you like, and set up any ordering for them.
+This can simplify a complicated manifest, which would otherwise require a lot of explicit
+dependencies between resources, to a great extent. If you can divide all the resources into
+groups A and B, and everything in A must be done before B, it's a prime candidate for using
+run stages.
+
+Gary Larizza has written a helpful introduction to using run stages, with some real-world
+examples, at http://glarizza.posterous.com/using-run-stages-with-puppet.

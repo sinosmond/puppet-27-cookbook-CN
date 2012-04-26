@@ -1,0 +1,269 @@
+﻿[[ch09sec07]]
+=== Using MCollective
+
+The *Marionette Collective* (*MCollective* for short) is a tool for system administration. It
+can run commands on large numbers of servers in parallel, and uses a broadcast architecture
+so that you can administer a large network without the need for a central master server or
+asset database.
+
+Each server runs an MCollective daemon that listens for requests, and can execute
+commands locally or return information about the server. This can be used to filter the list of
+target servers. So, for example, you could use MCollective to execute a given command on all
+servers that match certain criteria.
+
+You can think of MCollective as a complement to Puppet (though it also works fine with Chef
+and other configuration management systems). For example, your provisioning process for
+a new node might require firewall changes on other machines, permissions granted on a
+database server, and so on, which is not very easy to do with Puppet. Although you could
+automate specific jobs using shell scripts and SSH, MCollective provides a powerful and
+flexible way to solve this general problem.
+
+==== Getting ready...
+
+1. MCollective uses the ActiveMQ message broker framework (actually, any STOMPcompliant
+   middleware, but ActiveMQ is a popular choice), which in turn requires Java,
+   so if you don't have Java already installed on your system, install it:
++
+....
+# apt-get install gcj-4.4-jre-headless
+....
+
+2. Go to the ActiveMQ download page and get the latest stable "Unix distribution"
+   tarball: http://activemq.apache.org/download.html.
+3. Install the +stomp+ gem as follows:
++
+....
+# gem install stomp
+....
+
+4. Download the latest stable MCollective +.deb+ packages from: http://www.puppetlabs.com/misc/download-options/.
+5. Install the packages as follows:
++
+....
+# dpkg -i mcollective_1.0.1-1_all.deb mcollective-client_1.0.1-1_
+all.deb mcollective-common_1.0.1-1_all.deb
+....
+
+6. Download the tarball of the same release from the MCollective downloads page
+   (because it contains an example ActiveMQ configuration file).
+
+7. Edit the MCollective +server.cfg+ file:
++
+....
+# vi /etc/mcollective/server.cfg
+....
+
+8. Set the +plugin.stomp.host+ parameter to the name of your server (where you're
+   running ActiveMQ):
++
+----
+plugin.stomp.host = cookbook.bitfieldconsulting.com
+----
+
+9. Make the same change in the MCollective +client.cfg+ file:
++
+....
+# vi /etc/mcollective/client.cfg
+....
+
+10. Unpack the MCollective tarball and copy the example ActiveMQ configuration
+    into place:
++
+....
+# tar xvzf mcollective-1.0.1.tgz
+# cp mcollective-1.0.1/ext/activemq/examples/single-broker/
+activemq.xml /etc/mcollective
+....
+
+11. Edit the configuration file to set the password of the +mcollective+ user
+    to the same as it is in server.cfg:
++
+....
+# vi /etc/mcollective/activemq.xml
+....
+
+12. Unpack the ActiveMQ tarball and start the server using the following config file:
++
+....
+# tar xvzf apache-activemq-5.4.2-bin.tar.gz
+# apache-activemq-5.4.2/bin/activemq start xbean:/etc/mcollective/
+activemq.xml
+
+INFO: Using default configuration
+(you can configure options in one of these file: /etc/default/
+activemq /root/.activemqrc)
+
+INFO: Invoke the following command to create a configuration file
+bin/activemq setup [ /etc/default/activemq | /root/.activemqrc ]
+
+INFO: Using java '/usr/bin/java'
+
+INFO: Starting - inspect logfiles specified in logging.properties
+and log4j.properties to get details
+
+INFO: pidfile created : '/root/apache-activemq-5.4.2/data/
+activemq.pid' (pid '3322')
+....
+
+13. Start the MCollective server:
++
+....
+# service mcollective start
+Starting mcollective: *
+....
+
+==== How to do it…
+
+1. Check that MCollective and ActiveMQ are set up and working by running:
++
+....
+# mc-ping
+cookbook                             time=68.82 ms
+
+---- ping statistics ----
+1 replies max: 68.82 min: 68.82 avg: 68.82
+....
+
+2. If you don't see any results, check that the +mcollectived+ daemon is running, and
+   that a Java process is also running for ActiveMQ.
+3. Run +mc-inventory+ against your machine to see what information MCollective
+   knows about it:
++
+....
+# mc-inventory cookbook
+Inventory for cookbook:
+
+    Server Statistics:
+                       Version: 1.0.1
+                    Start Time: Mon Mar 07 11:44:53 -0700 2011
+                   Config File: /etc/mcollective/server.cfg
+                    Process ID: 4220
+                Total Messages: 14
+       Messages Passed Filters: 6
+             Messages Filtered: 5
+                  Replies Sent: 5
+          Total Processor Time: 0.8 seconds
+                   System Time: 0.47 seconds
+
+    Agents:
+             discovery rpcutil
+    Configuration Management Classes:
+
+    Facts:
+          mcollective => 1
+....
+
+4. Create a new custom fact for the server by adding the following code snippet to
+   +/etc/mcollective/facts.yaml+:
++
+----
+purpose: webserver
+----
+
+5. Now use MCollective to search for all machines matching this fact:
++
+....
+# mc-find-hosts --with-fact purpose=webserver
+cookbook
+....
+
+==== How it works…
+
+*MCollective* is a broadcast framework; when you issue a request like +mc-find-hosts+,
+MCollective sends a message out to all clients asking, "Does anyone match this filter?" All
+clients that match the filter will send a reply, and MCollective gathers the results and prints
+them out for you.
+
+You can install a number of plugins and agents for specific tasks (for example, running
+Puppet). These are installed on the clients, and MCollective handles the communications
+involved in sending the command out to all matching machines, and collating any results.
+
+==== There's more…
+
+Even though we've only taken a few steps with MCollective, it's clearly a powerful tool for both
+gathering information about servers, and executing commands on a list of servers that can be
+selected by facts. For example, you could get a list of all machines that haven't run Puppet in
+the last 24 hours. Or, you could take some action on all webservers, or all machines with an
++x86_64+ architecture.
+
+MCollective itself only provides a framework for such applications. There are a variety of
+plugins available which do useful things, and writing your own plugins is easy. In this example
+we'll use the +package+ plugin that allows you to query and operate on packages.
+
+===== Installing an MCollective plugin
+
+1. Clone the MCollective plugins repository from GitHub:
++
+....
+# git clone https://github.com/puppetlabs/mcollective-plugins.git
+....
+
+2. Copy the plugin files into place as follows:
++
+....
+# cd mcollective-plugins
+# cp agent/package/mc-package /usr/bin
+# cp agent/package/puppet-package.rb \
+     /usr/share/mcollective/plugins/mcollective/agent/package.rb
+# cp agent/package/package.ddl \
+     /usr/share/mcollective/plugins/mcollective/agent
+....
+
+3. Restart MCollective:
++
+....
+# service mcollective restart
+....
+
+4. Run +mc-inventory+ to check that the plugin appears in the list of agents:
++
+....
+# mc-inventory cookbook
+
+Inventory for cookbook:
+    Server Statistics:
+                       Version: 1.0.1
+                    Start Time: Tue Mar 08 08:28:29 -0700 2011
+                   Config File: /etc/mcollective/server.cfg
+                    Process ID: 6047
+                Total Messages: 1
+       Messages Passed Filters: 1
+             Messages Filtered: 0
+                  Replies Sent: 0
+          Total Processor Time: 0.04 seconds
+                   System Time: 0.02 seconds
+
+    Agents:
+        discovery        package        rpcutil
+
+    Configuration Management Classes:
+
+    Facts:
+        mcollective => 1
+        purpose => webserver
+....
+
+5. Try the +mc-package+ command to verify that it works with the following command:
++
+--
+....
+# mc-package status apache2
+Do you really want to operate on packages unfiltered? (y/n): y
+ * [ =========================================================> ] 1 / 1
+
+cookbook                            version = apache2-2.2.14-5ubuntu8.4
+
+---- package agent summary ----
+          Nodes: 1 / 1
+       Versions: 1 * 2.2.14-5ubuntu8.4
+   Elapsed Time: 0.58 s
+....
+
+The +package+ agent provides a powerful way to check package versions across
+your whole network, or only on certain machines, and install or update packages
+as necessary. For more details about this and other MCollective plugins, check the
+wiki page at: http://projects.puppetlabs.com/projects/mcollective-plugins/wiki.
+
+For more information on MCollective, see the main page at: 
+http://docs.puppetlabs.com/mcollective/.
+--

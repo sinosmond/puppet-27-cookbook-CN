@@ -1,0 +1,86 @@
+﻿[[ch02sec01]]
+=== Generating reports
+
+[quote, Pearl Bailey,]
+What the world really needs is more love and less paperwork.
+
+Truth is often the first casualty of large infrastructures. If you're managing a lot of machines,
+Puppet's reporting facility can give you some valuable information on what's actually
+happening out there.
+
+==== How to do it…
+
+To enable reports, just add the following to a client's +puppet.conf+:
+
+----
+report = true
+----
+
+==== How it works…
+
+With reporting enabled, Puppet will generate a report file on the Puppetmaster, containing
+data such as the following:
+
+- Time required to fetch configuration from the Puppetmaster
+- Total time of the run
+- Log messages output during the run
+- List of all resources in the client's manifest
+- Whether Puppet changed each resource
+- Whether a resource was out of sync with the manifest
+
+By default, these reports are stored in +/var/lib/puppet/reports+, but you can specify a
+different destination using the +reportdir+ option. You can either create your own scripts to
+process these reports (which are in the standard *YAML* format), or use a tool such as *Puppet
+Dashboard* to get a graphical overview of your network.
+
+==== There's more…
+
+A few tips for getting the best from Puppet's reports are explained in the following text.
+
+===== Enabling reports on the command line
+
+If you just want one report, or you don't want to enable reporting for all clients, you can add
+the `--report` switch to the command line when you run Puppet manually:
+
+......
+# puppet agent --test --report
+......
+
+You can also see some statistics about a Puppet run by supplying the `--summarize` switch
+as follows:
+
+......
+# puppet agent --test --summarize
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1306169315'
+notice: Finished catalog run in 0.58 seconds
+Changes:
+Events:
+Resources:
+             Total: 7
+Time:
+  Config retrieval: 3.65
+        Filebucket: 0.00
+          Schedule: 0.00
+......
+
+===== Logging Puppet messages to syslog
+
+Puppet can also send its log messages to the Puppetmaster's *syslog*, so that you can analyze
+them with standard syslog tools. To enable this, set the following option in the Puppetmaster's
++puppet.conf+:
+
+----
+[master]
+reports = store,log
+----
+
+The default report type is +store+ (it writes the reports to +/var/lib/puppet/reports+), and
++log+ tells Puppet to also send messages to the syslog.
+
+==== See also
+
+- <<ch02sec03,Creating graphical reports>> in this chapter
+- <<ch02sec11,Logging debug messages>> in this chapter
+- <<ch09sec05,Using Puppet Dashboard>> in Chapter 9

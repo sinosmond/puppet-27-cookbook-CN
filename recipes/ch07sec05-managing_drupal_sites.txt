@@ -1,0 +1,192 @@
+﻿[[ch07sec05]]
+=== Managing Drupal sites
+
+*Drupal* is a content management system that lets you build websites quickly by plugging
+together canned modules, and makes it relatively easy for users to create and edit their own
+content. It's particularly suited to management with Puppet because there is a powerful
+command-line tool, +drush+, which you can use to install and manage Drupal sites.
+
+If we combine the automation power of +drush+ with the recipes that we already created for
+MySQL databases and Apache virtual hosts, we can build a recipe that installs everything
+necessary for a Drupal site with a single resource.
+
+==== Getting ready…
+
+1. Create a new +drupal+ module as follows:
++
+....
+# mkdir /etc/puppet/modules/drupal
+# mkdir /etc/puppet/modules/drupal/manifests
+....
+
+2. Create the file +/etc/puppet/modules/drupal/manifests/init.pp+ with the
+   following contents:
++
+----
+class drupal {
+    $drupalversion = "7.2"
+
+    exec { "download-drush":
+        cwd => "/root",
+        command => "/usr/bin/wget http://ftp.drupal.org/files/
+         projects/drush-7.x-4.4.tar.gz ",
+        creates => "/root/drush-7.x-4.4.tar.gz",
+        require => Package["php5-mysql"],
+    }
+
+    exec { "install-drush":
+        cwd     => "/usr/local",
+        command => "/bin/tar xvzf /root/drush-7.x-4.4.tar.gz",
+        creates => "/usr/local/drush",
+        require => Exec["download-drush"],
+    }
+
+    file { "/usr/local/bin/drush":
+        ensure => link,
+        target => "/usr/local/drush/drush",
+        require => Exec["install-drush"],
+    }
+
+    exec { "install-drupal":
+        cwd     => "/var/www",
+        command => "/usr/local/drush/drush dl drupal-
+         ${drupalversion}",
+        creates => "/var/www/drupal-${drupalversion}",
+        require => Exec["install-drush"],
+    }
+
+    file { "/var/www/drupal":
+        ensure => link,
+        target => "/var/www/drupal-${drupalversion}",
+        require => Exec["install-drupal"],
+    }
+
+    package { [ "libapache2-mod-php5",
+                "php5-mysql" ]: ensure => installed }
+
+    exec { "enable-mod-php5":
+        command => "/usr/bin/a2enmod php5",
+        creates => "/etc/apache2/mods-enabled/php5.conf",
+        require => Package["libapache2-mod-php5"],
+    }
+}
+----
+
+
+==== How to do it…
+
+1. Add the following to +init.pp+ within the +drupal+ class:
++
+----
+define site( $password, $sitedomain = "" ) {
+    include drupal
+
+    if $sitedomain == "" {
+        $drupal_domain = $name
+    } else {
+        $drupal_domain = $sitedomain
+    }
+
+    $dbname = regsubst( $drupal_domain, "\.", "" )
+    mysql::server::db { $dbname:
+        user => $dbname,
+        password => $password,
+    }
+
+    exec { "site-install-${name}":
+        cwd => "/var/www/drupal",
+        command => "/usr/local/bin/drush site-install -y 
+         --site-name=${name} --sites-subdir=${drupal_domain}
+         --db-url=mysql://${dbname}:${password}@localhost/${dbname}",
+        creates => "/var/www/drupal/sites/${drupal_domain}",
+        require => [ File["/var/www/drupal"], Exec["install-drupal"],
+         Mysql::Server::Db[$dbname] ],
+        logoutput => on_failure,
+    }
+
+    apache::site { $drupal_domain:
+        documentroot => "/var/www/drupal",
+    }
+}
+----
+
+2. Add the following to a node:
++
+----
+drupal::site { "crispinfo.com":
+    password => "crunch",
+}
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1309783783'
+
+notice: /Stage[main]//Node[cookbook]/Drupal::Site[crispinfo.com]/
+Mysql::Server::Db[crispinfocom]/Exec[create-crispinfocom-db]/
+returns: executed successfully
+
+notice: /Stage[main]//Node[cookbook]/Drupal::Site[crispinfo.com]/
+Apache::Site[crispinfo.com]/File[/etc/apache2/sites-available/
+crispinfo.com.conf]/ensure: defined content as '{md5}15c5bbffa6128
+fce0b8a3996914af549'
+
+info: /Stage[main]//Node[cookbook]/Drupal::Site[crispinfo.com]/
+Apache::Site[crispinfo.com]/File[/etc/apache2/sites-available/
+crispinfo.com.conf]: Scheduling refresh of Exec[enable-crispinfo.
+com-vhost]
+
+notice: /Stage[main]//Node[cookbook]/Drupal::Site[crispinfo.com]/
+Apache::Site[crispinfo.com]/Exec[enable-crispinfo.com-vhost]:
+Triggered 'refresh' from 1 events
+
+info: /Stage[main]//Node[cookbook]/Drupal::Site[crispinfo.com]/
+Apache::Site[crispinfo.com]/Exec[enable-crispinfo.com-vhost]:
+Scheduling refresh of Service[apache2]
+
+notice: /Stage[main]/Apache/Service[apache2]: Triggered 'refresh'
+from 1 events
+
+notice: /Stage[main]//Node[cookbook]/Drupal::Site[crispinfo.com]/
+Exec[site-install-crispinfo.com]/returns: executed successfully
+notice: Finished catalog run in 22.51 seconds
+....
+
+4. Create an +/etc/hosts+ entry pointing +crispinfo.com+ to the node you're using (if
+it's not already set in DNS) as follows:
++
+----
+10.0.2.15 crispinfo.com
+----
+
+5. Check the site in a web browser to make sure everything has been properly created.
+   You should see the Drupal login prompt as shown in the following screenshot:
++
+image::image/ch07sec05.png[]
+
+The default administrator login created by `drush site-install` is username +admin+ and
+password +admin+. Obviously you should set a stronger password for production sites (see the
++drush+ documentation for how to do this on the command line).
+
+==== How it works…
+
+Magic! Specifically -- the +drupal+ class first installs drush, and then uses it to install the Drupal
+core code (you can change the version used by altering the value of $drupalversion).
+
+The +drupal::sitedefine+ runs `drush site-install` for each site you want to create.
+In our example, we created a site called +crispinfo.com+ and passed in the database
+password; +drush+ does the rest.
+
++drupal::site+ also creates the necessary *Apache vhost* for our site 
+(using the recipe <<ch07sec02,Creating Apache virtual hosts>> in this chapter) and a MySQL database
+(using the recipe <<ch07sec04,Creating MySQL databases and users>> in this chapter).
+
+==== There's more…
+
++drush+ can do a great deal to help you manage Drupal sites, including updating Drupal core
+code, installing modules and themes, managing users, and backing up your databases. You
+can find out more about +drush+ at http://drush.ws/.

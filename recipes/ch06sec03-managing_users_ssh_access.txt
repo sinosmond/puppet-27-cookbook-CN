@@ -1,0 +1,146 @@
+﻿[[ch06sec03]]
+=== Managing users' SSH access
+
+The only secure server is one that's turned off. Nonetheless, a good approach to access
+control for servers is to use named user accounts with passphrase-protected SSH keys, rather
+than having users share an account with a widely-known password. Puppet makes this easy to
+manage, thanks to the built-in +ssh_authorized_key+ type.
+
+To combine this with virtual users, as described in the previous section, you can create a
+define, which includes both the +user+ and the +ssh_authorized_key+. This will also be
+useful for adding customization files and other per-user resources.
+
+==== How to do it…
+
+1. Change the +user::virtual+ class that you created in the section on managing
+   users with virtual resources, to the following:
++
+----
+class user::virtual
+{
+    define ssh_user( $key )
+    {
+        user { $name:
+            ensure => present,
+            managehome => true,
+             }
+
+        ssh_authorized_key { "${name}_key":
+            key => $key,
+            type => "ssh-rsa",
+            user => $name,
+                            }
+    }
+
+    @ssh_user { "phil":
+        key => "AAAAB3NzaC1yc2EAAAABIwAAAIEA3ATqENg+GW
+        ACa2BzeqTdGnJhNoBer8x6pfWkzNzeM8Zx7/2Tf2pl7kHdbsiT
+        XEUawqzXZQtZzt/j3Oya+PZjcRpWNRzprSmd2UxEEPTqDw9LqY5S2B8og/
+        NyzWaIYPsKoatcgC7VgYHplcTbzEhGu8BsoEVBGYu3IRy5RkAcZik=",
+    }
+}
+----
+
+2. Include the following on a node:
++
+----
+realize( User::Virtual::Ssh_user["phil"] )
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1305561740'
+
+notice: /Stage[main]/User::Virtual/User::Virtual::Ssh_user[phil]/
+User[phil]/ensure: created
+
+notice: /Stage[main]/User::Virtual/User::Virtual::Ssh_user[phil]/
+Ssh_authorized_key[phil_key]/ensure: created
+
+notice: Finished catalog run in 1.04 seconds
+....
+
+==== How it works…
+
+We've created a new +define+ called +ssh_user+, which includes both the user resource itself,
+and the associated +ssh_authorized_key+, shown as follows:
+
+----
+define ssh_user( $key )
+{
+    user { $name:
+        ensure => present,
+        managehome => true,
+         }
+
+    ssh_authorized_key { "${name}_key":
+        key  => $key,
+        type => "ssh-rsa",
+        user => $name,
+                        }
+}
+----
+
+Then we create a virtual instance of +ssh_user+ for the user phil:
+
+----
+    @ssh_user { "phil":
+        key => "AAAAB3NzaC1yc2EAAAABIwAAAIEA3ATqENg+GW
+        ACa2BzeqTdGnJhNoBer8x6pfWkzNzeM8Zx7/2Tf2pl7kHdbsiT
+        XEUawqzXZQtZzt/j3Oya+PZjcRpWNRzprSmd2UxEEPTqDw9LqY5S2B8og/
+        NyzWaIYPsKoatcgC7VgYHplcTbzEhGu8BsoEVBGYu3IRy5RkAcZik=",
+    }
+----
+
+Recall that because the resource is virtual, Puppet will take note of it but won't actually create
+anything until +realize+ is called.
+
+Finally, we added the following to the node:
+
+----
+    realize( User::Virtual::Ssh_user["phil"] )
+----
+
+This actually creates the +user+ and the +authorized_keys+ file containing the user's public key.
+
+==== There's more…
+
+To use this idea with the organization of users into group classes that we saw in the previous
+section, modify the classes like the following:
+
+----
+class user::sysadmins
+{
+    search User::Virtual
+
+    realize( Ssh_user["john"],
+             Ssh_user["graham"] )
+}
+----
+
+The +search+, +User::Virtual+ is just to save on clutter; it allows you to refer to +Ssh_user+
+directly without prefixing it with +User::Virtual::+ every time.
+
+You may get an error like the following:
+
+....
+err: /Stage[main]/User::Virtual/User::Virtual::Ssh_user[graham]/Ssh_
+authorized_key[graham_key]: Could not evaluate: No such file or directory
+- /home/graham/.ssh
+....
+
+
+It may be because you previously created the +graham+ user without having Puppet manage the
+home directory. In this situation, Puppet will not automatically create the +.ssh+ directory for the
++authorized_keys+ file. Run the following command:
+
+....
+# userdel graham
+....
+
+To fix the problem, run Puppet again.
+

@@ -1,0 +1,203 @@
+﻿[[ch08sec02]]
+=== Building high-availability services using Heartbeat
+
+[quote, 'Spaceballs',]
+Even in the future, nothing works!
+
+Sooner or later, everything breaks. High-availability services are those that can survive the
+failure of an individual machine or network connection. The primary technique for high
+availability is redundancy, otherwise known as throwing hardware at the problem. Although
+the eventual failure of an individual server is certain, the simultaneous failure of two servers
+is unlikely enough that this provides a good level of redundancy for most applications.
+
+One of the simplest ways to build a redundant pair of servers is to have them share an
+IP address using Heartbeat. *Heartbeat* is a daemon which runs on both machines and
+exchanges regular messages -- heartbeats -- between the two. One server is the primary, and
+normally has the resource: in this case, an IP address. If the secondary server fails to detect a
+heartbeat from the primary, it can take over the address, ensuring continuity of service.
+
+In this recipe we'll set up two machines in this configuration using Puppet, and I'll explain how
+to use it to provide a high-availability service.
+
+==== How to do it…
+
+1. Create a +heartbeat+ module as follows:
++
+....
+# mkdir /etc/puppet/modules/heartbeat
+# mkdir /etc/puppet/modules/heartbeat/manifests
+# mkdir /etc/puppet/modules/heartbeat/files
+....
+
+2. Create the file +/etc/puppet/modules/heartbeat/manifests/init.pp+ with
+   the following contents:
++
+----
+class heartbeat {
+  package { "heartbeat":
+    ensure => installed,
+  }
+
+  service { "heartbeat":
+    ensure  => running,
+    require => Package["heartbeat"],
+  }
+
+  exec { "reload-heartbeat":
+    command     => "/usr/sbin/service heartbeat reload",
+    refreshonly => true,
+  }
+
+  file { "/etc/ha.d/authkeys":
+    source  => "puppet:///modules/heartbeat/authkeys",
+    mode    => "600",
+    require => Package["heartbeat"],
+    notify  => Exec["reload-heartbeat"],
+  }
+
+  file { "/etc/ha.d/haresources":
+    source  => "puppet:///modules/heartbeat/haresources",
+    notify  => Exec["reload-heartbeat"],
+    require => Package["heartbeat"],
+  }
+
+  file { "/etc/ha.d/ha.cf":
+    source  => "puppet:///modules/heartbeat/ha.cf",
+    notify  => Exec["reload-heartbeat"],
+    require => Package["heartbeat"],
+  }
+}
+----
+
+3. Create the file +/etc/puppet/modules/heartbeat/files/haresources+ with
+   the following contents. Substitute for +cookbook+ the name of your primary server.
+   This should be whatever is returned by `uname -n` on the server. For +10.0.2.100+
+   substitute the IP address you want to share between the two machines. This should
+   be an address that is currently unused on your network. Heartbeat will assign it to the
+   interface listed at the end (+eth0:1+ in this case).
++
+----
+cookbook IPaddr::10.0.2.100/24/eth0:1
+----
+
+4. Create the file +/etc/puppet/modules/heartbeat/files/authkeys+ with the
+   following contents (replace +topsecretpassword+ with a password of your own
+   choosing):
++
+----
+auth 1
+1 sha1 topsecretpassword
+----
+
+5. Create the file +/etc/puppet/modules/heartbeat/files/ha.cf+ with the
+   following contents. Replace the two IP addresses with the main addresses of your
+   two machines. Similarly, replace +cookbook+ and +cookbook2+ with the node names
+   of your machines (whatever is returned by `uname -n`).
++
+----
+autojoin none
+ucast eth0 10.0.2.15
+ucast eth0 10.0.2.16
+keepalive 1
+deadtime 10
+warntime 5
+udpport 694
+auto_failback on
+node cookbook
+node cookbook2
+use_logd yes
+----
+
+6. Run Puppet on each of the two servers:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1311440876'
+
+notice: /Stage[main]/Heartbeat/Package[heartbeat]/ensure: created
+notice: /Stage[main]/Heartbeat/File[/etc/ha.d/authkeys]/ensure:
+defined content as '{md5}e908c869aabe519aa69acc9e51da3399'
+
+info: /Stage[main]/Heartbeat/File[/etc/ha.d/authkeys]: Scheduling
+refresh of Exec[reload-heartbeat]
+
+notice: /Stage[main]/Heartbeat/File[/etc/ha.d/ha.cf]/ensure:
+defined content as '{md5}a8d3fdd62a1172cdff150fc1d86d8a6b'
+
+info: /Stage[main]/Heartbeat/File[/etc/ha.d/ha.cf]: Scheduling
+refresh of Exec[reload-heartbeat]
+
+notice: /Stage[main]/Heartbeat/File[/etc/ha.d/haresources]/ensure:
+defined content as '{md5}0f25aefe7f6c4c8e81b3bb6c86a42d60'
+
+info: /Stage[main]/Heartbeat/File[/etc/ha.d/haresources]:
+Scheduling refresh of Exec[reload-heartbeat]
+
+notice: /Stage[main]/Heartbeat/Exec[reload-heartbeat]: Triggered
+'refresh' from 3 events
+
+notice: Finished catalog run in 27.01 seconds
+....
+
+7. On the primary node, check that it has the resource:
++
+....
+# cl_status rscstatus -m
+This node is holding all resources.
+....
+
+8. On the secondary, you should see this:
++
+....
+# cl_status rscstatus -m
+This node is holding none resources.
+....
+
+9. Stop the Heartbeat service on the primary node:
++
+....
+# service heartbeat stop
+....
+
+10. The secondary node should now be holding the resource:
++
+....
+# cl_status rscstatus -m
+This node is holding all resources.
+....
+
+==== How it works…
+
+The Heartbeat daemon runs on each machine, listening for heartbeats from the other. If the
+primary detects that the secondary has gone down, nothing happens. On the other hand,
+if the secondary detects that the primary has gone down, it fails over (takes over) the IP
+address. When the primary comes back up, the secondary will relinquish the address again
+(if +auto_failback+ is set to on). In some cases, for example if you're sharing the IP address
+between a master and slave database server, you may not want this behavior, in which case
+set +auto_failback+ to off.
+
+==== There's more…
+
+Now that you have a shared IP address (really a misnomer, since the address is not 'shared',
+but swaps between one server and the other) you can use it to provide a high-availability
+service on this address. For example, if the servers are hosting a website, you can set the DNS
+record for the website to point to the shared address. When the primary server goes down, the
+secondary will take over and continue responding to HTTP requests on the address.
+
+
+[TIP]
+================
+If you're using an SSL site, you will need to configure the SSL virtual host
+with the shared IP address, or it won't be able to respond to requests on
+that IP. Also, if the website uses sessions, any sessions on the primary
+server will be lost following a failover, unless the sessions are stored in
+a separate shared database.
+================
+
+A shared IP address is a great way of pairing redundant load balancers (see the section on
+<<ch08sec04,Using HAProxy to load-balance multiple web servers>>). 
+You can also use it to provide redundant Puppetmaster machines. A suitable
+pattern is presented on the Puppet Labs site: 
+http://projects.puppetlabs.com/projects/1/wiki/High_Availability_Patterns.

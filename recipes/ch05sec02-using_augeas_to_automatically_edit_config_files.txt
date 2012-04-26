@@ -1,0 +1,156 @@
+﻿[[ch05sec02]]
+=== Using Augeas to automatically edit config files
+
+Of course, the great thing about standards is that there are so many of them. Sometimes
+it seems like every application config file format is slightly different, and writing regular
+expressions to parse and modify all of them can be a tiresome business.
+
+Thankfully, Augeas is here to help. Augeas is a tool which aims to simplify working with
+different config file formats, by presenting them all as a simple tree of values. Puppet's
+Augeas support allows you to create +augeas+ resources which can make the required
+config changes intelligently and automatically.
+
+==== Getting ready…
+
+Before we can use Augeas, we need to install it. The following Puppet code will add Augeas
+to your setup.
+
+1. Create the file +/etc/puppet/modules/admin/manifests/augeas.pp+ with
+   the following contents:
++
+----
+class admin::augeas {
+    package { [ "augeas-lenses",
+                "augeas-tools",
+                "libaugeas0",
+                "libaugeas-ruby1.8" ]:
+        ensure => "present"
+    }
+}
+----
+
+2. Include the following class on a node:
++
+----
+node cookbook {
+    include admin::augeas
+}
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303657095'
+notice: /Stage[main]/Admin::Augeas/Package[augeas-tools]/ensure:
+ensure changed 'purged' to 'present'
+notice: Finished catalog run in 21.96 seconds
+....
+
+
+==== How to do it…
+
+1. Create the file +/etc/puppet/modules/admin/manifests/ipforward.pp+
+   with the following contents:
++
+----
+class admin::ipforward {
+    augeas { "enable-ip-forwarding":
+        context => "/files/etc/sysctl.conf",
+        changes => [
+            "set net.ipv4.ip_forward 1",
+        ],
+    }
+}
+----
+
+2. Include this class on a node:
++
+----
+node cookbook {
+    include admin::augeas
+    include admin::ipforward
+}
+----
+
+3. Run Puppet:
++
+....
+# puppet agent --test
+info: Retrieving plugin
+info: Caching catalog for cookbook.bitfieldconsulting.com
+info: Applying configuration version '1303729376'
+notice: /Stage[main]/Admin::Ipforward/Augeas[enable-ipforwarding]/
+returns: executed successfully
+notice: Finished catalog run in 3.53 seconds
+....
+
+4. Check that the setting has been correctly applied with the following command:
++
+....
+# sysctl -p |grep forward
+net.ipv4.ip_forward = 1
+....
+
+
+==== How it works…
+
+This is what is going on in the preceding code:
+
+1. We declare an +augeas+ resource named +enable-ip-forwarding+:
++
+----
+augeas { "enable-ip-forwarding":
+----
+
+2. We specify that we want to make changes in the context of the
+   file +/etc/sysctl.conf+:
++
+----
+    context => "/files/etc/sysctl.conf",
+----
+
+3. The parameter +changes+ is passed an array of settings that we want to
+   make (in this case only one):
++
+--
+----
+    changes => [
+        "set net.ipv4.ip_forward 1",
+    ],
+----
+
+In general Augeas changes take the following form:
+
+----
+set <parameter> <value>
+----
+
+Augeas uses a set of translation files called *lenses* to enable it to write these settings
+in the appropriate format for the given config file. In this case, the setting will be
+translated into a line such as the following in +/etc/sysctl.conf+:
+
+----
+net.ipv4.ip_forward=1
+----
+--
+
+==== There's more…
+
+The +/etc/sysctl.conf+ file is used as the example because it can contain a wide variety
+of kernel settings, and you may want to change these settings for all sorts of different
+purposes and in different Puppet classes. You might want to enable IP forwarding for a
+router class as in the preceding example, but you might also want to tune the value of
++net.core.somaxconn+ for a load-balancer class.
+
+This means that simply "Puppetizing" the +/etc/sysctl.conf+ file and distributing it as a text
+file won't work, because you might have several different and conflicting versions, depending
+on the setting you want to modify. Augeas is the right solution here because you can define
++augeas+ resources in different places which modify the same file, such that they won't conflict.
+
+Augeas is a powerful tool that ships with lenses for most of the standard Linux config files,
+and you can write your own for rare or proprietary config formats if you need to manage
+these. For more about using Puppet and Augeas, visit the page on the Puppet Labs wiki: 
+http://projects.puppetlabs.com/projects/1/wiki/Puppet_Augeas.

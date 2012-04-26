@@ -1,0 +1,38 @@
+﻿[[ch02sec03]]
+=== Creating graphical reports
+
+Let's face it, bosses like pretty pictures. Puppet can produce report data in a form suitable
+for processing by the *RRD* (*Round-Robin Database*) graph library, to produce a graphical
+representation of metrics such as the runtime on each client.
+
+==== Getting ready
+
+You will need to install the RRD tools and libraries for Ruby on your system. For Ubuntu, run
+the following command:
+
+......
+# apt-get install rrdtool librrd-ruby
+......
+
+==== How to do it…
+
+Add the +rrdgraph+ report type to your +puppet.conf+ as follows:
+
+----
+reports = store,rrdgraph
+----
+
+==== How it works…
+
+For each run, Puppet will record data in the client's RRD directory (the default is +/var/lib/
+puppet/rrd/<clientname>+). It will create graphs in a PNG format for events, resources,
+and retrieval time, while the raw data is available to you in the +.rrd+ files if you want to
+process it further using third-party RRD tools.
+
+==== There's more…
+
+For more detailed reporting and graphing, you can use Puppet Dashboard.
+
+==== See also
+
+- <<ch09sec05,Using Puppet dashboard>> in Chapter 9

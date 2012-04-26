@@ -1,0 +1,108 @@
+﻿[[ch03sec06]]
+=== Iterating over multiple items
+
+It's one darned thing after another! *Arrays* are a powerful feature in Puppet; wherever you
+want to perform the same operation on a list of things, an array may able to help. You can
+create an array just by putting its contents in square brackets:
+
+----
+$lunch = [ "franks", "beans", "mustard" ]
+----
+
+==== How to do it…
+
+Add the following code to your manifest:
+
+----
+$packages = [ "ruby1.8-dev",
+              "ruby1.8",
+              "ri1.8",
+              "rdoc1.8",
+              "irb1.8",
+              "libreadline-ruby1.8",
+              "libruby1.8",
+              "libopenssl-ruby" ]
+
+package { $packages: ensure => installed }
+----
+
+Run Puppet, and note that each package should now be installed.
+
+==== How it works…
+
+Where Puppet encounters an array as the name of a resource, it creates a resource for
+each element in the array. In the preceding example, a new +package+ resource is created
+for each of the packages in the +$packages+ array, with the same parameters (+ensure =>
+installed+). This is a very compact way of instantiating lots of similar resources.
+
+==== There's more…
+
+If you thought arrays were exciting, wait till you hear about hashes.
+
+===== Hashes
+
+A *hash* is like an array, but each of the elements can be stored and looked up by name.
+For example:
+
+----
+$interface = { name    => 'eth0',
+               address => '192.168.0.1' }
+
+notice("Interface ${interface[name]} has address ${interface[address]}")
+----
+
+....
+Interface eth0 has address 192.168.0.1
+....
+
+Hash values can be anything that you can assign to a variable: strings, function calls,
+expressions, or even other hashes or arrays.
+
+===== Creating arrays with the split function
+
+You can declare literal arrays using square brackets, as follows:
+
+----
+define lunchprint() {
+    notify { "Lunch included $name": }
+}
+
+$lunch = [ "egg", "beans", "chips" ]
+lunchprint { $lunch: }
+
+Lunch included egg
+Lunch included beans
+Lunch included chips
+----
+
+But Puppet can also create arrays for you from strings, using the +split+ function, as follows:
+
+----
+$menu = "egg beans chips"
+$items = split($menu, ' ')
+lunchprint { $items: }
+
+Lunch included egg
+Lunch included beans
+Lunch included chips
+----
+
+Note that +split+ takes two arguments; the first being the string it has to split. The second is
+the character to split on; in this example, a single space. As Puppet works its way through the
+string, when it encounters a space, it will interpret it as the end of one item and the beginning
+of the next. So, given the string +"egg beans chips"+, this will be split into three items.
+
+The character to split on can be any character, or a string:
+
+----
+$menu = "egg and beans and chips"
+$items = split($menu, ' and ')
+----
+
+It can also be a regular expression; for example, a set of alternatives separated by a +|+
+(pipe) character:
+
+----
+$lunch = "egg:beans,chips"
+$items = split($lunch, ':|,')
+----

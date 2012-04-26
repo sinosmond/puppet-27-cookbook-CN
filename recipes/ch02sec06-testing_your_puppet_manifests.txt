@@ -1,0 +1,167 @@
+﻿[[ch02sec06]]
+=== Testing your Puppet manifests
+
+[quote, J.K. Galbraith,]
+If all else fails, immortality can always be assured by spectacular error.
+
+Trouble has a way of sneaking up on you like a bug on a windshield. The standard checks
+provided by monitoring tools like *Nagios* don't always cover everything you want to monitor.
+While metrics such as load average and disk space can be useful problem indicators', I like to
+be able to get higher-level information about the applications and services my machines provide.
+
+For example, if you are running a web application, it's not enough to know that the web server
+is listening to connections on port 80 and responding with an +HTTP 200 OK+ status. It could
+just be returning the default Apache welcome page.
+
+If your web application is an online store, for example, you might want to check the following:
+
+- Do we see expected text in the returned page (for example, "Welcome to FooStore")?
+- Can we log in as a user (if the application supports sessions)?
+- Can we search for a product and see the expected result?
+- Is the response time satisfactory?
+
+This kind of monitoring—focusing on the behavior of the application, rather than operational
+metrics of the server itself—is sometimes called *behavior-driven monitoring*.
+
+Just as developers often use behavior-driven tests to verify that the application does what it
+should when they make code changes, you can use behavior-driven monitoring to monitor it
+continuously in production.
+
+In fact, thanks to a tool called `cucumber-nagios`, you can run the same tests the developers
+use. Lindsay Holmwood's wrapper for the popular *Cucumber* testing framework lets you run
+Cucumber-based tests under Nagios as though they were standard Nagios metrics.
+
+==== Getting ready
+
+1. To install `cucumber-nagios`, you will need a few dependencies first. If you are
+   on Ubuntu or Debian, you will probably need to install *RubyGems* from source, as
+   `cucumber-nagios` needs RubyGems 1.3.6 or higher. Download the *tarball* from the
+   RubyGems site: http://rubygems.org/pages/download. Unpack it and run
+   `ruby setup.rb` to build and install the package.
+2. Next, you need to install a few more dependencies:
++
+......
+# apt-get install ruby1.8-dev libxml2-dev
+......
+
+3. Finally, you can install `cucumber-nagios` itself as follows:
++
+......
+# gem install cucumber-nagios
+......
+
+
+==== How to do it…
+
+1. Once RubyGems and all its dependencies have been installed, you can start writing
+   Cucumber tests. To do this, first use `cucumber-nagios` to help create a project
+   directory with everything you will need:
++
+--
+......
+# cucumber-nagios-gen project mytest
+
+Generating with project generator:
+    [ADDED] features/steps
+    [ADDED] features/support
+    [ADDED] .gitignore
+    [ADDED] .bzrignore
+    [ADDED] lib/generators/feature/%feature_name%.feature
+    [ADDED] Gemfile
+    [ADDED] bin/cucumber-nagios
+    [ADDED] lib/generators/feature/%feature_name%_steps.rb
+    [ADDED] README
+......
+
+Your new cucumber-nagios project can be found in +/root/mytest+.
+
+Next, install the necessary RubyGems with:
+
+......
+bundle install
+......
+
+Your project has been initialized as a git repository.
+--
+
+2. It's a good idea to run `bundle install` inside the project directory, as `cucumber-nagios`
+   advises you to do. This will bundle all the dependencies for `cucumber-nagios` 
+   inside the directory. Then you can move the project directory to any machine
+   and it will work.
++
+......
+# cd mytest
+# bundle install
+......
+
+3. Now we can start writing a test. As an example, let's test the home page on Google:
++
+......
+# cucumber-nagios-gen feature www.google.com home
+Generating with feature generator:
+[ADDED] features/www.google.com/home.feature
+[ADDED] features/www.google.com/steps/home_steps.rb
+......
+
+4. If you edit the +home.feature+ file, you will find that `cucumber-nagios` has
+   generated a basic initial test for you:
++
+--
+----
+Feature: www.google.com
+  It should be up
+
+  Scenario: Visiting home page
+    When I go to "http://www.google.com"
+    Then the request should succeed
+----
+
+You can run this from the project directory as follows:
+
+......
+# cucumber --require features features/www.google.com/home.feature
+Feature: www.google.com
+  It should be up
+
+  Scenario: Visiting home page # features/www.google.
+  com/home.feature:4
+
+    When I go to "http://www.google.com" # features/steps/http_
+    steps.rb:11
+
+    Then the request should succeed # features/steps/http_
+    steps.rb:64
+
+1 scenario (1 passed)
+2 steps (2 passed)
+0m0.176s
+......
+--
+
+5. Assuming this works (if it doesn't, call Google), all you need to do to make this feature
+   a Nagios check is to run it with `cucumber-nagios` instead of cucumber:
++
+......
+# bin/cucumber-nagios features/www.google.com/home.feature
+
+CUCUMBER OK - Critical: 0, Warning: 0, 2 okay | passed=2;
+failed=0; nosteps=0; total=2; time=0
+......
+
+
+==== How it works…
+
+Any script can be a Nagios monitoring plugin; it just has to return the appropriate exit status (0
+for OK, 1 for warning, and 2 for critical). `cucumber-nagios` wraps Cucumber tests to do this,
+and also prints out useful information which Nagios will report via the alert or the web interface.
+
+==== There's more…
+
+By itself, this doesn't do anything very useful. However, Cucumber lets you write quite
+sophisticated interaction scripts with websites: you can fill in form fields, search, click buttons,
+match text on the page, and so on. Whatever features of your web application or service you
+want to monitor; first figure out what a user would do in a web browser, then automate those
+steps with Cucumber to create the monitoring script.
+
+You can find out more about how to write tests for `cucumber-nagios` on the Cucumber
+website: http://cukes.info/

@@ -1,0 +1,112 @@
+﻿[[ch09sec06]]
+=== Using Foreman
+
+*Foreman* is a web-based Puppet management tool like Puppet Dashboard, but more
+ambitious. Foreman can manage not only Puppet reporting, nodes and manifest configuration,
+but also provision new machines for you. If you need to build large numbers of servers
+automatically, or if you frequently rebuild servers, Foreman will help with this process.
+
+==== Getting ready…
+
+1. Add the Foreman package repo to your system, following the instructions at
+   http://theforeman.org/projects/foreman/wiki/Installation_instructions.
+2. Install the Foreman package as follows:
++
+....
+# apt-get update
+# apt-get install foreman
+....
+
+3. You will be prompted to select a database, so choose +mysql+, +pgsql+, or +sqlite+
+   depending which one you want to use.
+4. Install one of the following packages depending which database you selected in
+   the previous step:
++
+....
+# apt-get install foreman-mysql
+# apt-get install foreman-pgsql
+# apt-get install foreman-sqlite3
+....
+
+5. Copy the file +/etc/foreman/extras/puppet/foreman/files/foremanreport.rb+
+   to your Puppet custom report directory (usually +/usr/lib/ruby/1.8./puppet/reports+)
+   and name it foreman.rb as follows:
++
+....
+# cp /etc/foreman/extras/puppet/foreman/files/foreman-report.rb \
+     /usr/lib/ruby/1.8/puppet/reports/foreman.rb
+....
+
+6. Edit the +foreman.rb+ file to set the URL of your Foreman server as follows:
++
+----
+# URL of your Foreman installation
+$foreman_url="http://cookbook.bitfieldconsulting.com:3000"
+----
+
+7. Edit your +puppet.conf+ and add the +foreman+ report type to the list of enabled
+   reports:
++
+----
+[master]
+reports = store,log,foreman
+----
+
+8. Restart the Puppet server to enable this new report.
+
+==== How to do it…
+
+1. Start the Foreman server:
++
+....
+# /usr/share/foreman/script/server -e production
+....
+
+2. Browse to the web interface at the URL you previously set at http://cookbook.bitfieldconsulting.com:3000.
++
+--
+You should see Foreman's initial welcome page as shown in the following screenshot:
+
+image::image/ch09sec06_1.png[]
+--
+
+3. Now run Puppet on a client:
++
+--
+....
+# puppet agent --test
+....
+
+Go to the *Reports* section in the Foreman web interface. You should see a report for
+the client where you just ran Puppet as shown in the following screenshot:
+
+image::image/ch09sec06_2.png[]
+--
+
+4. Go to the Dashboard page and you will see an *OVERVIEW* of all your clients (just one
+   in this case, but you get the idea).
++
+image::image/ch09sec06_3.png[]
+
+
+==== There's more…
+
+We've only touched on the basics of Foreman here. Now that you've got it set up, you can
+experiment with the different reports, graphs, and other information available in Foreman.
+These become more valuable when you have many hosts to look after, and want to see
+statistics about how Puppet is running across the whole network.
+
+The other major feature of Foreman is provisioning: it can use PXEboot and Kickstart to build
+virtual or physical servers from scratch, sign your Puppet certificates automatically, and run
+Puppet to bring the machine up to production status. For more information about how to do
+this, see the Foreman documentation: http://theforeman.org/projects/foreman/wiki/Unattended_installations.
+
+
+[NOTE]
+========
+If you decide to use Foreman in production, it's probably worthwhile
+setting up an Apache virtual host for it rather than using the Webrick
+server that ships with Foreman. Webrick is useful for testing, but it's
+not really a production-grade web server.
+========
+
