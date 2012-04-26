@@ -1,18 +1,19 @@
-﻿[[ch02sec14]]
-=== Using run stages
+[[ch02sec14]]
+=== {Recipe214}
 
 [quote, Louis Saaberda,]
 What do you get when you play country music backwards? You get your girl back,
 your dog back, your pick-up back, and you stop drinking.
 
-It's important to do things in the right order. A common requirement is to apply a certain
-resource before all others (for example, installing a package repository), or after all others (for
-example, deploying an application once its dependencies are installed). Puppet's *run stages*
-allow you to do this.
+重要的是要以正确的顺序做的事情。
+一个普遍的需求是应用一个特定的资源之前必须先应用它所依赖的所有资源
+（例如，安装一个软件包仓库），或者之后运行其他资源
+（例如，一旦其所依赖的包都已安装，就部署应用程序）。
+Puppet 的 *run stages* 用于实现这种功能。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 class install_repos {
@@ -30,7 +31,7 @@ class { "install_repos": stage => "first" }
 class { "deploy_app": stage => "last" }
 ----
 
-2. Run Puppet as follows:
+2. 运行 Puppet：
 +
 ......
 # puppet agent --test
@@ -47,9 +48,9 @@ notice: Finished catalog run in 0.59 seconds
 ......
 
 
-==== How it works…
+==== {Howitworks}
 
-1. We declared the classes for the things we want done first and last.
+1. 首先把要做的工作根据先后顺序声明为两个类。
 +
 ----
 class install_repos {
@@ -61,37 +62,34 @@ class deploy_app {
 }
 ----
 
-2. Then we created a run stage named first:
+2. 然后创建一个名为 first 的运行阶段：
 +
 ----
 stage { "first": before => Stage["main"] }
 ----
 +
-The parameter +before+ specifies that everything in stage +first+ must be done before
-anything in stage +main+ (the default stage).
+参数 +before+ 指定了 +first+ 阶段必须在 +main+ 阶段（默认阶段）之前完成的一切。
 
-3. Then we created a run stage named last:
+3. 接着创建一个名为 last 的运行阶段：
 +
 ----
 stage { "last": require => Stage["main"] }
 ----
 +
-The parameter +require+ specifies that stage +main+ must be completed before any
-resource in stage last.
+参数 +require+ 指定了在 +last+ 阶段之前 +main+ 阶段必须完成的一切。
 
-4. Finally, we included the two classes +install_repos+ and +deploy_app+, specifying
-   that they should be part of stages +first+ and +last+ respectively:
+4. 最后，我们包含 +install_repos+ 和 +deploy_app+ 两个类， 指定他们
+   分别应该是 +first+ 阶段和 +last+ 阶段的一部分：
 +
 ----
 class { "install_repos": stage => "first" }
 class { "deploy_app": stage => "last" }
 ----
 +
-Note that we used the keyword class, rather than include, just like when we were
-passing parameters to classes. You can think of +stage+ as a parameter that can
-always be passed to any class.
+注意我们使用的是 +class+ 关键字，而不是 +include+ 关键字， 就像为类传递参数一样。
+你能想象，作为一个参数，+stage+ 可以被传递到任何类。
 
-5. Puppet will now apply the stages in the following order:
+5. Puppet 会按照如下的顺序应用 ++stage++：
 +
 ----
 i. first
@@ -99,13 +97,12 @@ ii. main
 iii. last
 ----
 
-==== There's more…
+==== {Theresmore}
 
-In fact, you can define as many run stages as you like, and set up any ordering for them.
-This can simplify a complicated manifest, which would otherwise require a lot of explicit
-dependencies between resources, to a great extent. If you can divide all the resources into
-groups A and B, and everything in A must be done before B, it's a prime candidate for using
-run stages.
+事实上，只要你喜欢你可以定义许多运行阶段，并为他们安排执行顺序。
+这可以简化配置清单的复杂性，否则在很大程度上就会需要很多资源之间的明确的依赖关系。
+如果你可以将所有资源分为A和B两组，A组资源必须要在B组资源之前运行完成，
+这是使用运行阶段的典型情况。
 
-Gary Larizza has written a helpful introduction to using run stages, with some real-world
-examples, at http://glarizza.posterous.com/using-run-stages-with-puppet.
+Gary Larizza 写了一篇有用的关于使用运行阶段的介绍文章，并结合了一些实际的例子，
+网址为 http://glarizza.posterous.com/using-run-stages-with-puppet 。

@@ -1,19 +1,19 @@
-﻿[[ch03sec11]]
-=== Using regular expression substitutions
+[[ch03sec11]]
+=== {Recipe311}
 
 [quote, Robert C. Gallagher,]
 Change is inevitable, except from vending machines.
 
-Puppet's +regsubst+ function provides an easy way to manipulate text, search and replace
-within strings, or extract patterns from strings. We commonly need to do this with data
-obtained from a fact for example, or from external programs.
+Puppet 的 +regsubst+ 函数提供了一种处理文本的简单方法，
+用于在字符串中查找和替换，或者从字符串提取匹配的模式。
+例如，我们通常需要对从 facter 或者从外部程序获得的数据做这样的处理。
 
-In this example we'll see how to use +regsubst+ to extract the first three octets of an IP
-address (the network part, assuming it's a Class C address).
+在本例中将会看到如何使用 +regsubst+ 提取一个 IP 地址的前三个字节
+（即网络地址部分，假定此 IP 地址是一个 C 类地址）。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 在配置清单中添加如下的代码：
 +
 ----
 $class_c = regsubst($ipaddress, "(.*)\..*", "\1.0")
@@ -21,38 +21,37 @@ notify { $ipaddress: }
 notify { $class_c: }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ......
 notice: 10.0.2.15
 notice: 10.0.2.0
 ......
 
-==== How it works…
+==== {Howitworks}
 
-+regsubst+ takes at least three parameters: +source+, +pattern+, and +replacement+. In our
-example, we specified the source string as +$ipaddress+, which happens to be:
++regsubst+ 函数需要携带三个参数： 源字符串、匹配模式（pattern）和替换结果。
+在本例中，我们指定的源字符串是 ++$ipaddress++，这恰好是：
 
 ----
     10.0.2.15
 ----
 
-We also specified the +pattern+ as +(.*)\..*+ and the +replacement+ as +\1.0+
+我们还指定了 ++(.*)\..*++ 作为匹配模式并且 ++\1.0++ 作为替换结果。 
 
-The +pattern+ will match the whole IP address, capturing the first three octets in round
-brackets. The captured text will be available as +\1+ for use in the +replacement+ string.
+匹配模式将匹配整个 IP 地址，捕获的前三个字节放在一对圆括号内。
+被捕获的文本可以在替换结果中使用 +\1+ 来引用。
 
-The whole of the matched text (in this case the whole string) is replaced with +replacement+.
-This is +\1+ (the captured text from the +source+ string) followed by the string +.0+, which
-evaluates to: +10.0.2.0+
+被匹配的全部文本（本例中是字符串 “10.0.2.15”）将使用替换结果（++replacement++）来替换。
+这里是 +\1+ （从源字符串中捕获的文本）跟上字符串 ++.0++， 
+最终获得：++10.0.2.0++。
 
-==== There's more…
+==== {Theresmore}
 
-+pattern+ can be any regular expression, using the same (Ruby) syntax as regular
-expressions in +if+ statements.
+匹配模式中可以使用任何正则表达式，与在 +if+ 语句中使用的正则表达式 (Ruby) 语法一致。
 
-==== See also
+==== {Seealso}
 
-- <<ch04sec09,Importing dynamic information>> in Chapter 4
-- <<ch04sec08,Getting information about the environment>> in Chapter 4
-- <<ch03sec08,Using regular expressions in if statements>> in this chapter
+- 第 4 章的 <<ch04sec09,{Recipe409}>> 一节
+- 第 4 章的 <<ch04sec08,{Recipe408}>> 一节
+- 第 3 章的 <<ch03sec08,{Recipe308}>> 一节

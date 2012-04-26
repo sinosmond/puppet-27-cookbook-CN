@@ -1,52 +1,54 @@
-﻿[[ch01sec01]]
-=== Using version control
+[[ch01sec01]]
+=== {Recipe101}
 
 [quote, Doug Gwyn,]
 Unix was not designed to stop you from doing stupid things, because that would
 also stop you from doing clever things.
 
-Ever deleted something and wished you hadn't? The most important tip in this book is to put
-your Puppet manifests in a *version control system* such as Git or Subversion. Editing the
-manifests directly on the *Puppetmaster* is a bad idea, because your changes could get applied
-before you're ready. Puppet automatically detects any changes to manifest files, so you might
-find half-finished manifests being applied to your clients. This could have nasty results!
+你曾经遇到过误删除了某些文件而又希望恢复的情形吧？ 本书中提及的最重要的技巧就是将 Puppet 的
+配置清单（manifests）纳入像 Git 或 Subversion 这样的 **版本控制系统（Version Control System，VCS）**。
+直接在 *Puppetmaster* 上编辑配置清单并非明智之举，因为在你还没确信应用这些更改之前可能已经被应用。
+Puppet 会自动检测配置清单的变化，因此可能会将配置清单的半成品应用到客户端。 这可是个令人讨厌的结果。
 
-Instead, use version control (I recommend Git) and make the +/etc/puppet+ directory on the
-Puppetmaster a checkout from your repository. This gives you several advantages:
+取而代之的正确做法是：使用 VCS （我推荐 Git）并从一个版本仓库导出（checkout） Puppetmaster 上所需的
++/etc/puppet+ 目录内容。这样做有如下好处：
 
-- You don't run the risk of Puppet applying incomplete changes
-- You can undo changes and revert to any previous version of your manifest
-- You can experiment with new features using a branch, without affecting the master
-  version used in production
-- If several people need to make changes to the manifests, they can make them
-  independently, in their own working copies, and then merge their changes later
-- You can use the log feature to see what was changed, and when (and by whom).
+- 你不用担心 Puppet 会应用未完成的配置清单
+- 你可以撤消更改，并将配置清单恢复到以前的任何版本
+- 你可以使用分支（branch）来尝试使用新功能，而不会影响到生产线上使用的主版本（master version）
+- 如果多个人需要修改配置清单，他们可以彼此独立的工作，修改他们自己的工作副本，之后合并（merge）他们的改动
+- 你可以使用日志来查看何时，何人改动了什么
 
-==== Getting ready
+==== {Gettingready}
 
-You'll need a Puppetmaster and a set of existing manifests in +/etc/puppet+. If you don't have
-these already, refer to the Puppet documentation to find out how to install Puppet and create
-your first manifests.
+你需要一个运行 Puppetmaster 的主机并且配置清单文件集存放在 +/etc/puppet+ 目录。
+如果你还没有准备好这些，可以参考 Puppet 文档（http://docs.puppetlabs.com/[]）：
+如何安装 Puppet（http://docs.puppetlabs.com/guides/installation.html[]）以及如何建立自己的第一个配置清单
+（http://docs.puppetlabs.com/guides/setting_up.html[]）。
 
-To put your manifests under version control, you need to import the +/etc/puppet+ directory
-from the Puppetmaster into your version control system, and make it a working copy. In this
-example, we'll use a *GitHub* account to store the Puppet configuration.
+然后将你的配置清单纳入版本控制，可以从 Pupppetmaster 上的 +/etc/puppet+ 目录导入到版本控制系统中,
+并使用它作为工作副本。在本例中，我们将使用一个 *GitHub* 账号存储 Puppet 的所有配置。
 
-You'll need a GitHub account (it's free to sign up) and a repository. Follow the instructions at
-http://www.github.com[www.github.com] to create one.
+你需要一个 GitHub 账号（可以免费注册）和并创建一个仓库。跟随
+http://www.github.com[www.github.com] 的指示去创建一个吧。
+
+[NOTE]
+.译者注
+============================
+可以参考 http://www.worldhello.net/[蒋鑫] 撰写的 http://www.worldhello.net/gotgithub/[GotGitHub]
+学习 GitHub 的使用。
+============================
 
 [TIP]
 ================
-You can download the example code files for all Packt books you have
-purchased from your account at http://www.PacktPub.com. If you purchased
-this book elsewhere, you can visit http://www.PacktPub.com/support and
-register to have the files e-mailed directly to you.
+你可以使用你的账号从 http://www.PacktPub.com[] 下载你购买的 Packt 出版的所有书籍的案例代码文件。
+如果你从其他地方购买了本书，你可以访问 http://www.PacktPub.com/support[] ，
+注册并直接从 e-mail 获得案例代码文件。
 ================
 
-==== How to do it…
+==== {Howtodoit}
 
-1. To turn the +/etc/puppet+ directory on the Puppetmaster into a Git repository, run
-   the following commands:
+1. 将 Puppetmaster 上的 +/etc/puppet+ 目录纳入一个 Git 仓库，执行如下命令:
 +
 ..................
 root@cookbook:/etc/puppet# git init
@@ -60,7 +62,7 @@ root@cookbook:/etc/puppet# git commit -m "initial commit"
 ...
 ..................
 
-2. Connect this to your GitHub repo and push as follows:
+2. 关联你的 GitHub 仓库并执行推送（push）:
 +
 ..................
 # git push -u origin master
@@ -72,38 +74,39 @@ To git@github.com:bitfield/puppet-demo.git
  * [new branch] master -> master
 ..................
 +
-Branch master setup to track remote branch masters from the origin.
+分支 master 设置为从 origin 跟踪远程分支 masters。
 
-==== How it works…
+==== {Howitworks}
 
-You've created a "master" *repository* (usually known as a *repo* for short) at GitHub which
-contains your Puppet manifests. You can check out multiple copies of this in different places
-and work on them before committing your changes. For example, if you had a team of system
-admins, each of them could work on their own local copy of the repo.
+你已经在 GitHub 上创建了一个 “master” **仓库（repository）**（通常简写为 **repo**），
+它包含了你的 Puppet 配置清单。
+你可以在不同的地方导出多个副本，提交变更之前在这些副本上工作。
+例如, 如果你有一个系统管理员的团队，他们每个人都可以在他们自己的本地仓库副本上工作。
 
-The copy in +/etc/puppet+ on the Puppetmaster is now just another working copy, slaved to
-the GitHub repo. When you decide that you want to tell Puppet about your changes, you can
-update this copy and it will pull the latest changes from GitHub.
+Puppetmaster 上的 +/etc/puppet+ 目录仅是从属于 GitHub 仓库的另外一个工作副本。
+当你决定要在 +/etc/puppet+ 的工作副本上应用 GitHub 仓库上的变更时，
+你可以更新这个本地副本，从 GitHub 仓库上获取（pull）最近的变更。
 
-==== There's more…
+==== {Theresmore}
 
-Now that you've set up version control, you can use the following workflow for editing your
-Puppet manifests:
+既然已经配置了版本控制，你就可以使用如下的工作流程编辑你的 Puppet 配置清单了：
 
-1. Make your changes in the working copy using your favorite text editor.
-2. Commit the changes and push them to the GitHub repo, as shown in the preceding text.
-3. Update the Puppetmaster's working copy, using git pull.
+1. 使用自己偏爱的文本编辑器在你自己的工作副本上修改 Puppet 配置清单。
 +
 --
-- Here is an example where we add a new file to the manifest, commit it, and
-  then update the Puppetmaster's working copy. I've made some edits to the
-  working copy on my laptop:
-+
+例如：在我的笔记本电脑上自己的工作副本上添加新的配置清单文件（或做一些编辑工作）：
+
 ..........................
 john@laptop:~$ cd puppet-work
 john@laptop:~/puppet-work$ mkdir manifests
 john@laptop:~/puppet-work$ touch manifests/nodes.pp
 john@laptop:~/puppet-work$ git add manifests/nodes.pp
+..........................
+--
+
+2. 提交（commit）变更并推送（push）变更至 GitHub 仓库。
++
+..........................
 john@laptop:~/puppet-work$ git commit -m "adding nodes.pp"
 [master 5c7b94c] adding nodes.pp
  0 files changed, 0 insertions(+), 0 deletions(-)
@@ -117,7 +120,7 @@ To git@github.com:bitfield/puppet-demo.git
     c7a24cf..b74d452 master -> master
 ..........................
 
-- Now I'll update the working copy on the Puppetmaster:
+3. 使用 `git pull` 从 Github 仓库更新 Puppetmaster 上的工作副本。
 +
 ..........................
 root@cookbook:/etc/puppet# git pull
@@ -133,11 +136,10 @@ Fast-forward
 create mode 100644 manifests/nodes.pp
 ..........................
 
-- You can automate this process by using a tool such as *Rake*.
---
+你可以使用像 *Rake* 这样的工具实现这一过程的自动化。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec03,Deploying changes with Rake>> in this chapter
-- <<ch01sec10,Creating a decentralized Puppet architecture>> in this chapter
-- <<ch01sec02,Using commit hooks>> in this chapter
+- 本章的 <<ch01sec03,{Recipe103}>> 一节
+- 本章的 <<ch01sec10,{Recipe110}>> 一节
+- 本章的 <<ch01sec02,{Recipe102}>> 一节

@@ -1,32 +1,31 @@
 ﻿[[chapter05]]
-== Working with Files and Packages
+== 使用文件和软件包
 
 [quote, Gerald Weinberg,]
 If builders built buildings the way programmers wrote programs, then the first
 woodpecker that came along would destroy civilization.
 
-In this chapter we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Making quick edits to config files
-- Using Augeas to automatically edit config files
-- Building config files using snippets
-- Using ERB templates
-- Using array iteration in templates
-- Installing packages from a third-party repository
-- Setting up an APT package repository
-- Setting up a gem repository
-- Building packages automatically from source
-- Comparing package versions
+- {Recipe501}
+- {Recipe502}
+- {Recipe503}
+- {Recipe504}
+- {Recipe505}
+- {Recipe506}
+- {Recipe507}
+- {Recipe508}
+- {Recipe509}
+- {Recipe510}
 
-Almost everything you'll do as a Puppet administrator involves either files or packages.
-They are the most important kinds of resources in Puppet and this chapter will help you
-to understand them thoroughly, and learn some useful features and patterns to help you
-make better use of them.
+作为 Puppet 系统管理员，你所涉及的最多的管理工作就是文件和包。
+文件和包是 Puppet 中最重要的两种资源，本章将帮助你深入了解它们，
+并学习一些有用的功能和模式，以帮助你更好地使用它们。
 
-In this chapter we'll see how to make small edits to files, how to make larger changes in a
-structured way using the *Augeas* tool, how to construct files from concatenated snippets, and
-how to generate files from templates. We'll also learn how to install packages from additional
-repositories, and how to create those repositories.
+在本章中，我们将看到：如何对文件做轻微地编辑；
+如何利用 *Augeas* 工具以结构化的方式实现大规模的改变； 
+如何串联片段构建文件；以及如何从模板生成文件。
+我们还将学习，如何从额外的仓库安装包，以及如何创建这些仓库。
 
 
 include::recipes/ch05sec01-making_quick_edits_to_config_files.txt[]

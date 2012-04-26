@@ -1,24 +1,23 @@
-﻿[[ch01sec05]]
-=== Running Puppet from cron
+[[ch01sec05]]
+=== {Recipe105}
 
-Is your Puppet sleeping on the job? By default, when you run the Puppet agent on a client,
-it will become a daemon (background process), waking up every 30 minutes to check for
-any manifest updates and apply them (optionally after a randomized delay using the +splay+
-setting +in puppet.conf+). If you want more control over when Puppet runs, you can trigger it
-using +cron+ instead.
+你的 Puppet 工作在休眠状态吗？ 默认情况下，当你在客户端上运行 Puppet agent 时，
+它会以守护进程（后台进程）的方式执行，每隔30分钟唤醒一次并检查配置清单是否有更新并应用这些变更
+（也可以在 +puppet.conf+ 中将 +splay+ 选项的值设为 true 来指定一个随机的时间间隔）。 
+如果想要更灵活的控制 Puppet 的运行，你可以安排 +cron+ 任务来替代守护进程的触发执行方式。
 
-For example, if you have many Puppet clients, you may want to deliberately stagger the Puppet
-run times to spread the load on the Puppetmaster. A simple way to do this is to set the minute
-or hour of the +cron+ job time using a hash of the client hostname.
+例如，如果你有很多的 Puppet 客户端，可能需要刻意地错开 Puppet 的运行时间以减轻
+Puppetmaster 的负载压力。一个简单的方法是：将客户端主机名的哈希（散列）值作为
++cron+ 任务的分钟或小时的时间参数。
 
-==== How to do it…
+==== {Howtodoit}
 
-Use Puppet's +inline_template+ function, which allows you to execute Ruby code:
+使用 Puppet 的 +inline_template+ 函数，它允许你执行 Ruby 代码：
 
 ----
 cron { "run-puppet":
     command => "/usr/sbin/puppet agent --test",
-    minute => inline_template("<%= hostname.hash.abs % 60 %>"),
+    minute  => inline_template("<%= hostname.hash.abs % 60 %>"),
 }
 service { "puppet":
     ensure => stopped,
@@ -26,23 +25,26 @@ service { "puppet":
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Because each hostname produces a unique hash value, each client will run Puppet at a
-different minute past the hour. This hashing technique is useful for randomizing any +cron+
-jobs to improve the odds that they won't interfere with each other.
+因为每个主机名会生成一个唯一的哈希值，所以每个客户端将会在一小时的不同分钟数运行 Puppet。
+这种散列技术对于使 +cron+ 任务随机运行是相当有用的，因为分散了运行时间，改善了互相干扰，
+从而减轻了 Puppetmaster 的负载压力。
 
-==== There's more…
+==== {Theresmore}
 
-You may find that running Puppet as a daemon leaks memory over time, or that occasionally
-Puppet can get into a stuck state when communicating with the master. Running Puppet from
-+cron+ should also fix these problems.
+你可能会发现，随着时间的推移以守护进程方式运行的 Puppet 会占用更多的内存，
+或者偶尔 Puppet 与 Puppetmaster 的通信处于停滞状态（stuck state）。
+以 +cron+ 方式运行 Puppet 会解决这些问题。
 
-There are other ways to trigger Puppet runs, including the *MCollective* tool, which we'll cover
-in detail elsewhere in this book.
+参考 Puppet Labs 的 Wiki 页面 http://projects.puppetlabs.com/projects/puppet/wiki/Cron_Patterns 
+获得更多信息。
 
-==== See also
+触发 Puppet 的运行还有其他方式，包括 *MCollective* 工具，
+我们将在这本书的后续章节中做详细介绍。
 
-- <<ch06sec05,Efficiently distributing cron jobs>> section in Chapter 6
-- <<ch03sec04,Using embedded Ruby>> section in Chapter 3
-- <<ch09sec07,Using MCollective>> section in Chapter 9
+==== {Seealso}
+
+- 第 6 章的 <<ch06sec05,{Recipe605}>> 一节
+- 第 3 章的 <<ch03sec04,{Recipe304}>> 一节
+- 第 9 章的 <<ch09sec07,{Recipe907}>> 一节

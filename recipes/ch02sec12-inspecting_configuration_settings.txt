@@ -1,25 +1,25 @@
-﻿[[ch02sec12]]
-=== Inspecting configuration settings
+[[ch02sec12]]
+=== {Recipe212}
 
-Pop quiz, hotshot!. You already know that Puppet's configuration settings are stored in
-puppet.conf, but any parameter not mentioned in that file will take a default value. How can
-you see the value of any configuration parameter, regardless of whether or not it's explicitly set
-in +puppet.conf+? The answer is to use Puppet's `--genconfig` switch.
+突击测验，炙手可热！你已经知道 Puppet 的配置设置保存在 puppet.conf 文件里，
+在该文件里没有提及的任何参数都会使用其默认值。
+你怎样才能显示所有的配置参数的值呢（不管它是否在 puppet.conf 文件里有明确设置）？
+你可以使用 Puppet 的 `--genconfig` 开关。
 
-==== How to do it…
+==== {Howtodoit}
 
-Run the following command:
+运行如下命令：
 
 ......
 # puppet --genconfig
 ......
 
-==== How it works…
+==== {Howitworks}
 
-This will output every configuration parameter and its value (and there are lots of them). It
-does, however, include helpful comments explaining what each parameter does.
+这将输出每个配置参数以及值（配置参数有许多）。
+无论如何，输出里包含的解释每个参数的说明会非常有用。
 
-To find the specific value you're interested in, you can use `grep` in the following manner:
+要找到你感兴趣的特定参数，你可以像这样使用 `grep` 命令过滤：
 
 ....
 # puppet --genconfig |grep "reportdir ="

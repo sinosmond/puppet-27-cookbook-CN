@@ -1,31 +1,27 @@
-﻿[[ch09sec02]]
-=== Executing commands before and after Puppet runs
+[[ch09sec02]]
+=== {Recipe902}
 
-If you need to have a command executed before each Puppet run, you can do this using
-the +prerun_command+ configuration setting. Similarly, you can use +postrun_command+ to
-execute a command after the run has completed. This mechanism gives you a powerful hook
-to integrate Puppet with other software, or even trigger events on other machines.
+如果你希望在每次运行 Puppet 之前执行命令，可以在配置文件中使用 +prerun_command+ 配置。
+类似地，你也可以使用 +postrun_command+ 配置运行 Puppet 之后需要执行的命令。
+这种机制为 Puppet 与其他软件的集成提供了强大的钩子，甚至可以触发其他机器上的事件。
 
-The +prerun+ and +postrun+ commands must succeed (that is, return a zero exit status), or
-Puppet will report an error. This enables you to have any command failures reported using
-Puppet's reporting mechanism, for example.
++prerun+ 和 +postrun+ 命令必须能成功运行（即其返回的状态码为 0），否则
+Puppet 将报告一个错误。这可以让你通过 Puppet 的报告机制获得任何命令的错误报告。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-Set +prerun_command+ or +postrun_command+ in +puppet.conf+ to the commands you want
-to run:
+在 +puppet.conf+ 中设置 +prerun_command+ 或 +postrun_command+ 要执行的命令：
 
 ----
 prerun_command  = /usr/local/bin/before-puppet-run.sh
 postrun_command = /usr/local/bin/after-puppet-run.sh
 ----
 
-==== There's more…
+==== {Theresmore}
 
-You can use prerun and postrun commands to integrate Puppet with Ubuntu's +etckeeper+
-system. *Etckeeper* is a version control system for tracking changes to files in the +/etc+
-directory. To do this, define these commands in +puppet.conf+:
+你可以使用 prerun 和 postrun 命令将 Puppet 与 Ubuntu 的 +etckeeper+ 版本库整合起来。
+*Etckeeper* 是一种用于跟踪 +/etc+ 目录中文件变化的版本控制系统。
+为了实现此功能，在 +puppet.conf+ 配置文件中定义如下的执行命令：
 
 ----
 prerun_command=/etc/puppet/etckeeper-commit-pre

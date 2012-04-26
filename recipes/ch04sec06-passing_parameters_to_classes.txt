@@ -1,15 +1,13 @@
-﻿[[ch04sec06]]
-=== Passing parameters to classes
+[[ch04sec06]]
+=== {Recipe406}
 
-Sometimes it's very useful to *parameterize* some aspect of a class. For example, you might
-need to manage different versions of a +gem+ package, and rather than making separate
-classes for each that differ only in the version number, or using inheritance and overrides,
-you can pass in the version number as a parameter.
+有时对一个类的某些方面进行 **参数化**（**parameterize**）是很有用的。例如，
+你可能需要管理不同版本的 +gem+ 软件包，既可以为每一种版本创建分离的单独的类，
+也可以使用继承和覆盖，为一个类传递一个版本号作为参数。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Declare the parameter as part of the class definition as follows:
+1. 声明参数作为如下类定义的一部分：
 +
 ----
 class eventmachine( $version ) {
@@ -20,22 +18,22 @@ class eventmachine( $version ) {
 }
 ----
 
-2. Then use the following syntax to include the class on a node:
+2. 然后在一个节点上使用如下语法包含类：
 +
 ----
 class { "eventmachine": version => "0.12.8" }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-The class definition:
+类定义：
 
 ----
 class eventmachine( $version ) {
 ----
 
-is just like a normal class definition except it specifies that the class takes one parameter:
-+$version+. Inside the class, we've defined a +package+ resource as follows:
+与普通的类定义一样，不同之处在于它携带了一个参数：++$version++。
+在此类中，我们定义了如下的 +package+ 资源：
 
 ----
 package { "eventmachine":
@@ -44,31 +42,31 @@ package { "eventmachine":
 }
 ----
 
-This is a +gem+ package, and we're requesting to install version +$version+.
+这是一个 +gem+ 包资源，并且要求安装 +$version+ 版本的软件包。
 
-When you include the class on a node, instead of the usual syntax:
+当你在一个节点上包含这个类时， 替换通常的语法：
 
 ----
 include eventmachine
 ----
 
-there's a +class+ statement as follows:
+为如下的 +class+ 语句：
 
 ----
 class { "eventmachine": version => "0.12.8" }
 ----
 
-This has the same effect, but also sets a value for the parameter +$version+.
+这有相同的效果，只是同时为参数 +$version+ 指定了一个值。
 
-==== There's more…
+==== {Theresmore}
 
-You can specify multiple parameters for a class:
+你可以为一个类指定多个参数：
 
 ----
 class mysql( $package, $socket, $port ) {
 ----
 
-and supply them in the same way:
+使用同样的方法为其传递参数值：
 
 ----
 class { "mysql":
@@ -78,13 +76,13 @@ class { "mysql":
 }
 ----
 
-You can also give default values for some of your parameters:
+你也可以为一些参数指定默认值：
 
 ----
 class mysql( $package, $socket, $port = "3306" ) {
 ----
 
-or all, as shown in the following code snippet:
+或者使用如下代码片段为所有参数指定默认值：
 
 ----
 class mysql(
@@ -93,10 +91,10 @@ class mysql(
     port = "3306" ) {
 ----
 
-Unlike a define, only one instance of a parameterized class can exist on a node. So where
-you need to have several different instances of the resource, use a +define+ instead.
+与 +define+ 不同，一个节点上只能存在一个参数化的类实例。
+所以当你需要针对一个资源创建多个不同的实例时，应该使用 +define+ 取代类的参数化。
 
-==== See also
+==== {Seealso}
 
-- <<ch04sec04,Using node inheritance>> in this chapter
-- <<ch04sec05,Using class inheritance and overriding>> in this chapter
+- 本章的 <<ch04sec04,{Recipe404}>> 一节
+- 本章的 <<ch04sec05,{Recipe405}>> 一节

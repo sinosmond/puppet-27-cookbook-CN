@@ -1,44 +1,42 @@
 ﻿[[chapter06]]
-== Users and Virtual Resources
+== 用户和虚拟资源
 
 [quote, Kent Beck,]
 How good the design is doesn't matter near as much as whether the design is
 getting better or worse. If it is getting better, day by day, I can live with it forever.
 If it is getting worse, I will die.
 
-In this chapter, we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Using virtual resources
-- Managing users with virtual resources
-- Managing users' SSH access
-- Managing users' customization files
-- Efficiently distributing cron jobs
-- Running a command when a file is updated
-- Using host resources
-- Using multiple file sources
-- Distributing directory trees
-- Cleaning up old files
-- Using schedules with resources
-- Auditing resources
-- Temporarily disabling resources
-- Managing timezones
+- {Recipe601}
+- {Recipe602}
+- {Recipe603}
+- {Recipe604}
+- {Recipe605}
+- {Recipe606}
+- {Recipe607}
+- {Recipe608}
+- {Recipe609}
+- {Recipe610}
+- {Recipe611}
+- {Recipe612}
+- {Recipe613}
+- {Recipe614}
 
-Users can be a real pain. I don't mean the people, though doubtless that's sometimes true.
-But keeping UNIX user accounts and file permissions in sync across a network of machines,
-some of them running different operating systems, can be very challenging without some kind
-of centralized configuration management.
+维护用户是件痛苦的事，我不是说人，但毫无疑问某种情况下这确实是真的。
+为了在网络中的机器上同步 UNIX 用户账号和权限文件，其中一些机器可能运行了不同的操作系统，
+没有某种集中的配置管理是非常具有挑战性的。
 
-Consider a situation where a new developer has joined the organization. He needs an account
-on every machine along with `sudo` privileges and group memberships, and also needs his
-SSH key authorized for a bunch of different accounts. The sysadmin who has to take care of
-this manually, will be at the job all day. A sysadmin who uses Puppet will be done in minutes,
-heading out for an early lunch.
+考虑一个新的开发者要加入开发团队的情况，他在每台机器上都需要一个账号，
+并为此账号的组成员分配 `sudo` 特权；还需要他的 SSH 密钥授权一堆不同的账号。
+系统管理员若手工实现这些工作，恐怕要忙活一整天。
+使用 Puppet 的系统管理员却能在几分钟内完成这些工作，提早就去吃午餐了。
 
-In this chapter, we'll look at some handy patterns and techniques for managing users and
-their associated resources. We'll also see how to schedule resources in Puppet, how to
-spread cron jobs around the clock for efficiency, how to handle time zones and +/etc/hosts+
-entries, and how to have Puppet collect audit data, so you know when someone's messing
-with your machines.
+在本章中，我们将会看到管理用户及其相关资源的处理模式和技术。
+我们还将看到：如何在 Puppet 中安排资源的执行；
+为提高效率如何将 cron 任务分散到不同的时间执行；
+如何处理时区，如何处理 +/etc/hosts+ 条目；
+以及如何让 Puppet 收集审计数据，当有人搞乱了你网络中的机器时你就会知道。
 
 
 include::recipes/ch06sec01-using_virtual_resources.txt[]

@@ -1,18 +1,17 @@
-﻿[[ch05sec01]]
-=== Making quick edits to config files
+[[ch05sec01]]
+=== {Recipe501}
 
-Did you know Puppet can do micro-surgery? Often we don't want to have to put a whole config
-file into Puppet just to add one setting -- especially if the file is managed by someone else and
-we can't overwrite it. What would be useful is a simple recipe to add a line to a config file if it's
-not already present: for example, adding a module name to +/etc/modules+ to tell the kernel
-to load that module at boot.
+你知道 Puppet 能做微创手术吗？ 通常，我们不希望将整个配置文件交由 Puppet
+管理而仅仅是在配置文件中添加某项设置 -- 尤其是如果该文件是由别人管理，我们不能覆盖它的情况。
+一种简单而有用的方法是，如果配置文件中不存在指定的行就添加这行配置。例如：
+添加一个内核模块名到配置文件 +/etc/modules+ 告知内核在启动时加载此模块。
 
-You can use an +exec+ resource to do jobs like this: this example shows how to use +exec+ to
-append a line to a text file.
+你可以使用一个 +exec+ 资源达成此任务。下面的例子将展示如何使用 +exec+
+向一个文本文件追加一行配置。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create the file +/etc/puppet/manifests/utils.pp+ with the following content:
+1. 使用如下内容创建 +/etc/puppet/manifests/utils.pp+ 文件：
 +
 ----
 define append_if_no_such_line($file, $line) {
@@ -22,13 +21,13 @@ define append_if_no_such_line($file, $line) {
 }
 ----
 
-2. Add this line to +/etc/puppet/manifests/site.pp+:
+2. 添加如下行到 +/etc/puppet/manifests/site.pp+ 文件：
 +
 ----
 import "utils.pp"
 ----
 
-3. Now add this to your manifest:
+3. 添加如下代码到你的配置清单：
 +
 ----
 append_if_no_such_line { "enable-ip-conntrack":
@@ -37,7 +36,7 @@ append_if_no_such_line { "enable-ip-conntrack":
 }
 ----
 
-4. Run Puppet:
+4. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -50,28 +49,27 @@ modules']/returns: executed successfully
 notice: Finished catalog run in 1.22 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-The +exec+ resource will append the specified text in +$line+ to the file +$file+, provided it's not
-already present:
++exec+ 资源将追加指定的文本 +$line+ 到文件 ++$file++，除非它已经存在：
 
 ----
 exec { "/bin/echo '$line' >> '$file'":
     unless => "/bin/grep -Fx '$line' '$file'",
 ----
 
-This +append_if_no_such_line+ resource is now available for you to use in your manifest.
-In this example, we've used it to ensure that the +/etc/modules+ file (which specifies what
-kernel modules to load at boot time) contains the following line:
+现在，+append_if_no_such_line+ 资源已经可以在你的配置清单中使用了。
+在本例中，我们已经使用它确保 +/etc/modules+
+文件（此文件指定在启动过程中需要加载哪些内核模块）包含如下的行：
 
 ----
 ip_conntrack
 ----
 
-==== There's more…
+==== {Theresmore}
 
-You can use similar +define+ functions to perform other minor operations on text files. For
-example, the following code snippet will enable you to search and replace within a file:
+类似的，你可以使用 +define+ 函数对文本文件执行其他细小的操作。例如，
+下面的代码片段可以让你在文本文件中执行查找和替换的操作：
 
 ----
 define replace_matching_line( $match, $replace ) {
@@ -88,6 +86,6 @@ replace_matching_line { "/etc/apache2/apache2.conf":
 }
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch05sec02,Using Augeas to automatically edit config files>> in this chapter
+- 本章的 <<ch05sec02,{Recipe502}>> 一节

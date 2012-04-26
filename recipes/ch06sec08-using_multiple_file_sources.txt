@@ -1,15 +1,14 @@
-﻿[[ch06sec08]]
-=== Using multiple file sources
+[[ch06sec08]]
+=== {Recipe608}
 
-A neat feature of Puppet's +file+ resource is that you can specify multiple sources for the file.
-Puppet will look for each of them in order. If the first isn't found, it moves on to the next, and
-so on. You can use this to specify a default substitute if the particular file isn't present, or even
-a series of increasingly generic substitutes.
+Puppet 的 +file+ 资源有一个实用功能，那就是可以为文件指定多个源。
+Puppet 会按顺序查找每一个。如果第一个不存在，就继续查找下一个，以此类推。
+你可以利用这个功能指定一个默认文件源的替代品，
+若一个甚至一系列替代品不存在就会使用默认的（最后一个列出的）文件源。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Add the following class to your manifest:
+1. 添加如下的类到你的配置清单：
 +
 ----
 class mysql::app-config( $app )
@@ -21,27 +20,25 @@ class mysql::app-config( $app )
 }
 ----
 
-2. Create the file +/etc/puppet/modules/admin/files/minutespace.my.cnf+
-   with the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/admin/files/minutespace.my.cnf+ 文件：
 +
 ....
 # MinuteSpace config file
 ....
 
-3. Create the file +/etc/puppet/modules/admin/files/generic.my.cnf+ with the
-   following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/admin/files/generic.my.cnf+ 文件：
 +
 ....
 # Generic config file
 ....
 
-4. Add the following to a node:
+4. 在一个节点中添加如下代码：
 +
 ----
 class { "mysql::app-config": app => "minutespace" }
 ----
 
-5. Run Puppet:
+5. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -55,20 +52,20 @@ defined content as '{md5}24f04b960f4d33c70449fbc4d9f708b6'
 notice: Finished catalog run in 0.35 seconds
 ....
 
-6. Check that Puppet has deployed the app-specific +config+ file:
+6. 检查 Puppet 是否部署了适用于指定应用程序的 +config+ 文件：
 +
 ....
 # cat /etc/my.cnf
 # MinuteSpace config file
 ....
 
-7. Now change the node definition to:
+7. 现在更改节点的定义为：
 +
 ----
 class { "mysql::app-config": app => "shreddit" }
 ----
 
-8. Run Puppet again:
+8. 再次运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -97,10 +94,9 @@ b3a6e744c3ab78dfb20e46ff55f6c33c'
 notice: Finished catalog run in 0.93 seconds
 ....
 
+==== {Howitworks}
 
-==== How it works…
-
-We've defined the +/etc/my.cnf+ file as having two sources that are as follows:
+我们定义了 +/etc/my.cnf+ 文件有如下的两个源：
 
 ----
 file { "/etc/my.cnf":
@@ -109,26 +105,25 @@ file { "/etc/my.cnf":
 }
 ----
 
-The value of +$app+ will be passed in by anyone using the class. In the first example, we passed
-in a value of minutespace:
++$app+ 的值由任何一个使用它的类传递。在第一个例子中，我们为 +app+ 传递了 ++minutespace++：
 
 ----
 class { "mysql::app-config": app => "minutespace" }
 ----
 
-Puppet will look first of all for +modules/admin/files/minutespace.my.cnf+. This file
-exists, so it will be used. So far, so normal.
+Puppet 将首先查找 +modules/admin/files/minutespace.my.cnf+ 文件。
+由于此文件存在，所以就会使用它。到目前为止，一切正常。
 
-Then we change the value of +app+ to shreddit. Puppet now looks for 
-+modules/admin/files/shreddit.my.cnf+. 
-This doesn't exist, so Puppet tries the next listed source:
-+modules/admin/files/generic.my.cnf+. This does exist, so it will be deployed.
+然后我们把 +app+ 的值更改为 shreddit。Puppet 现在会查找 
++modules/admin/files/shreddit.my.cnf+ 文件。 
+由于此文件不存在，所以 Puppet 试图查找源列表中的下一个文件：
+++modules/admin/files/generic.my.cnf++。因为此文件存在，所以会将它部署到节点。
 
 
-==== There's more…
+==== {Theresmore}
 
-You can use this trick anywhere you have a +file+ resource. For example, some nodes might
-need machine-specific +config+, but not others, so you could do something like the following:
+你可以在任何一个 +file+ 资源中使用这种手段来处理。例如，
+一些节点可能需要针对特定主机的配置，而另一些节点则不需要，你可以使用类似于如下的代码实现：
 
 ----
 file { "/etc/stuff.cfg":
@@ -137,10 +132,10 @@ file { "/etc/stuff.cfg":
 }
 ----
 
-Then you put the normal configuration in +generic.cfg+. If machine +cartman+ needs a special
-+config+, just put it in the file +cartman.cfg+. This will be used in preference to the +generic+
-file, because it is listed first in the array of sources.
+然后将你的通用配置放在 +generic.cfg+ 文件中。如果主机 +cartman+ 需要一个特殊的配置，
+将适用于此主机的配置放在 +cartman.cfg+ 文件中。
++cartman.cfg+ 文件优先于 +generic.cfg+ 文件，因为它在源数组中是首先被列出的。
 
-==== See also
+==== {Seealso}
 
-- <<ch04sec06,Passing parameters to classes>> in Chapter 4.
+- 第 4 章的 <<ch04sec06,{Recipe406}>> 一节

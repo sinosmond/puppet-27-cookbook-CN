@@ -1,16 +1,16 @@
-﻿[[ch03sec04]]
-=== Using embedded Ruby
+[[ch03sec04]]
+=== {Recipe304}
 
 [quote, Mikkel Bruun,]
 Ruby, like fire, is a very useful friend, and a very dangerous enemy.
 
-Templates are a powerful way of using embedded Ruby to help build configuration files
-dynamically and iterate over arrays. However, you can embed Ruby in your manifests directly
-without having to use a separate file, by calling the +inline_template+ function.
+在模板中使用嵌入式 Ruby 帮助构建动态的配置文件或实现数组遍历是一种强大的方式。
+然而，你也可以在配置清单中使用 +inline_template+ 函数直接嵌入 Ruby
+而不必使用分离的模板文件。
 
-==== How to do it…
+==== {Howtodoit}
 
-Pass your Ruby code to +inline_template+ within the Puppet manifest as follows:
+在 Puppet 的配置清单中将 Ruby 代码传递给 +inline_template+ 函数：
 
 ----
 cron { "nightly-job":
@@ -20,13 +20,13 @@ cron { "nightly-job":
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Anything inside the string passed to +inline_template+ is executed as if it were an ERB
-template. That is, anything inside the +<%=+ and +%>+ delimiters will be executed as Ruby code,
-and the rest will be treated as a string.
+传递给 +inline_template+ 的字符串都会被执行，就像 ERB 模板一样。
+也就是说，在分隔符 +<%=+ 和 +%>+ 之间的所有内容都被当做 Ruby 代码执行，
+其余的将被视为字符串。
 
-==== See also
+==== {Seealso}
 
-- <<ch05sec04,Using ERB templates>> in Chapter 5
-- <<ch05sec05,Using array iteration in templates>> in Chapter 5
+- 第 5 章的 <<ch05sec04,{Recipe504}>> 一节
+- 第 5 章的 <<ch05sec05,{Recipe505}>> 一节

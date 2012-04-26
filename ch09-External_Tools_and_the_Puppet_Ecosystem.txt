@@ -1,32 +1,32 @@
 ﻿[[chapter09]]
-== External Tools and the Puppet Ecosystem
+== 扩展工具和 Puppet 生态环境
 
 [quote, Belinda Asbell,]
 Unix is the answer, but only if you phrase the question very carefully.
 
-In this chapter we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Creating custom Facter facts
-- Executing commands before and after Puppet runs
-- Generating manifests from shell sessions
-- Generating manifests from a running system
-- Using Puppet Dashboard
-- Using Foreman
-- Using MCollective
-- Using public modules
-- Using an external node classifier
-- Creating your own resource types
-- Creating your own providers
+- {Recipe901}
+- {Recipe902}
+- {Recipe903}
+- {Recipe904}
+- {Recipe905}
+- {Recipe906}
+- {Recipe907}
+- {Recipe908}
+- {Recipe909}
+- {Recipe910}
+- {Recipe911}
 
-Puppet is a useful tool by itself, but you can get much greater benefits from using Puppet in
-combination with other tools and frameworks. We'll look at some of these in this chapter,
-from tools for getting data into Puppet -- Facter, `cft`, and `puppet resource` -- to tools for
-managing and reporting the data that comes out of Puppet -- Foreman and Puppet Dashboard.
 
-You'll also learn how to extend Puppet by creating your own custom resource types and
-implementing them on different platforms, how to use an external node classifier script to
-integrate Puppet with databases such as LDAP, how to use public modules from Puppet Forge,
-and how Puppet plays with the systems management framework MCollective.
+Puppet 本身就是一个有用的工具，但组合使用 Puppet 与其他工具和框架可以得到更大的利益。
+在本章我们会看到：使用工具（Facter、++cft++ 和 ++puppet resource++）获得 Puppet 所需的数据；
+使用工具（Foreman 和 Puppet Dashboard）管理和报告出自 Puppet 的数据。
+
+你还会学到：如何通过创建你自己自定义的资源类型扩展 Puppet，并在不同的平台上实现自定义类型；
+如何使用外部节点分类器脚本整合 Puppet 和数据库（例如：LDAP）；
+如何使用来自 Puppet Forge 的公共模块；以及
+Puppet 如何与系统管理框架 MCollective 协同工作。
 
 
 include::recipes/ch09sec01-creating_custom_facter_facts.txt[]

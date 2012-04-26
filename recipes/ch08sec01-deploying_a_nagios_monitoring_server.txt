@@ -1,29 +1,25 @@
 ﻿[[ch08sec01]]
-=== Deploying a Nagios monitoring server
+=== {Recipe801}
 
 [quote, Steven Wright,]
 My roommate lost his pet elephant. It's in the apartment somewhere.
 
+我们无法持续关注所有的一切。问题是：你怎么知道一台服务器何时会出现故障呢？
+错误的答案是，“我的客户打电话给我，告诉我服务器是关闭的。”
+但是，你会惊奇地发现，许多组织的系统没有任何的自动监控。自动监控的设置非常简单。
+目前有许多优秀的免费开源的自动监测工具可用，包括 Nagios、Icinga、Zabbix 和 Zenoss。 
+Nagios 是其中历史最久最复杂的一个，尽管它有一个难以配置的名声（基本上是实至名归的）。
 
-We can't keep an eye on everything. Question: How do you know when one of your servers
-goes down? The wrong answer is, "My client calls me and tells me the server is down." But
-you'd be surprised how many organizations don't have any kind of automated monitoring of
-their systems. It's very simple to set up. There are several excellent free and open-source
-monitoring tools available, including Nagios, Icinga, Zabbix, and Zenoss. Nagios has been
-around the longest and is among the most sophisticated, although it has a (partly deserved)
-reputation for being difficult to configure.
+本处方将向你展示如何使用 Puppet 创建一个基于 Nagios 的监控服务器以及
+如何让 Puppet 配置由 Nagios 监控的每台机器。
 
-This recipe will show you how to build a Nagios-based monitoring server using Puppet and
-also how to have Puppet configure each of your boxes to be monitored by Nagios.
+==== {Gettingready}
 
-==== Getting ready…
+你将需要我们已经在第 7 章的 <<ch07sec01,{Recipe701}>> 一节中创建的 Apache 模块。
 
-You'll need the apache module that we created in the section <<ch07sec01,Managing Apache servers>>
-in Chapter 7.
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Create a nagios module:
+1. 创建一个 nagios 模块：
 +
 ....
 # mkdir /etc/puppet/modules/nagios
@@ -31,8 +27,7 @@ in Chapter 7.
 # mkdir /etc/puppet/modules/nagios/manifests
 ....
 
-2. Create the file +/etc/puppet/modules/nagios/manifests/server.pp+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/nagios/manifests/server.pp+ 文件：
 +
 ----
 class nagios::server {
@@ -116,8 +111,7 @@ class nagios::server {
 }
 ----
 
-3. Create the file +/etc/puppet/modules/nagios/files/nagios.cfg+ with the
-   following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/nagios/files/nagios.cfg+ 文件：
 +
 ----
 # Config files to read
@@ -143,8 +137,7 @@ check_external_commands=1
 resource_file=/etc/nagios3/resource.cfg
 ----
 
-4. Create the file +/etc/puppet/modules/nagios/files/service_templates.cfg+
-   with the following contents:
+4. 使用如下内容创建 +/etc/puppet/modules/nagios/files/service_templates.cfg+ 文件：
 +
 ----
 define service{
@@ -213,8 +206,7 @@ define service {
 }
 ----
 
-5. Create the file +/etc/puppet/modules/nagios/files/services.cfg+ with the
-   following contents:
+5. 使用如下内容创建 +/etc/puppet/modules/nagios/files/services.cfg+ 文件：
 +
 ----
 define service {
@@ -232,8 +224,7 @@ define service {
 }
 ----
 
-6. Create the file +/etc/puppet/modules/nagios/files/cgi.cfg+ with the
-   following contents:
+6. 使用如下内容创建 +/etc/puppet/modules/nagios/files/cgi.cfg+ 文件：
 +
 ----
 main_config_file=/etc/nagios3/nagios.cfg
@@ -262,8 +253,7 @@ notes_url_target=_blank
 lock_author_names=1
 ----
 
-7. Create the file +/etc/puppet/modules/nagios/files/host_templates.cfg+
-   with the following contents:
+7. 使用如下内容创建 +/etc/puppet/modules/nagios/files/host_templates.cfg+ 文件：
 +
 ----
 define host{
@@ -282,9 +272,8 @@ define host{
 }
 ----
 
-8. Create the file +/etc/puppet/modules/nagios/files/contacts.cfg+ with the
-   following contents (use your own e-mail address, or at least that of someone who
-   won't mind getting a lot of e-mail from your monitoring server):
+8. 使用如下内容创建 +/etc/puppet/modules/nagios/files/contacts.cfg+ 文件
+   （使用你自己的 e-mail 地址，或者至少是一个不介意从你的监控服务获得大量邮件的人的 e-mail 地址）：
 +
 ----
 define contact {
@@ -306,8 +295,7 @@ define contactgroup {
 }
 ----
 
-9. Create the file +/etc/puppet/modules/nagios/files/hostgroups.cfg+ with
-   the following contents:
+9. 使用如下内容创建 +/etc/puppet/modules/nagios/files/hostgroups.cfg+ 文件：
 +
 ----
 define hostgroup {
@@ -317,8 +305,7 @@ define hostgroup {
 }
 ----
 
-10. Create the file +/etc/puppet/modules/nagios/files/timeperiods.cfg+ with
-    the following contents:
+10. 使用如下内容创建 +/etc/puppet/modules/nagios/files/timeperiods.cfg+ 文件：
 +
 ----
 define timeperiod {
@@ -334,8 +321,8 @@ define timeperiod {
 }
 ----
 
-11. Create the file +/etc/puppet/modules/nagios/files/hosts.cfg+ with the
-    following contents (replace with your own server details):
+11. 使用如下内容创建 +/etc/puppet/modules/nagios/files/hosts.cfg+ 文件
+    （使用你自己的服务器信息替换相应的配置值）：
 +
 ----
 define host {
@@ -345,8 +332,7 @@ define host {
 }
 ----
 
-12. Create the file +/etc/puppet/modules/nagios/files/commands.cfg+ with the
-    following contents:
+12. 使用如下内容创建 +/etc/puppet/modules/nagios/files/commands.cfg+ 文件：
 +
 ----
 define command {
@@ -389,8 +375,8 @@ define command{
 }
 ----
 
-13. Create the file +/etc/puppet/modules/nagios/files/nagios.conf+ with the
-    following contents (replace the ServerName with your own server):
+13. 使用如下内容创建 +/etc/puppet/modules/nagios/files/nagios.conf+ 文件
+    （用你自己的服务器替换 ServerName 的配置值）：
 +
 ----
 ScriptAlias /cgi-bin/nagios3 /usr/lib/cgi-bin/nagios3
@@ -426,7 +412,7 @@ nagios3|/etc/nagios3/stylesheets)>
 </VirtualHost>
 ----
 
-14. Create the password file to control access to the Nagios web interface:
+14. 创建口令文件控制对 Nagios web 界面的访问：
 +
 ....
 # htpasswd -c /etc/puppet/modules/nagios/files/htpasswd.nagios
@@ -434,28 +420,26 @@ nagios
 Password: (type password)
 ....
 
-15. If the program htpasswd isn't on your system, run the following command:
+15. 如果你的系统中还没有 `htpasswd` 程序，运行如下的命令：
 +
 ....
 # apt-get install apache2-utils
 ....
 
-16. Create an +/etc/hosts+ entry or DNS record for the +ServerName+ you specified in the
-    preceding code; in this case:
+16. 在前面的代码中指定的 +ServerName+ 为你创建一个 +/etc/hosts+ 条目或 DNS 记录，本例中的主机名是：
 +
 ----
 nagios.bitfieldconsulting.com
 ----
 
-17. Include the following in the node definition for your Nagios server:
+17. 在你的 Nagios 服务器的节点中定义中包含如下代码：
 +
 ----
 include nagios::server
 ----
 
-18. Create the file +/etc/puppet/modules/nagios/files/nrpe.cfg+ with the
-    following contents (replace the +allowed_hosts+ setting with the name or IP address
-    of your monitoring server):
+18. 使用如下内容创建 +/etc/puppet/modules/nagios/files/nrpe.cfg+ 文件
+    （使用你自己的监控服务器的主机名或 IP 地址替换 +allowed_hosts+ 设置值）：
 +
 ----
 log_facility=daemon
@@ -474,8 +458,7 @@ command[check_all_disks]=/usr/lib/nagios/plugins/check_disk -w
  $ARG1$ -c $ARG2$ -e -A -i '.gvfs'
 ----
 
-19. Create the file +/etc/puppet/modules/nagios/manifests/target.pp+ with the
-    following contents:
+19. 使用如下内容创建 +/etc/puppet/modules/nagios/manifests/target.pp+ 文件：
 +
 ----
 class nagios::target {
@@ -502,86 +485,74 @@ class nagios::target {
 }
 ----
 
-20. Include this class on the nodes you want to monitor (this should also include the
-    Nagios server itself):
+20. 在你要监控的所有节点（也应该包括 Nagios 服务器自己）上包含这个类：
 +
 ----
 include nagios::target
 ----
 
-21. Run Puppet on the Nagios server as follows:
+21. 在 Nagios 服务器上运行如下 Puppet 命令：
 +
 ....
 # puppet agent --test
 ....
 
-22. Go to the web interface in your browser (log in with the username +nagios+ and the
-    password you set in the preceding code) and check that you see the Nagios welcome
-    screen as shown in the following screenshot:
+22. 使用浏览器打开 Nagios 的 web 界面（使用用户名 +nagios+ 和你在前面的代码中设置的口令登录）
+    检查你看到的 Nagios 欢迎界面，如图所示：
 +
 image::image/ch08sec01_1.png[]
 
-23. Go to the *Host detail* screen and you should see your target nodes listed.
-24. Click on the name of a node and then select "Schedule a check of all services on this
-    host" from the *Host commands* menu.
-25. Tick the box that says "Force check" and click "Commit". It will take a few seconds for
-    Nagios to run the checks. Go to the "Service detail" screen and you should see the
-    services listed in green like this:
+23. 点击 *Host detail* 菜单，在界面中你应该看到目标节点的列表。
+24. 点击节点的名字，之后从 *Host commands* 菜单中选择 "Schedule a check of all services on this host"。
+25. 在 "Force check" 复选框上打勾将其选中并单击 "Commit"。 这会花几秒钟运行 Nagios 的检查。
+    点击 "Service detail" 菜单，在界面中你应该看到显示为绿色的服务列表，如图所示：
 +
 image::image/ch08sec01_2.png[]
 
-==== How it works…
+==== {Howitworks}
 
-Although this recipe is quite a lengthy one, the Puppet manifest itself is pretty simple; there's
-nothing here that we haven't used already in other recipes.
+尽管这个处方相当的长，但是 Puppet 的配置清单本身却很简单；
+这里没有我们在其他处方中还没使用过的配置内容。
 
-Essentially, what we're doing is installing the Nagios package itself, configuring a virtual host
-for Apache to serve it, and deploying a bunch of config files for Nagios that tell it what hosts to
-check, which services to check, and other assorted things.
+本质上，我们所做的就是安装 Nagios 包，配置服务于它的 Apache 虚拟主机，
+为 Nagios 部署一系列的配置文件，这些配置文件用于告诉 Nagios 要检查哪些主机、
+检查哪些服务以及其他一些杂七杂八的配置。
 
-On the client side, each node that's monitored by Nagios needs the +nagios-nrpe-server+
-package installed (*NRPE* is the protocol that Nagios uses to securely execute commands
-on remote servers) and a configuration file that tells the NRPE server which commands are
-allowed to be executed.
+在客户端，由 Nagios 监控的每个节点上都需要安装 +nagios-nrpe-server+ 包
+（**NRPE** 是使 Nagios 能在远程服务器上安全地执行命令的协议） 
+以及告诉 NRPE 服务允许执行哪些命令的配置文件。
 
 [NOTE]
 ====================
-You should be aware that the +dont_blame_nrpe+ setting in +nrpe.cfg+ is
-a potential security hole, as it allows remote execution of commands with
-user-supplied arguments. This is a very useful feature, as it means you can
-alter alert thresholds or other parameters without having to reconfigure
-every monitored machine. However, if you don't need this feature, it's safer to
-disable +dont_blame_nrpe+.
+你应该知道，+nrpe.cfg+ 文件中的 +dont_blame_nrpe+ 设置是一个潜在的安全漏洞，
+因为它允许在远程主机上使用用户提供的参数去执行命令。
+这是一个非常有用的功能，因为这意味着你可以在无需重新配置每一个监控机的情况下，
+就可以改变警报阈值或其他参数。
+然而，如果你不需要这个功能，禁用 +dont_blame_nrpe+ 设置会更安全。
 ====================
 
-==== There's more…
+==== {Theresmore}
 
-The tricky thing with Nagios is getting it set up and running in the first place. Although the
-monitoring configuration presented here is very basic (just disk space and CPU load checking),
-you can use this working Nagios setup as a starting point to add more service checks and
-more hosts. Here are some things that you might like to add:
+使用 Nagios 最为棘手的事情，就是获取、配置及首次执行。
+虽然这里介绍的是非常基本的监控配置（仅包括对磁盘占用和 CPU 负载的检查），
+你可以使用这个配置作为 Nagios 设置工作的起点，添加更多要检查的服务和主机。
+你可能想要添加如下的一些配置：
 
-- Host groups (for example, web servers or database servers): You can configure a
-  check to apply to all members of a host group automatically.
-- Website checks: The +check_http plugin+ that comes with Nagios is quite
-  sophisticated, and can handle redirects, SSL, authentication, and matching text from
-  a web page.
-- Process checks: It's common to want to monitor a specific process on a box. Use the
-  +check_procs+ plugin for this.
-- Different check frequencies: I've defined the service templates +every_hour+,
-  +every_day+, and +every_5_mins+ in +service_templates.cfg+; you may want to
-  add some new ones.
-- New time periods: Currently the only one defined in +timeperiods.cfg+ is 24x7,
-  but you may want to create your own. For example, if your database maintenance
-  jobs run from midnight to 1 a.m., you could define a time period that excludes those
-  hours, so that you don't get false alarms on the database server.
+- 主机组（例如，web 服务器组或数据库服务器组）：你可以配置一个检查自动应用到主机组的每个成员。
+- Web 站点检查：配置 Nagios 的 +check_http plugin+ 插件是相当复杂的，
+  它可以处理重定向、SSL、认证以及在一个 Web 页面中匹配文本。
+- 进程检查：监视一个主机上指定的进程是一个常见的需求。使用 +check_procs+ 插件可以实现。
+- 不同的检查频率：我已经在 +service_templates.cfg+ 模板中定义了 ++every_hour+、
+  +every_day+ 和 ++every_5_mins++；你可能想要添加一些新的频率设置。
+- 新的时间周期；在 +timeperiods.cfg+ 中，当前仅定义了一个时间周期 ++24x7++，
+  但你可能想要创建自己的时间周期。例如，如果要从午夜 0 点到凌晨 1 点执行数据库的维护工作，
+  你可以定义一个排除了这段时间的时间周期，而不会获得来自这个数据库服务器的误报。
 
-To find out more about how to configure Nagios, have a look at the documentation at
-http://nagios.sourceforge.net/docs/nagioscore/3/en/toc.html.
+要找到如何配置 Nagios 的更多内容, 请参考文档：
+http://nagios.sourceforge.net/docs/nagioscore/3/en/toc.html 。
 
-There is also some built-in support for Nagios in Puppet; you can have Puppet generate host
-and service definitions automatically from your manifests, which is a powerful and useful
-feature. Although I use this on some production sites, I have had to regretfully exclude
-coverage of it from this book for space reasons. If you want to find out about this, check
-the official Puppet documentation and also Mike Gurski's excellent article on the subject:
-http://blog.gurski.org/index.php/2010/01/28/automatic-monitoring-with-puppet-and-nagios/.
+在 Puppet 中也有一些对 Nagios 内置支持；你可以让 Puppet 从配置清单生成主机和服务的定义，
+这是一个强大而有用的功能。尽管我在一些生产站点上会使用这个功能，但基于篇幅的原因，
+我不得不遗憾地排除了对它的介绍。若你希望找到与这部分的相关的内容，请参考 Puppet 的官方文档以及
+Mike Gurski 撰写的有关这个主题的优秀文章：
+http://blog.gurski.org/index.php/2010/01/28/automatic-monitoring-with-puppet-and-nagios/ 。

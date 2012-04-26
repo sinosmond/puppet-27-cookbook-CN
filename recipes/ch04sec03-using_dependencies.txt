@@ -1,34 +1,30 @@
-﻿[[ch04sec03]]
-=== Using dependencies
+[[ch04sec03]]
+=== {Recipe403}
 
 [quote, Instructions on 7-11 muffin packaging,]
 Remove wrapper, open mouth, insert muffin, eat.
 
-To make sure things happen in the right order, you can specify in Puppet that one resource
-depends on another; for example, you need to install package X before you can start the
-service it provides, so you would mark the service as dependent on the package. Puppet will
-sort out the required order to meet all the dependencies.
+为确保事物以正确的顺序发生，你可以在 Puppet 中指定一个资源依赖另一个资源，
+例如：你必须先安装软件包 X 然后再启动它提供的服务，因此应该标记这项服务
+依赖于软件包 X。Puppet 会按要求的顺序排出它遇到的所有依赖。
 
-In some configuration management systems, resources are applied in the order you write
-them - in other words, the ordering is implicit. That's not the case with Puppet, where
-resources are applied in a more or less random (but consistent) order unless you state an
-explicit ordering using dependencies. Some people prefer the implicit approach, because you
-can write the resource definitions in the order that they need to be done, and that's the way
-they'll be executed.
+在一些配置管理系统中，资源按照你的书写顺序被应用，换句话说，资源被应用的顺序是隐式的。
+Puppet 则不是这种情况，资源或多或少以一种随机（但一致）顺序被应用，
+除非你明确地使用依赖关系指出应用的顺序。
+一些人更喜欢隐式的方式，因为你可以按照你需要的执行顺序书写资源定义，
+并且这就是它们被执行的方式。
 
-On the other hand, in many cases the ordering of resources doesn't matter. With an implicitstyle
-system, you can't tell whether resource B is listed after resource A because B depends
-on A, or because it just happens to have been written in that order. That makes refactoring
-more difficult, as moving resources around may break some implicit dependency.
+另一方面，许多情况下资源的顺序无关紧要。使用隐式风格的系统时，
+你不能明确地告诉系统，资源 B 是否被写在了资源 A 之后，由于资源 B 依赖于 A；
+或者说书写的顺序是否正确，即资源 A 写在了资源 B 之前。
+这使得重构更加困难，因为移动资源有可能会打破一些隐式的依赖关系。
 
-Puppet makes you do a little more work by specifying the dependencies up front, but the
-resulting code is clearer and easier to maintain. Let's look at an example.
+虽然 Puppet 会让你多做一点儿工作，就是预先指定依赖关系，
+但是这样产生的代码会更清晰且更易于维护。让我们看一个例子。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Create a new file +/etc/puppet/modules/admin/manifests/ntp.pp+ with the
-   following contents:
+1. 使用如下的内容创建一个新文件 ++/etc/puppet/modules/admin/manifests/ntp.pp++：
 +
 ----
 class admin::ntp {
@@ -49,13 +45,13 @@ class admin::ntp {
 }
 ----
 
-2. Copy your existing +ntp.conf+ file into Puppet as follows:
+2. 复制已经存在的 +ntp.conf+ 文件到 Puppet 的如下目录：
 +
 ....
 # cp /etc/ntp.conf /etc/puppet/modules/admin/files
 ....
 
-3. Add the +admin::ntp+ class to your server in +nodes.pp+:
+3. 在 +nodes.pp+ 中将 +admin::ntp+ 类添加到你的服务器：
 +
 ----
 node cookbook {
@@ -63,13 +59,13 @@ node cookbook {
 }
 ----
 
-4. Now remove the existing ntp.conf file:
+4. 现在删除系统中已存在的 ntp.conf 文件：
 +
 ....
 # rm /etc/ntp.conf
 ....
 
-5. Run Puppet:
+5. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -86,10 +82,10 @@ notice: Finished catalog run in 2.36 seconds
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-This example demonstrates two kinds of dependencies: +require+, and +notify+. In the first
-case, the +ntp+ service requires the +ntp+ package to be applied first:
+在本例中演示了两种类型的依赖： +require+ 和 ++notify++。在第一种情况中，
++ntp+ 服务要求 +ntp+ 包资源首先被应用：
 
 ----
 service { "ntp":
@@ -98,8 +94,8 @@ service { "ntp":
 }
 ----
 
-In the second case, the NTP config file is set to +notify+ the +ntp+ service; in other words, if the
-file changes, Puppet should restart the +ntp+ service to pick up its new configuration:
+在第二种情况中，NTP 的配置文件设置成了 ++notify++（通知）++ntp++ 服务；换句话说，
+一旦发现配置文件有变化，Puppet 就应该使用新的配置文件重新启动 +ntp+ 服务：
 
 ----
 file { "/etc/ntp.conf":
@@ -109,46 +105,43 @@ file { "/etc/ntp.conf":
 }
 ----
 
-This implies that the service depends on the file as well as on the package, and so Puppet will
-be able to apply all three resources in the correct order as follows:
+这意味着服务依赖于配置文件以及所安装的软件包，Puppet
+会按照如下的正确顺序来应用这三个资源：
 
 ----
 Package["ntp"] -> File["/etc/ntp.conf"] ~> Service["ntp"]
 ----
 
-In fact, this is another way to specify the same dependency chain. Adding the preceding
-line to your manifest will have the same effect as the +require+ and +notify+ parameters in
-our example (the +->+ means +require+, while +~>+ means +notify+). However, I prefer to use
-+require+ and +notify+ because the dependencies are defined as part of the resource, so it's
-easier to see what's going on. For complex chains of dependencies, though, you may want to
-use the +->+ notation instead.
+事实上，这是指定相同依赖关系链的另一种方法。添加上面这行到你的配置清单中，
+就会产生和上例中使用 +require+ 和 +notify+ 参数的同样效果
+（++->++ 表示 ++require++，++~>++ 表示 ++notify++）。然而，我更喜欢使用 +require+ 和 ++notify++，
+因为依赖关系被定义成了资源的一部分，因此更容易看清将会发生什么。
+不过，对于复杂的依赖关系链,你可能想使用 +->+ 符号来代替。
 
-==== There's more…
+==== {Theresmore}
 
-You can also specify that a resource depends on a certain class:
+你也可以指定一个资源依赖于某个类：
 
 ----
 require => Class["my-apt-repo"]
 ----
 
-You can specify dependencies not just between resources and classes, but between
-*collections*:
+你不仅可以指定资源和类之间的依赖关系，甚至可以指定 *collections* 之间的依赖关系：
 
 ----
 Yumrepo <| |> -> Package <| provider == yum |>
 ----
 
-is a powerful way to express that all +yumrepo+ resources should be applied before all
-+package+ resources whose +provider+ is +yum+.
+这是一种功能强大的表达方式，所有 +provider+ 是 +yum+ 的 +package+ 资源被应用之前，
+所有的 +yumrepo+ 资源首先都应该被应用。
 
 [NOTE]
-.Historical note:
+.历史说明:
 ===================
-In versions of Puppet prior to 2.7, the catalog was applied
-in a non-deterministic way, which means that resources could be applied in
-a different order every time Puppet runs. This could cause some interesting
-issues, as a Puppet manifest that worked without errors on one machine
-could fail on another. This is no longer the case, and as Puppet Labs put it,
-Puppet will now "either succeed reliably, or fail reliably". If you are using an
-earlier version and having this problem, upgrading should fix it.
+在 Puppet 2.7 版本之前， 所有资源目录都以非确定性的方式被应用，
+这意味着每次 Puppet 运行资源的顺序都会不同。这可能会导致一些有趣的问题，
+比如一个 Puppet 配置清单在一台机器上能运行成功而在另一台机器上却运行失败。
+经过 Puppet Labs 的努力，现在这种情况已经不会发生。现在 Puppet
+既保证可靠成功，又保证可靠失败（"either succeed reliably, or fail reliably"）。
+如果你还在使用早期版本并且遇到了这种问题，请更新到新版本。
 ===================

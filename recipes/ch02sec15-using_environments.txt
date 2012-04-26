@@ -1,25 +1,24 @@
-﻿[[ch02sec15]]
-=== Using environments
+[[ch02sec15]]
+=== {Recipe215}
 
 [quote, Joke,]
 A Zen student went up to a hot dog vendor and said: "Make me one with
 everything".
 
-Context is important. If you want to test Puppet manifests before putting them into production,
-you can use Puppet's *environment* feature to do this. This lets you apply a different manifest
-depending on the environment setting of the client machine. For example, you might define
-the following environments:
+环境背景很重要。 如果你想对 Puppet 的配置清单在应用到生产环境之前先进行测试，
+你可以使用 Puppet 的 *environment* 特性来做到。
+这可以让你根据环境应用不同的配置清单来设置客户机。例如，你可以定义如下的环境：
 
 - development
 - staging
 - production
 
-You can set up environments in your +puppet.conf+ file. In this example, we'll add a
-+development+ environment, pointing to a different set of manifests.
+你可以在 +puppet.conf+ 文件中设置环境。在本例中，我们将添加一个
++development+ 环境，用于指向一套不同的配置清单。
 
-==== How to do it…
+==== {Howtodoit}
 
-Add the following lines to +puppet.conf+:
+在 +puppet.conf+ 文件中添加如下行：
 
 ----
 [development]
@@ -27,48 +26,53 @@ manifest = /etc/puppet/env/development/manifests/site.pp
 modulepath = /etc/puppet/env/development/modules:/etc/puppet/modules
 ----
 
-==== How it works…
+==== {Howitworks}
 
-You can put your environment manifests anywhere you like, as long as you set the +manifest+
-parameter to point to the top-level +site.pp+ file. In this example we've put the manifests
-for this environment in +/etc/puppet/env/development+. Similarly, you need to set
-+modulepath+ to the location of your modules directory for that environment.
+你可以根据你的喜好将一套与一个环境相关的配置清单存在磁盘的任何位置，
+只要设置 +manifest+ 参数指向顶级的 +site.pp+ 文件即可。在本例中,
+我们为 +development+ 环境所编制的配置清单保存在 +/etc/puppet/env/development+ 目录。
+类似地，你还需要使用 +modulepath+ 参数指定这个环境需要使用的模块目录。
 
-In the preceding example, the +modulepath+ also includes +/etc/puppet/modules+; this is
-so that if Puppet doesn't find a module in your +development+ environment, it will also look for
-it in the default environment. This means you only need to put the modules you're working on
-into the +development+ environment.
+在上面的例子中，参数 +modulepath+ 同时包括了 ++/etc/puppet/modules++；
+所以若 Puppet 在你的 +development+ 环境中找不到模块，它也会在默认的环境中寻找。
+这就意味着你仅需要将区别于其他环境的模块存入 +development+ 环境。
 
-The default environment is production, so if you run Puppet without specifying an
-environment, that's what you'll get.
+默认的环境是 ++production++，所以如果你没有指定 Puppet 的环境的话，将会使用默认环境。
 
-==== There's more…
+==== {Theresmore}
 
-If you are using a version control system such as Git, your environments can be Git branches.
-Once you have finished testing and staging a new module, you can merge it into the Git master
-branch for use in production. You can read more about this strategy for using environments
-in R.I. Pienaar's article: http://www.devco.net/archives/2009/10/10/puppet_environments.php.
+如果你使用 Git 这样的版本控制系统，你的不同环境可以是 Git 的不同分支。
+一旦你编制了新模块并完成了测试，就可以将其合并（merge）到用于生产环境的
+Git 主分支（master branch）。
+你可以在 R.I. Pienaar 的文章里了解更多使用环境的技巧：
+http://www.devco.net/archives/2009/10/10/puppet_environments.php 。
 
-You can specify the environment of a client machine in several ways. You can use the
-`--environment` switch when running Puppet as follows:
+[NOTE]
+.译者注
+=========================
+你还可以参考 http://puppetlabs.com/blog/git-workflow-and-puppet-environments/
+了解关于使用 Git 和 Puppet 动态环境的技巧。
+=========================
+
+你可以用多种方式指定客户端的环境。
+一种方式是在运行 Puppet 时使用 `--environment` 开关：
 
 ....
 # puppet agent --test --environment=development
 ....
 
-Alternatively, you can specify it in the client's +puppet.conf+:
+另一种方式是在客户端的 +puppet.conf+ 文件中使用 +environment+ 参数指定：
 
 ----
 [main]
 environment=development
 ----
 
-If you are using an external node classifier script (described elsewhere in this book), this can
-also specify the client's environment.
+如果你使用的是外部节点分类器脚本（将在本书第 9 章的描述），也可以指定客户端所属的环境。
 
-You can also have a different +fileserver.conf+ for each environment (see the section on
-configuring Puppet's file server). To do this, set the variable +fileserverconfig+ for each
-environment in the Puppetmaster's +puppet.conf+ file as follows:
+你也可以为每一个环境指定不同的 ++fileserver.conf++（参考 <<ch01sec04,{Recipe104}>> 一节）。
+为了实现此功能，需要在 Puppetmaster 的配置文件 +puppet.conf+
+中为每个环境设置 +fileserverconfig+ 参数：
 
 ----
 [development]
@@ -78,11 +82,11 @@ fileserverconfig = /etc/puppet/fileserver.conf.development
 fileserverconfig = /etc/puppet/fileserver.conf.production
 ----
 
-For more information, see the Puppet Labs page on using environments: 
-http://projects.puppetlabs.com/projects/1/wiki/Using_Multiple_Environments
+更多的信息，请参考 Puppet Labs 的“使用多环境”的页面： 
+http://projects.puppetlabs.com/projects/1/wiki/Using_Multiple_Environments 。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec01,Using version control>> in Chapter 1
-- <<ch03sec02,Using modules>> in Chapter 3
-- <<ch09sec09,Using an external node classifier>> in Chapter 9
+- 第 1 章的 <<ch01sec01,{Recipe101}>> 一节
+- 第 3 章的 <<ch03sec02,{Recipe302}>> 一节
+- 第 9 章的 <<ch09sec09,{Recipe909}>> 一节

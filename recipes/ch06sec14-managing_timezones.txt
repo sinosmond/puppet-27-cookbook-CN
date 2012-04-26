@@ -1,21 +1,18 @@
-﻿[[ch06sec14]]
-=== Managing timezones
+[[ch06sec14]]
+=== {Recipe614}
 
 [quote, Ashleigh Brilliant,]
 I try to take one day at a time, but sometimes several days attack at once.
 
-Sooner or later, you'll encounter a weird problem, which you'll eventually track down to servers
-having different time zones. It's wise to avoid this kind of issue by making sure that all your
-servers use the same time zone, whatever their geographical location (GMT is the logical
-choice).
+你迟早会遭遇由于服务器的时区不同而带来的各种奇怪问题。
+为了避免此类问题的发生，确保所有服务器都使用相同的时区是明智之举。
+无论这些服务器所处的地理位置在何处，都应该使用相同的时区（GMT 是合乎逻辑的选择）。
 
-Unless a server is solar powered, I can't think of any reason for it to care about the time zone
-it's in.
+除非服务器是由太阳能供电的，否则我认为没有任何理由不关心服务器的时区设置。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create the file +/etc/puppet/modules/admin/manifests/gmt.pp+ with the
-   following contents:
+1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/gmt.pp+ 文件：
 +
 ----
 class admin::gmt
@@ -27,13 +24,13 @@ class admin::gmt
 }
 ----
 
-2. Add the following to all nodes:
+2. 在所有的节点中添加如下代码：
 +
 ----
 include admin::gmt
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -53,7 +50,6 @@ ensure changed 'file' to 'link'
 notice: Finished catalog run in 1.94 seconds
 ....
 
-==== There's more…
+==== {Theresmore}
 
-If you want to use a different timezone, choose the appropriate file in
-+/usr/share/zoneinfo+: for example, +US/Eastern+.
+如果你想要使用其他的时区，请在 +/usr/share/zoneinfo+ 中选择相应的文件，例如：++US/Eastern++。

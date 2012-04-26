@@ -1,13 +1,13 @@
-﻿[[ch06sec09]]
-=== Distributing directory trees
+[[ch06sec09]]
+=== {Recipe609}
 
 [quote, Saying,]
 To understand recursion, you must first understand recursion.
 
-When you find yourself deploying several files with Puppet, all to the same directory, it might
-be worth considering a recursive file resource instead. If you set the +recurse+ parameter
-on a directory, Puppet will copy the directory to the node along with its contents and all its
-subdirectories, shown as follows:
+当你需要使用 Puppet 分发一批位于同一目录下的多个文件时，
+就应该考虑使用文件资源的递归特性来替代逐个文件的分发。
+如果你在一个目录上设置了 +recurse+ 参数，
+Puppet 会复制此目录及其子目录中的所有文件到节点目录，例如：
 
 ----
 file { "/usr/lib/nagios/plugins/custom":
@@ -17,9 +17,9 @@ file { "/usr/lib/nagios/plugins/custom":
 }
 ----
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a suitable directory tree in the Puppet repository as follows:
+1. 在 Puppet 仓库中的适当位置创建如下的目录树：
 +
 ....
 # mkdir /etc/puppet/modules/admin/files/tree
@@ -29,7 +29,7 @@ file { "/usr/lib/nagios/plugins/custom":
 # mkdir /etc/puppet/modules/admin/files/tree/a/1
 ....
 
-2. Add the following to your manifest:
+2. 添加如下代码到你的配置清单：
 +
 ----
 file { "/tmp/tree":
@@ -38,7 +38,7 @@ file { "/tmp/tree":
 }
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -56,21 +56,20 @@ notice: /File[/tmp/tree/c]/ensure: created
 notice: Finished catalog run in 1.25 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-If a +file+ resource has the +recurse+ parameter set on it, and if it is a directory, then Puppet
-will deploy not only the directory itself, but all its contents (including subdirectories and their
-contents). This is a great way to put a whole tree of files onto a node, or to quickly create a
-large number of paths using a single resource.
+如果一个 +file+ 资源上设置了 +recurse+ 参数，而且此资源又是个目录，那么 Puppet
+不仅会部署目录自身，而且还会分发其中的所有内容（包括子目录及其文件）。
+对于要在节点上部署目录树及其所有的文件来说，这是一个很好的方法。
+也可以用这种方法使用一个单独的资源快速创建大量路径。
 
+==== {Theresmore}
 
-==== There's more…
+有时你要部署一些文件到一个已经存在的目录，但是首先要移除该目录下的所有没被
+Puppet 管理的文件。 例如，Ubuntu 的 +/etc/apt/sources.list.d+ 目录下的文件，
+你可能想要确保没有文件存在，即删除那些不是来自 Puppet 的文件。
 
-Sometimes, you want to deploy files to an existing directory, but remove any files that aren't
-managed by Puppet. For example, in Ubuntu's +/etc/apt/sources.list.d+ directory, you
-might want to make sure that there are no files present that don't come from Puppet.
-
-The +purge+ parameter will do this for you. Define the directory as a resource in Puppet:
++purge+ 参数可以为我们实现这个功能。在 Puppet 中定义如下的目录的 +file+ 资源：
 
 ----
 file { "/etc/apt/sources.list.d":
@@ -80,9 +79,9 @@ file { "/etc/apt/sources.list.d":
 }
 ----
 
-The combination of +recurse+ and +purge+ will remove all files and subdirectories in 
-+/etc/apt/sources.list.d+ that are not deployed by Puppet. You can then deploy your own files
-to that location using a separate resource as follows:
+联合使用 +recurse+ 和 +purge+ 将会移除 +/etc/apt/sources.list.d+ 
+目录及其子目录下的所有不被 Puppet 管理的文件。
+然后你就可以使用独立的 +file+ 资源将自己的文件部署到 +/etc/apt/sources.list.d+ 目录：
 
 ----
 file { "/etc/apt/sources.list.d/bitfield.list":
@@ -90,8 +89,9 @@ file { "/etc/apt/sources.list.d/bitfield.list":
 }
 ----
 
-If there are subdirectories, which contain files you don't want to +purge+, just define the
-subdirectory as a Puppet resource, and it will be left alone:
+如果有一个子目录，其中包含了你不想 +purge+ 的文件，
+可以将此子目录作为 Puppet 的一个 +file+ 资源单独进行定义，
+这样这个子目录中的内容就会保留：
 
 ----
 file { "/etc/exim4/conf.d/acl":
@@ -101,7 +101,6 @@ file { "/etc/exim4/conf.d/acl":
 
 [NOTE]
 ============
-Be aware that, at least in current implementations of Puppet, recursive file
-copies can be quite slow and place a heavy memory load on the server. If the
-data doesn't change very often, it might be better to deploy a tarball instead.
+要知道，至少在 Puppet 的当前实现中，采用递归方式复制文件相当慢而且会占用大量服务器的内存。
+如果要部署的文件不经常改变，使用 tarball 进行部署比使用这种递归方式会更好。
 ============

@@ -1,35 +1,34 @@
-﻿[[ch04sec08]]
-=== Getting information about the environment
+[[ch04sec08]]
+=== {Recipe408}
 
 [quote, Mark Twain,]
 In Paris they simply stared when I spoke to them in French. I never did succeed in
 making those idiots understand their language.
 
-Local knowledge can be very useful. Often in a Puppet manifest, you need to know some
-local information about the machine you're on. *Facter* is the tool that accompanies Puppet to
-provide a standard way of getting information ('facts') from the environment about things like:
+当地的知识是非常有用的。通常在 Puppet 的配置清单中，你需要知道一些所在机器的本地信息。 
+Puppet 的发行中包含了一个 *Facter* 工具，它提供了从环境中获取系统信息（'facts'）
+的一种标准方法，这些信息包括：
 
-- Operating system
-- Memory size
-- Architecture
-- Processor count
+- 操作系统
+- 内存大小
+- 体系结构
+- 处理器数量
 
 [NOTE]
 =========
-To see a complete list of the facts available on your system, run the command: 
+要查看关于你的系统中可用的完整的 +facts+ 列表，请运行如下命令： 
 
 ----
 # facter
 ----
 
-While it can be handy to get this information from the command line,
-the real power of Facter lies in being able to access these facts in your
-Puppet manifests.
+虽然它可以方便地从命令行获得信息，但 *Facter* 的真正强大之处在于，
+可以在你的 Puppet 配置清单中访问这些 ++facts++。
 =========
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Reference a Facter fact in your manifest like any other variable as follows:
+1. 在你的配置清单中可以像引用其他变量一样引用一个 Facter 的值，例如：
 +
 ----
 notify { "This is $operatingsystem version
@@ -37,31 +36,31 @@ $operatingsystemrelease, on $architecture architecture, kernel
 version $kernelversion": }
 ----
 
-2. When Puppet runs, it will fill in the appropriate values for the current node:
+2. 一旦运行 Puppet，它就会为当前节点填充适当的值：
 +
 ......
 notice: This is Ubuntu version 10.04, on i386 architecture,
 kernel version 2.6.32
 ......
 
-==== How it works…
+==== {Howitworks}
 
-Facter provides an abstraction layer for Puppet, and a standard way for manifests to get
-information about their environment. When you refer to a fact in a manifest, Puppet will query
-Facter to get the current value, and insert it into the manifest.
+Facter 为 Puppet 提供了一个抽象层，并在配置清单中提供了一种关于环境信息的标准方法。
+当你在配置清单中引用一个 +fact+ 值时，Puppet 就会通过查询 Facter 获得当前值，
+并将其插入配置清单。
 
-==== There's more…
+==== {Theresmore}
 
-You can also use facts in *ERB* templates. For example, you might want to insert the node's
-hostname into a file, or change a config setting for an application based on the memory size
-of the node. When you use fact names in templates, remember that they don't need a dollar
-sign, because this is Ruby, not Puppet:
+你也可以在 *ERB* 模板中使用 ++facts++。例如，你可能会在一个文件中插入一个节点的主机名，
+或者基于一个节点的内存大小改变一个应用的配置设置。
+当你在模板中使用 +fact+ 的名字时，它们不需要前导的美元符号，
+因为在 *ERB* 模板中使用的是 Ruby，而不是 Puppet：
 
 ----
 $KLogPath <%= case kernelversion when "2.6.31" then "/var/run/rsyslog/
 kmsg" else "/proc/kmsg" end %>
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch09sec01,Creating custom Facter facts>> in Chapter 9
+- 第 9 章的 <<ch09sec01,{Recipe901}>> 一节

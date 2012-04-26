@@ -1,17 +1,14 @@
 ﻿[[ch03sec07]]
-=== Writing powerful conditional statements
+=== {Recipe307}
 
-Life is full of choices. Puppet's +if+ statement allows you to change the manifest based on the
-value of a variable or an expression. With it, you can apply different resources or parameter
-values depending on certain facts about the node such as the operating system, or the
-memory size. You can also set variables within the manifest that can change the behavior
-of included classes. For example, nodes in data center A might need to use different DNS
-servers as compared to nodes in data center B, or you might need to include one set of
-classes for an Ubuntu system, and a different set for other systems.
+生活充满选择。Puppet 的 +if+ 语句允许基于变量或表达式的值应用不同的配置代码。
+使用 +if+ 语句，你可以根据当前节点的实际情况应用不同的资源或参数值，例如：
+操作系统或内存大小。举例来说，数据中心A中的节点和数据中心B中的节点可能需要使用不同的
+DNS 服务器；对 Ubuntu 系统和其他系统可能需要执行不同类的集合。
 
-==== How to do it…
+==== {Howtodoit}
 
-Add the following code to your manifest:
+在你的配置清单中添加如下的代码：
 
 ----
 if $lsbdistid == "Ubuntu" {
@@ -22,25 +19,24 @@ immediately.")
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Puppet treats whatever follows the +if+ keyword as an expression and evaluates it. If the
-expression is evaluated as +true+, Puppet will execute the code within the curly braces.
+Puppet 对 +if+ 关键字之后的内容视为表达式并对其进行评估。若表达式的值为
+++true++， Puppet 将执行大括号内的代码。
 
-Optionally, you can add an +else+ branch, which will be executed if the expression is evaluated
-as +false+.
+另外，你还可以使用 +else+ 分支，它将在表达式的值为 +false+ 时执行。
 
-==== There's more…
+==== {Theresmore}
 
-You can write very complicated +if+ statements in Puppet, but I recommend you don't. Very
-often, it's better to change your design (for example, using a template) rather than use +if+.
-While looking through some of my production manifests for examples, I was surprised to find
-that I haven't used +if+ at all in many thousands of lines of code. Still, your mileage may vary,
-so here are some more tips on using +if+.
+虽然你可以在 Puppet 中写出很复杂的 +if+ 语句，但是我不建议你这么做。
+很多时候，改变你的设计思路（例如，使用模板）比使用 +if+ 语句要好。
+
+从我用于生产环境的一些配置清单实例来看，我惊讶地发现，在所有的几千行代码中都没有使用
++if+ 语句。尽管如此，你的里程可能会有所不同，所以下面给出一些使用 +if+ 的技巧。 
 
 ===== elsif
 
-You can add further tests using the +elsif+ keyword, as follows:
+你可以添加 +elsif+ 关键字进行进一步的测试，例如：
 
 ----
 if $lsbdistid == "Ubuntu" {
@@ -53,9 +49,9 @@ immediately.")
 }
 ----
 
-===== Comparisons
+===== 比较
 
-You can check if two values are equal using the +==+ syntax, as in our example:
+你可以使用 +==+ 语法检查两个值是否相同，例如：
 
 ----
 if $lsbdistid == "Ubuntu" {
@@ -63,7 +59,7 @@ if $lsbdistid == "Ubuntu" {
 }
 ----
 
-Or, you can check if they are not equal using +!=+ as follows:
+或者使用 +!=+ 语法检查两个值是否不同，例如：
 
 ----
 if $lsbdistid != "CentOS" {
@@ -71,7 +67,7 @@ if $lsbdistid != "CentOS" {
 }
 ----
 
-You can also compare numeric values using +<+ and +>+ as follows:
+你也可以使用 +<+ 和 +>+ 比较两个数值，例如：
 
 ----
 if $uptime_days > 365 {
@@ -80,7 +76,7 @@ there for ages, you will so be 0wned!")
 }
 ----
 
-To test if a value is greater (or less) than or equal to another value, use +<=+ or +>=+:
+还可以使用 +<=+ 或 +>=+ 对数值进行比较：
 
 ----
 if $lsbmajdistrelease <= 9 {
@@ -88,10 +84,10 @@ if $lsbmajdistrelease <= 9 {
 }
 ----
 
-===== Combining expressions
+===== 复杂表达式
 
-You can put together the kind of simple expressions described in the preceding code snippets
-into more complex, logical expressions using +and+, +or+, and +not+ as follows:
+你可以把上述代码片段中的一些简单表达式组合成更复杂的逻辑表达式，
+逻辑表达式使用与（++and++）、或（++or++）和非（++not++）连接简单表达式，例如：
 
 ----
 if ($uptime_days > 365) and ($lsbdistid == "Ubuntu") {
@@ -103,8 +99,8 @@ if ($role == "webserver") and ( ($datacenter == "A") or ($datacenter == "B") ) {
 }
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch03sec08,Using regular expressions in if statements>> in this chapter
-- <<ch03sec10,Testing whether values are contained in strings>> in this chapter
-- <<ch03sec09,Using selectors and case statements>> in this chapter
+- 第 3 章的 <<ch03sec08,{Recipe308}>> 一节
+- 第 3 章的 <<ch03sec10,{Recipe310}>> 一节
+- 第 3 章的 <<ch03sec09,{Recipe309}>> 一节

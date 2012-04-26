@@ -1,25 +1,22 @@
-﻿[[ch05sec06]]
-=== Installing packages from a third-party repository
+[[ch05sec06]]
+=== {Recipe506}
 
-Most often, you will want to install packages from the main distribution repository, so a simple
-+package+ resource will do:
+大多数情况下，你会从发行版本的官方仓库安装软件包，所以使用简单的
++package+ 资源就可以做到：
 
 ----
 package { "exim4": ensure => installed }
 ----
 
-Sometimes, though, you need a package which is only found in a third-party repository (an
-*Ubuntu PPA*, for example). Or it might be that you need a more recent version of a package
-than that provided by the distribution, which is available from a third party.
+但是，有时你需要的软件包只能在第三方仓库（例如 **Ubuntu PPA**）中找到。
+或者是第三方仓库提供的软件包版本比官方仓库中的软件包新。
 
-On a manually administered machine, you would normally do this by adding the repository
-source configuration to +/etc/apt/sources.list.d+ (and, if necessary, a GPG key for the
-repository) before installing the package. We can automate this process easily with Puppet.
+对于手工管理的主机，你通常需要在安装软件包之前先添加仓库源配置到 +/etc/apt/sources.list.d+
+（如果有必要，还应该导入仓库的 GPG 公钥）。我们可以很容易地使用 Puppet 自动完成这个过程。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 package { "python-software-properties": ensure => installed }
@@ -31,7 +28,7 @@ exec { "/usr/bin/add-apt-repository ppa:mathiaz/puppet-backports":
 }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -44,39 +41,38 @@ successfully
 notice: Finished catalog run in 5.97 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-1. The +python-software-properties+ package provides the command `add-apt-repository`,
-   which simplifies the process of adding extra repositories as follows:
+1. +python-software-properties+ 软件包提供了 `add-apt-repository` 命令，
+   使用此命令可以简化添加额外的软件仓库源配置的过程：
 +
 ----
 package { "python-software-properties": ensure => installed }
 ----
 
-2. We then call this command in the +exec+ resource to add the required configuration:
+2. 然后我们使用 +exec+ 资源调用这个命令添加要求的配置：
 +
 ----
 exec { "/usr/bin/add-apt-repository ppa:mathiaz/puppet-backports":
 ----
 
-3. To ensure that the +exec+ resource is not run every time Puppet runs, we specify a file
-   that the command creates, so that Puppet will skip +exec+ if this file already exists:
+3. 确保 Puppet 不会在每次运行时都执行这个 +exec+ 资源，我们指定了一个由此命令创建的文件，
+   如果此文件已经存在，则 Puppet 就会忽略 +exec+ 资源的执行：
 +
 --
 ----
 creates => "/etc/apt/sources.list.d/mathiaz-puppet-backports-lucid.list",
 ----
 
-You might want to combine this with purging unwanted repository definitions in
-+/etc/apt/sources.list.d+, as described in the section on recursive file resources.
+你可能想要将这个内容与清除 +/etc/apt/sources.list.d+ 中不需要的仓库定义相结合，
+正如本书中使用递归文件资源部分中所描述的。
 --
 
-==== There's more…
+==== {Theresmore}
 
-This method of repository handling is specific to Debian and Ubuntu systems, which as we've
-said is our reference platform for the book. If you're on a RedHat-based system, you can use
-+yumrepo+ resources to manage RPM repositories directly.
+这种处理仓库的方法是针对 Debian 和 Ubuntu 系统的，我们之前说过，这是本书使用的参考平台。
+如果你使用的是基于 Red Hat 的系统，你可以直接使用 +yumrepo+ 资源管理 RPM 仓库。
 
-==== See also
+==== {Seealso}
 
-- <<ch06sec09,Distributing directory trees>> in Chapter 6
+- 第 6 章的 <<ch06sec09,{Recipe609}>> 一节

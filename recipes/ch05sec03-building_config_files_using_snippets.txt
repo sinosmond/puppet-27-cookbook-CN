@@ -1,17 +1,13 @@
-﻿[[ch05sec03]]
-=== Building config files using snippets
+[[ch05sec03]]
+=== {Recipe503}
 
-How do you eat an elephant? One bite at a time. Sometimes you have a situation where you
-want to build up a single config file from various snippets managed by different classes. For
-example, you might have two or three services that require +rsync+ modules to be configured,
-so you can't distribute a single +rsyncd.conf+. Although you could use Augeas, there's a
-simple way to concatenate config snippets together into a single file using an +exec+ resource.
+你怎能一口吃头大象呢？有时你会遇到这种情况，想要从被不同类管理的各种片段构建单一的配置文件。
+例如，你可能有两到三个服务需要 +rsync+ 模块配置，因此你不能只发布单一的配置文件 ++rsyncd.conf++。
+尽管你可以使用 Augeas，但是一种更简单的方法就是使用 +exec+ 资源将若干配置片段串接成一个文件。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Create the file +/etc/puppet/modules/admin/manifests/rsyncdconf.pp+
-   with the following contents:
+1. 使用如下代码创建 +/etc/puppet/modules/admin/manifests/rsyncdconf.pp+ 文件：
 +
 ----
 class admin::rsyncdconf {
@@ -27,7 +23,7 @@ class admin::rsyncdconf {
 }
 ----
 
-2. Add the following to your manifest:
+2. 添加如下代码到你的配置清单：
 +
 ----
 class myapp::rsync {
@@ -43,8 +39,7 @@ class myapp::rsync {
 include myapp::rsync
 ----
 
-3. Create the file +/etc/puppet/modules/myapp/files/myapp.rsync+ with the
-   following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/myapp/files/myapp.rsync+ 文件：
 +
 ----
 [myapp]
@@ -57,7 +52,7 @@ include myapp::rsync
     auth users = myappuser
 ----
 
-4. Run Puppet:
+4. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -75,10 +70,9 @@ Triggered 'refresh' from 1 events
 notice: Finished catalog run in 1.01 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-The +admin::rsyncdconf+ class creates a directory for +rsync+ config snippets to be placed
-into as follows:
++admin::rsyncdconf+ 类为存放 +rsync+ 的配置片段创建了如下目录：
 
 ----
 file { "/etc/rsyncd.d":
@@ -86,11 +80,11 @@ file { "/etc/rsyncd.d":
 }
 ----
 
-When you create a config snippet (such as in +myapp::rsync+), all you need to do is +require+
-the directory -- +require => File["/etc/rsyncd.d"]+,and +notify+ the +exec+ resource that
-updates the main config file as follows: +notify => Exec["update-rsyncd.conf"],+.
+当你创建一个配置片段（例如本例中的 ++myapp::rsync++），你要做的所有工作就是 +require+
+这个目录（++require => File["/etc/rsyncd.d"]++）并 +notify+ 资源 +exec+ 更新主配置文件
+（++notify => Exec["update-rsyncd.conf"],++）。
 
-This +exec+ resource will then be run every time one of the following snippets is updated:
+只要 +/etc/rsyncd.d+ 目录中有一个配置片段被更新，++exec++ 资源就会执行一次：
 
 ----
 exec { "update-rsyncd.conf":
@@ -99,19 +93,16 @@ exec { "update-rsyncd.conf":
 }
 ----
 
-The preceding code snippet will concatenate all the snippets in +/etc/rsyncd.d+ into
-+rsyncd.conf+.
+这样，++/etc/rsyncd.d++ 目录中的所有配置片段将会串接成一个 +rsyncd.conf+ 文件。
 
-The reason this is useful is that you can have many different snippet resources spread
-throughout different classes and modules, all of which will eventually be combined into a
-single +rsyncd.conf+ file, but you can keep the code to combine this in one place.
+这是非常有用的，原因在于你可以有许多不同的片段资源散布在各个不同的类或模块中，
+所有这些片段最终都将被合并成单一的 +rsyncd.conf+ 文件，而你却可以在一个地方实现配置代码的合并。
 
-==== There's more…
+==== {Theresmore}
 
-This is a useful pattern whenever you have a service like +rsync+ that has a single config
-file which may contain distinct snippets. In effect, it gives you the functionality of Apache's
-+conf.d+ or PHP's +php-ini.d+ directories.
+当你有一个像 +rsync+ 这样的服务且在一个配置文件中需要包含不同的片段时，这会是一种很有用的模式。
+实际上，这为你提供了类似于 Apache 的 +conf.d+ 目录或 PHP 的 +php-ini.d+ 目录的功能。
 
-==== See also
+==== {Seealso}
 
-- <<ch02sec13,Using tags>> in Chapter 2
+- 第 2 章的 <<ch02sec13,Using tags>> 一节

@@ -1,88 +1,82 @@
-﻿[[ch09sec07]]
-=== Using MCollective
+[[ch09sec07]]
+=== {Recipe907}
 
-The *Marionette Collective* (*MCollective* for short) is a tool for system administration. It
-can run commands on large numbers of servers in parallel, and uses a broadcast architecture
-so that you can administer a large network without the need for a central master server or
-asset database.
+**Marionette Collective**（简称为 **MCollective**）是一个系统管理工具。
+MCollective 可以在大量服务器上并行运行命令，它采用广播架构，
+所以，你可以使用它管理一个大型网络而不需要一个中央主服务器或资产数据库。
 
-Each server runs an MCollective daemon that listens for requests, and can execute
-commands locally or return information about the server. This can be used to filter the list of
-target servers. So, for example, you could use MCollective to execute a given command on all
-servers that match certain criteria.
+每台服务器都运行一个 MCollective 守护进程监听请求，并在本地执行命令或返回有关服务器的信息。
+这也可以用来过滤目标服务器列表。
+例如，你可以使用 MCollective 在符合特定条件的所有服务器上执行给定的命令。
 
-You can think of MCollective as a complement to Puppet (though it also works fine with Chef
-and other configuration management systems). For example, your provisioning process for
-a new node might require firewall changes on other machines, permissions granted on a
-database server, and so on, which is not very easy to do with Puppet. Although you could
-automate specific jobs using shell scripts and SSH, MCollective provides a powerful and
-flexible way to solve this general problem.
+你可以考虑将 MCollective 作为 Puppet 的一个补充（尽管它也可以与 Chef 或其他配置管理系统协同工作）。
+例如，你配置一个新节点的过程可能需要改变其他机器上的防火墙配置，对数据库服务器授予适当的权限，等等。
+这仅使用 Puppet 是不太容易做到的。虽然你可以使用 Shell 脚本和 SSH 自动化执行特定的工作，
+但是 MCollective 提供了解决这个普遍问题的强大而灵活的方式。
 
-==== Getting ready...
+==== {Gettingready}
 
-1. MCollective uses the ActiveMQ message broker framework (actually, any STOMPcompliant
-   middleware, but ActiveMQ is a popular choice), which in turn requires Java,
-   so if you don't have Java already installed on your system, install it:
+1. MCollective 使用 ActiveMQ 消息代理框架（实际上，可以使用任何 STOMPcompliant 中间件，
+   但 ActiveMQ 是一个受欢迎的选择）， ActiveMQ 需要 Java 运行环境，
+   如果你的系统还没有安装 Java，先安装它：
 +
 ....
 # apt-get install gcj-4.4-jre-headless
 ....
 
-2. Go to the ActiveMQ download page and get the latest stable "Unix distribution"
-   tarball: http://activemq.apache.org/download.html.
-3. Install the +stomp+ gem as follows:
+2. 到 ActiveMQ 下载页面 http://activemq.apache.org/download.html
+   下载 “Unix 发布” 最近的稳定版 tar 包。
+3. 安装 +stomp+ gem ：
 +
 ....
 # gem install stomp
 ....
 
-4. Download the latest stable MCollective +.deb+ packages from: http://www.puppetlabs.com/misc/download-options/.
-5. Install the packages as follows:
+4. 到 http://www.puppetlabs.com/misc/download-options/
+   下载 MCollective 最近的稳定版 +.deb+ 包。
+5. 安装已下载的 +.deb+ 包：
 +
 ....
 # dpkg -i mcollective_1.0.1-1_all.deb mcollective-client_1.0.1-1_
 all.deb mcollective-common_1.0.1-1_all.deb
 ....
 
-6. Download the tarball of the same release from the MCollective downloads page
-   (because it contains an example ActiveMQ configuration file).
+6. 从 MCollective 的下载页面下载与 +.deb+ 版本相同的 tar 包
+   （因为其中包含了 ActiveMQ 配置文件样例）。
 
-7. Edit the MCollective +server.cfg+ file:
+7. 编辑 MCollective 的 +server.cfg+ 文件：
 +
 ....
 # vi /etc/mcollective/server.cfg
 ....
 
-8. Set the +plugin.stomp.host+ parameter to the name of your server (where you're
-   running ActiveMQ):
+8. 将参数 +plugin.stomp.host+ 设置为你的服务器名（即你运行 ActiveMQ 的服务器）：
 +
 ----
 plugin.stomp.host = cookbook.bitfieldconsulting.com
 ----
 
-9. Make the same change in the MCollective +client.cfg+ file:
+9. 对 MCollective 的 +client.cfg+ 文件做同样的设置：
 +
 ....
 # vi /etc/mcollective/client.cfg
 ....
 
-10. Unpack the MCollective tarball and copy the example ActiveMQ configuration
-    into place:
+10. 解压缩 MCollective 的 tar 包并复制 ActiveMQ 的配置文件样例到 ++/etc/mcollective++：
 +
 ....
 # tar xvzf mcollective-1.0.1.tgz
-# cp mcollective-1.0.1/ext/activemq/examples/single-broker/
-activemq.xml /etc/mcollective
+# cp mcollective-1.0.1/ext/activemq/examples/single-broker/activemq.xml \
+    /etc/mcollective
 ....
 
-11. Edit the configuration file to set the password of the +mcollective+ user
-    to the same as it is in server.cfg:
+11. 编辑这个配置文件设置 +mcollective+ 用户的口令与 +server.cfg+ 中的相同：
 +
 ....
 # vi /etc/mcollective/activemq.xml
 ....
 
-12. Unpack the ActiveMQ tarball and start the server using the following config file:
+12. 解压缩 ActiveMQ 的 tar 包，用指定的配置文件启动 ActiveMQ 的服务：
 +
 ....
 # tar xvzf apache-activemq-5.4.2-bin.tar.gz
@@ -105,16 +99,16 @@ INFO: pidfile created : '/root/apache-activemq-5.4.2/data/
 activemq.pid' (pid '3322')
 ....
 
-13. Start the MCollective server:
+13. 启动 MCollective 的服务：
 +
 ....
 # service mcollective start
 Starting mcollective: *
 ....
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Check that MCollective and ActiveMQ are set up and working by running:
+1. 使用如下命令检查 MCollective 和 ActiveMQ 是否启动且正常运行：
 +
 ....
 # mc-ping
@@ -124,10 +118,9 @@ cookbook                             time=68.82 ms
 1 replies max: 68.82 min: 68.82 avg: 68.82
 ....
 
-2. If you don't see any results, check that the +mcollectived+ daemon is running, and
-   that a Java process is also running for ActiveMQ.
-3. Run +mc-inventory+ against your machine to see what information MCollective
-   knows about it:
+2. 如果未看到任何结果输出，检查 +mcollectived+ 守护进程是否已运行，并检查用于
+   ActiveMQ 的 Java 进程是否已运行。
+3. 针对你的机器运行 +mc-inventory+ 查看 MCollective 知道的关于 +cookbook+ 机器的信息：
 +
 ....
 # mc-inventory cookbook
@@ -153,52 +146,48 @@ Inventory for cookbook:
           mcollective => 1
 ....
 
-4. Create a new custom fact for the server by adding the following code snippet to
-   +/etc/mcollective/facts.yaml+:
+4. 通过在 +/etc/mcollective/facts.yaml+ 中添加如下的代码片段为服务器创建一个新的自定义 fact：
 +
 ----
 purpose: webserver
 ----
 
-5. Now use MCollective to search for all machines matching this fact:
+5. 现在使用 MCollective 查找所有匹配这个 fact 的机器：
 +
 ....
 # mc-find-hosts --with-fact purpose=webserver
 cookbook
 ....
 
-==== How it works…
+==== {Howitworks}
 
-*MCollective* is a broadcast framework; when you issue a request like +mc-find-hosts+,
-MCollective sends a message out to all clients asking, "Does anyone match this filter?" All
-clients that match the filter will send a reply, and MCollective gathers the results and prints
-them out for you.
+*MCollective* 是一个广播框架；当你发出一个像 +mc-find-hosts+ 这样的请求时，
+MCollective 就为所有请求的客户端发送消息：“有没有客户匹配这个过滤器呀？”
+所有匹配过滤器的客户端都会发送一个回复，MCollective 会将这些回复收集到一起并为你输出这些信息。
 
-You can install a number of plugins and agents for specific tasks (for example, running
-Puppet). These are installed on the clients, and MCollective handles the communications
-involved in sending the command out to all matching machines, and collating any results.
+你可以为特定的任务安装大量的插件和代理（例如，运行 Puppet）。
+这些插件和代理都是安装在客户端上的，MCollective 处理发送命令到所有匹配机器所涉及的通信，
+并整理校勘其任何结果。
 
-==== There's more…
+==== {Theresmore}
 
-Even though we've only taken a few steps with MCollective, it's clearly a powerful tool for both
-gathering information about servers, and executing commands on a list of servers that can be
-selected by facts. For example, you could get a list of all machines that haven't run Puppet in
-the last 24 hours. Or, you could take some action on all webservers, or all machines with an
-+x86_64+ architecture.
+尽管我们只涉及了使用 MCollective 的一些基本步骤，但是它显然是一个功能强大的工具，
+它既可以收集有关服务器的信息，也可以通过选择 fact 针对一个服务器列表执行命令。
+例如，你可以获得一个过去 24 小时没有运行 Puppet 的机器列表。
+又如，你可以对所有 Web 服务器或所有 +x86_64+ 结构的机器执行一些动作。
 
-MCollective itself only provides a framework for such applications. There are a variety of
-plugins available which do useful things, and writing your own plugins is easy. In this example
-we'll use the +package+ plugin that allows you to query and operate on packages.
+MCollective 本身只为这类应用提供了一个框架。对于不同的应用有各种各样的插件可用，
+而且编写自己的插件也是很容易的。在下面的例子中，我们将使用 +package+ 插件，此插件允许你查询和操作包。
 
-===== Installing an MCollective plugin
+===== 安装 MCollective 插件
 
-1. Clone the MCollective plugins repository from GitHub:
+1. 从 GitHub 克隆 MCollective 插件仓库：
 +
 ....
 # git clone https://github.com/puppetlabs/mcollective-plugins.git
 ....
 
-2. Copy the plugin files into place as follows:
+2. 复制插件文件到适当的目录：
 +
 ....
 # cd mcollective-plugins
@@ -209,13 +198,13 @@ we'll use the +package+ plugin that allows you to query and operate on packages.
      /usr/share/mcollective/plugins/mcollective/agent
 ....
 
-3. Restart MCollective:
+3. 重新启动 MCollective：
 +
 ....
 # service mcollective restart
 ....
 
-4. Run +mc-inventory+ to check that the plugin appears in the list of agents:
+4. 运行 +mc-inventory+ 检查该插件是否出现在 Agents 列表中：
 +
 ....
 # mc-inventory cookbook
@@ -243,7 +232,7 @@ Inventory for cookbook:
         purpose => webserver
 ....
 
-5. Try the +mc-package+ command to verify that it works with the following command:
+5. 试着执行 +mc-package+ 命令检验如下命令是否正常工作：
 +
 --
 ....
@@ -259,11 +248,10 @@ cookbook                            version = apache2-2.2.14-5ubuntu8.4
    Elapsed Time: 0.58 s
 ....
 
-The +package+ agent provides a powerful way to check package versions across
-your whole network, or only on certain machines, and install or update packages
-as necessary. For more details about this and other MCollective plugins, check the
-wiki page at: http://projects.puppetlabs.com/projects/mcollective-plugins/wiki.
++package+ 代理提供了一个强大的方法用于在你的整个网络（或特定的机器）
+上检查包版本、安装或更新所需的软件包。
+有关此插件和其他 MCollective 插件的更多细节，请查看 wiki 页面：
+http://projects.puppetlabs.com/projects/mcollective-plugins/wiki 。
 
-For more information on MCollective, see the main page at: 
-http://docs.puppetlabs.com/mcollective/.
+有关 MCollective 的更多信息，请访问其主页： http://docs.puppetlabs.com/mcollective/ 。
 --

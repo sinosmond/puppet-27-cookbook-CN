@@ -1,14 +1,12 @@
-﻿[[ch05sec05]]
-=== Using array iteration in templates
+[[ch05sec05]]
+=== {Recipe505}
 
-In the preceding example we saw that you can use Ruby to interpolate different values in
-templates depending on the result of an expression. You can also use a loop to generate
-content based on; the elements of an array:
+在前面的例子中，我们已经看到使用 Ruby 可以根据表达式的结果插入不同的值。
+你也可以使用循环对数组中的每个元素生成内容。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 $ipaddresses = [ '192.168.0.1',
@@ -20,8 +18,7 @@ file { "/tmp/addresslist.txt":
 }
 ----
 
-2. Create the file +/etc/puppet/modules/admin/templates/addresslist.erb+
-   with the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/admin/templates/addresslist.erb+ 文件：
 +
 ----
 <% ipaddresses.each do |ip| -%>
@@ -29,7 +26,7 @@ IP address <%= ip %> is present.
 <% end -%>
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -41,7 +38,7 @@ ensure: defined content as '{md5}7ad1264ebdae101bb5ea0afef474b3ed'
 notice: Finished catalog run in 0.64 seconds
 ....
 
-4. Check the contents of the generated file as follows:
+4. 检查生成文件的内容：
 +
 ....
 # cat /tmp/addresslist.txt
@@ -50,25 +47,24 @@ IP address 158.43.128.1 is present.
 IP address 10.0.75.207 is present.
 ....
 
-==== How it works…
+==== {Howitworks}
 
-1. In the first line of the template, we reference the array +ipaddresses+, and call the
-   corresponding +each+ method as follows:
+1. 在模板的第一行，我们引用了一个数组 ++ipaddresses++，并调用了相应的 +each+ 方法：
 +
 ----
 <% ipaddresses.each do |ip| -%>
 ----
 
-2. In Ruby, this creates a loop that will execute once for each element of the array. Each
-   time round the loop, the variable +ip+ will be set to the value of the current element.
-3. In our example, the +ipaddresses+ array contains three elements, so the following
-   line will be executed three times, once for each element:
+2. 使用 Ruby 创建的这个循环将对数组中的每个元素执行一次。
+   每循环一次，变量 +ip+ 将会设置成数组当前元素的值。
+3. 在我们的例子中，++ipaddresses++ 数组包含三个元素，所以下面的行将执行三次，
+   对每个数组元素执行一次：
 +
 ----
 IP address <%= ip %> is present.
 ----
 
-4. This will result in three output lines:
+4. 结果将产生如下三行内容：
 +
 ----
 IP address 192.168.0.1 is present.
@@ -76,19 +72,18 @@ IP address 158.43.128.1 is present.
 IP address 10.0.75.207 is present.
 ----
 
-5. The final line ends the loop as follows:
+5. 最后一行是循环的结束：
 +
 ----
 <% end -%>
 ----
 
-6. Note that the first and last lines end with +-%>+, instead of just +%>+ as we saw before.
-   The effect of the +-+ is to suppress the newline that would otherwise be generated,
-   giving us an unwanted blank line in the file.
+6. 注意循环的第一行和最后一行都以 +-%>+ 结束，而不是我们以前所看到的以 +%>+ 结束。
+   使用 +-+ 的作用是要抑制换行，否则会产生换行符，即在文件中产生无用的空白行。
 
-==== There's more…
+==== {Theresmore}
 
-Templates can also iterate over hashes, or arrays of hashes as follows:
+模板也可以遍历哈希，或哈希数组，例如：
 
 ----
 $interfaces = [ { name => 'eth0',
@@ -99,10 +94,11 @@ $interfaces = [ { name => 'eth0',
                   ip => '10.0.75.207' } ]
 
 <% interfaces.each do |interface| -%>
-Interface <%= interface['name'] %> has the address <%= interface['ip']
-%>.
+Interface <%= interface['name'] %> has the address <%= interface['ip']%>.
 <% end -%>
 ----
+
+结果为：
 
 ....
 Interface eth0 has the address 192.168.0.1.
@@ -110,6 +106,6 @@ Interface eth1 has the address 158.43.128.1.
 Interface eth2 has the address 10.0.75.207.
 ....
 
-==== See also
+==== {Seealso}
 
-- <<ch05sec04,Using ERB templates>> in this chapter
+- 第 5 章的 <<ch05sec04,{Recipe504}>> 一节

@@ -1,52 +1,51 @@
-﻿[[ch02sec11]]
-=== Logging debug messages
+[[ch02sec11]]
+=== {Recipe211}
 
-The truth will make you free. It can be very helpful when debugging problems if you can print out
-information at a certain point in the manifest. This is a good way to tell, for example, if a variable
-isn't defined or has an unexpected value. Sometimes it's useful just to know that a particular
-piece of code has been run. Puppet's +notify+ resource lets you print out such messages.
+真理会使你获得自由。在调试问题时，若能输出配置清单某一个点上的信息将会对问题解决有很帮助。 
+这是一种很好的报告问题的方式，例如，如果一个变量没有定义或者定义了一个非法的值。
+有时，获知一个特定的代码片段已经被执行也是很有用的。
+Puppet 的 +notify+ 资源可以让你显示出调试信息。
 
-==== How to do it…
+==== {Howtodoit}
 
-Define a +notify+ resource in your manifest at the point you want to investigate:
+在你的配置清单中要被调研的检查点上定义 +notify+ 资源：
 
 ----
 notify { "Got this far!": }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-When this resource is compiled Puppet will print out the message:
+当这个资源被编译时，Puppet 就会显示如下的信息：
 
 ----
 notice: Got this far!
 ----
 
-==== There's more…
+==== {Theresmore}
 
-If you're the kind of brave soul who likes experimenting, and I hope you are, you'll probably
-find yourself using debug messages a lot to figure out why your code doesn't work. So knowing
-how to get the most out of Puppet's debugging features can be a great help. Some of these
-uses are explained in the following text.
+如果你有勇敢的心，喜欢尝试，当然我也希望你是那样的一个人，
+你或许会从自己的调试信息中发现大量的代码不能工作的原因。
+所以知道如何获得更多的 Puppet 调试特性将非常有用。
+下面将解释其中的一些用法。
 
-===== Printing out variable values
+===== 输出变量的值
 
-You can reference variables in the message:
+你可以在消息中引用变量：
 
 ----
 notify { "operatingsystem is $operatingsystem": }
 ----
 
-Puppet will interpolate the values in the printout:
+Puppet 会在输出中引用变量的值：
 
 ......
 notice: operatingsystem is Ubuntu
 ......
 
-===== Printing the full resource path
+===== 输出资源的完整路径
 
-For more advanced debugging, you may want to use the parameter +withpath+ to see in which
-class the +notify+ message was executed:
+对于更高级的调试， 你可以使用 +withpath+ 参数显示哪个类的 +notify+ 消息被执行了：
 
 ----
 notify { "operatingsystem is $operatingsystem":
@@ -54,27 +53,26 @@ notify { "operatingsystem is $operatingsystem":
 }
 ----
 
-Now the notify message will be prefixed with the complete resource path as shown in the
-following code snippet:
+现在 notify 消息将显示类似如下的完整资源路径前缀：
 
 ......
 notice: /Stage[main]/Nagios::Target/Notify[operatingsystem is Ubuntu]/
 message: operatingsystem is Ubuntu
 ......
 
-===== Logging messages on the Puppetmaster
+===== 将日志信息记录到 Puppetmaster
 
-Sometimes you just want to log a message on the Puppetmaster, without generating extra
-output on the client. You can use the +notice+ function to do this:
+有时你仅仅想要在 Puppetmaster 上记录日志消息，而不在客户端生成额外的输出。
+你可以使用 +notice+ 函数实现：
 
 ----
 notice("I am running on node $fqdn")
 ----
 
-Now when you run Puppet, you will not see any output on the client, but on the Puppetmaster
-a message like this will be sent to the syslog:
+现在，当你运行 Puppet，就不会在客户端看到任何输出，但在 Puppetmaster
+上会有一条如下的消息被记录到 syslog 系统日志：
 
 ......
-Jan 31 11:51:38 cookbook puppet-master[22640]: (Scope(Node[cookbook])) I
-am running on node cookbook.bitfieldconsulting.com
+Jan 31 11:51:38 cookbook puppet-master[22640]: (Scope(Node[cookbook])) 
+I am running on node cookbook.bitfieldconsulting.com
 ......

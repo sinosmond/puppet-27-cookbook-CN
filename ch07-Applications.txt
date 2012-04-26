@@ -1,24 +1,24 @@
 ﻿[[chapter07]]
-== Applications
+== 应用程序
 
 [quote, Luke Kanies,]
 The best software in the world only sucks. The worst software is significantly worse
 than that.
 
-In this chapter we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Managing Apache servers
-- Creating Apache virtual hosts
-- Creating Nginx virtual hosts
-- Creating MySQL databases and users
-- Managing Drupal sites
-- Managing Rails applications
+- {Recipe701}
+- {Recipe702}
+- {Recipe703}
+- {Recipe704}
+- {Recipe705}
+- {Recipe706}
 
-Without applications, a server is just a very expensive space heater. This chapter will present
-some recipes for managing some specific applications with Puppet: MySQL, Apache, Nginx,
-Rails, and Drupal. These are very popular applications, so they should be useful to you in
-themselves. However, the patterns and techniques they use are applicable to almost any
-software, so you can adapt them to your own purposes without much difficulty.
+如果没有应用程序，服务器仅仅是一个非常昂贵的空间加热器。
+本章将介绍一些使用 Puppet 管理一些特定应用程序的处方：MySQL、Apache、Nginx、Rails 和 Drupal。
+这些都是非常流行的应用程序， 所以这对你会很有用。
+然而，它们使用的模式和技术几乎适用于任何软件，
+所以适当改写这些处方以适应自己的目的不是什么难事。
 
 
 include::recipes/ch07sec01-managing_apache_servers.txt[]

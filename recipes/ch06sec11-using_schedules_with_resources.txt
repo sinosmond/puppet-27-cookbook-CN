@@ -1,9 +1,8 @@
-﻿[[ch06sec11]]
-=== Using schedules with resources
+[[ch06sec11]]
+=== {Recipe611}
 
-Using a +schedule+ resource, you can control when other resources get applied. For example,
-the built-in +daily+ schedule does what you'd expect: if you specify a resource, such as the
-following, then it'll be applied once a day:
+使用启用了 +schedule+ 参数的资源，你可以控制当前资源何时被应用。
+例如，你希望如下的 +exec+ 资源每天应用一次，将资源参数 +schedule+ 设置成了内置的值 ++daily++：
 
 ----
 exec { "/usr/bin/apt-get update":
@@ -11,19 +10,19 @@ exec { "/usr/bin/apt-get update":
 }
 ----
 
-The slightly tricky thing about +schedule+ is that it doesn't guarantee that the resource will be
-applied once a day. It's just a limit: the resource won't be applied more than once a day. When
-and whether the resource is applied at all will depend on when and whether Puppet runs.
+遗憾的是，给 +schedule+ 参数指定 +daily+ 并不能保证该资源每天都能应用一次。
+内置的 +daily+ 仅能限制 +exec+ 资源在一天之内不能被应用多余一次，
+但是资源是否被应用以及何时被应用完全取决于 Puppet 是否运行以及何时运行。
 
-That being so, +schedule+ is best used to restrict other resources, for example, you might
-want to make sure that `apt-get update` hasn't run more than once an hour, or that a
-maintenance job doesn't run during daytime production hours.
+正因为如此，使用 +schedule+ 资源才是安排执行其他资源的最佳选择。例如，
+你可能想要确保 `apt-get update` 一小时内运行不超过一次；
+或者确保一项维护工作在白天生产时间期间不被执行。
 
-For this, you will need to create your own +schedule+ resources.
+为此，你需要创建自己的 +schedule+ 资源。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 schedule { "not-in-office-hours":
@@ -37,27 +36,26 @@ exec { "/bin/echo Doing maintenance!":
 }
 ----
 
-2. Run Puppet.
+2. Run Puppet。
 
 
-==== How it works…
+==== {Howitworks}
 
-We've created a +schedule+ called +not-in-office-hours+, which specifies the repetition
-period as +daily+, and the allowable time range as after 5 p.m., or before 9 a.m. as follows:
+我们创建了名为 +not-in-office-hours+ 的 ++schedule++，它指定了重复周期为 ++daily++, 
+且指定了允许的时间范围为下午 5 点到次日早上 9 点：
 
 ----
     period  => daily,
     range   => [ "17:00-23:59", "00:00-09:00" ],
 ----
 
-We've also said that the maximum number of times a resource can be applied in one period
-is once:
+我们同时设置了在每个时间周期内资源被应用的最大次数为 1：
 
 ----
     repeat => 1,
 ----
 
-Now, we apply that schedule to an +exec+ resource as follows:
+然后，我们在如下的 +exec+ 资源中使用这个自定义的 ++schedule++：
 
 ----
     exec { "/bin/echo Doing maintenance!":
@@ -65,35 +63,31 @@ Now, we apply that schedule to an +exec+ resource as follows:
     }
 ----
 
-Without the +schedule+ parameter, this resource would run every time Puppet runs. Now,
-Puppet will check the +not-in-office-hours+ schedule to see the following:
+若 +exec+ 资源不使用 +schedule+ 参数，每次运行 Puppet，这个 +exec+ 资源就会被应用一次。
+现在，Puppet 将依照 +not-in-office-hours+ 资源的设置做如下测试：
 
-- Whether the time is in the permitted range
-- Whether the resource has been run the maximum permitted number of times in this
-  period
+- 当前时间是否在允许的范围内
+- 在一个重复周期内，资源是否已经应用到了允许的最大次数
 
-For example, let's consider what happens if Puppet runs every hour, on the following hours:
+例如，让我考察在如下连续的几个小时内如果 Puppet 每小时执行一次将会发生什么：
 
-- 4 p.m.: It's outside the permitted time range, so Puppet will do nothing.
-- 5 p.m.: It's inside the permitted time range, and the resource hasn't been run yet in
-  this period, so Puppet will apply the resource.
-- 6 p.m.: It's inside the permitted time range, but the resource has already been run
-  once, so it has reached its maximum +repeat+ count. Puppet will do nothing.
+- 4 p.m.：超出了允许的时间范围，所以 Puppet 不会做任何事情。
+- 5 p.m.：在允许的时间范围内，且在此重复周期内还没有运行过，所以 Puppet 会应用此资源。
+- 6 p.m.：在允许的时间范围内，且在此重复周期内已经运行过一次，由于已经到达了 +repeat+
+  设置的最大值，所以 Puppet 不会做任何事情。
 
-And so on until the next day.
+依此类推，直到第二天再重复这一过程。
 
-==== There's more…
+==== {Theresmore}
 
-You can increase the +repeat+ parameter if you want to, for example, run a job no more than 6
-times an hour:
+如果需要，你可以增大 +repeat+ 参数的值，例如：在每小时内运行一个作业不超过 6 次：
 
 ----
     period => hourly,
     repeat => 6,
 ----
 
-Remember that this won't guarantee that the job will run 6 times an hour. It just sets an upper
-limit. No matter how often Puppet runs or anything else happens, the job won't run if it has
-already run 6 times this hour. If Puppet only runs once a day, the job will just be run once. So,
-+schedule+ is best used for making sure that things *don't* happen at certain times (or don't
-exceed a given frequency).
+要记住这不能保证每个小时此作业都会运行 6 次。这只是设置了一个上限。
+无论 Puppet 经常运行还是会发生其他情况，如果一个小时内已经运行了 6 次就不会再次运行。
+如果 Puppet 每天仅执行一次，那么这个作业也仅执行一次。
+因此，要确保某事件在特定的时间 **不会** 发生（或者 **不** 超过给定的频率），使用 +schedule+ 是最有用的。

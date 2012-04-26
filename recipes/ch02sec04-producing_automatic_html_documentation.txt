@@ -1,17 +1,16 @@
-﻿[[ch02sec04]]
-=== Producing automatic HTML documentation
+[[ch02sec04]]
+=== {Recipe204}
 
 [quote, David Knight,]
 An expert is someone who is one page ahead of you in the manual.
 
-Like most engineers, I never read the manual, unless and until the product actually catches
-fire. However, as your manifests get bigger and more complex, it can be helpful to create
-HTML documentation for your nodes and classes using Puppet's automatic documentation
-tool, `puppet doc`.
+像大多数工程师一样，我从来没有阅读过手册，除非或者直到产品实际出现了十万火急的情况。
+然而，随着你的配置清单代码不断增多且越来越复杂，使用 Puppet 的自动文档工具
+`puppet doc` 为你的节点（node）和类（class）生成 HTML 文档是非常有用的。
 
-==== How to do it…
+==== {Howtodoit}
 
-Run puppet doc over your manifest as follows:
+在你的配置清单目录下运行如下的 `puppet doc` 命令：
 
 ....
 puppet doc --all --outputdir=/var/www/html/puppet --mode rdoc \
@@ -20,19 +19,18 @@ puppet doc --all --outputdir=/var/www/html/puppet --mode rdoc \
 
 image::image/ch02sec04_1.png[]
 
-==== How it works…
+==== {Howitworks}
 
-`puppet doc` creates a structured HTML documentation tree in +/var/www/html/puppet+
-similar to that produced by *RDoc*, the popular Ruby documentation generator. This makes
-it easier to understand how different parts of the manifest relate to one another, as you can
-click on an included class name and see its definition.
+`puppet doc` 在 +/var/www/html/puppet+ 目录下生成结构化的 HTML 文档树，
+这与 *RDoc* 生成的文档很类似，RDoc 是流行的 Ruby 文档生成器。 
+这使理解不同配置清单代码之间的相互关系便得更容易，
+因为你可以点击被包含的类名称便能看到它的定义。
 
-==== There's more…
+==== {Theresmore}
 
-`puppet doc` will generate basic documentation of your manifests as they are at present.
-However, you can include more useful information by adding comments to your manifest files,
-using the standard RDoc syntax. Here's an example of some documentation comments added
-to a class:
+`puppet doc` 将根据你当前的配置清单生成基本的文档。
+然而，你可以在你的配置清单文件中使用标准的 RDoc 语法包含更多的有用信息。
+下面是一个在类中添加一些注释文档的例子：
 
 ----
 class puppet {
@@ -51,7 +49,6 @@ class puppet {
 }
 ----
 
-Your comments are added to the documentation for each class in the resulting HTML files as
-shown in the following screenshot:
+你在文档中为每个类添加的注释，会显示在生成的 HTML 文件里，如图所示：
 
 image::image/ch02sec04_2.png[]

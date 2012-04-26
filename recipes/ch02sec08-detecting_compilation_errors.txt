@@ -1,40 +1,39 @@
-﻿[[ch02sec08]]
-=== Detecting compilation errors
+[[ch02sec08]]
+=== {Recipe208}
 
 [quote, Steven Wright,]
-My mechanic told me, 'I couldn't repair your brakes, so I made your horn louder.
+My mechanic told me, 'I couldn't repair your brakes, so I made your horn louder'.
 
-Usually, when there's a problem, we'll want to stop and fix it before continuing. However,
-when running in daemon mode, Puppet will ignore any compilation errors in the manifest
-and just apply the last known working version from its cache. This behavior is governed by
-the +usecacheonfailure+ config setting, and its default setting, true:
+通常，当出现问题时，我们会在继续运行前先停止它并修复错误。然而，
+当以守护进程模式运行时，Puppet 会忽略配置清单的编译错误，
+仅从缓存中应用最近一次已知可运行的版本。这个行为是由 +usecacheonfailure+ 配置设置的，
+且默认值为 ++true++：
 
 ......
 # puppet --genconfig |grep usecacheonfailure
   # usecacheonfailure = true
 ......
 
-It's worth noting that when you apply manifests by hand using `puppet agent --test`,
-this doesn't happen: Puppet will complain and refuse to do anything if there is an error in
-the manifest. That's because the `--test` switch is shorthand for the following options:
+值得注意的是，当你手动执行 `puppet agent --test` 应用配置清单时，
+这种情况不会发生：如果配置清单中有任何错误，Puppet 将提示错误并拒绝执行。 
+这是因为 `--test` 开关是如下选项的缩写：
 
 ......
 # puppet agent --onetime --verbose --ignorecache --no-daemonize --no-usecacheonfailure
 ......
 
-Because +usecacheonfailure+ is on when Puppet runs as a daemon, sometimes you won't
-notice mistakes in a manifest for a while, as Puppet keeps on silently running an old version
-of the manifest instead of complaining.
+因为 +usecacheonfailure+ 仅当 Puppet 以守护进程运行时有效， 
+有时你不会注意到一段时间内配置清单中的错误，因为 Puppet
+会静默的运行旧版本的配置清单而不是显示出错信息。
 
-==== How to do it…
+==== {Howtodoit}
 
-If you want to change this behavior, set the following value in +puppet.conf+:
+如果你想改变这一行为，在 +puppet.conf+ 中做如下设置：
 
 ----
     usecacheonfailure = false
 ----
 
-==== How it works…
+==== {Howitworks}
 
-With this option set, Puppet will immediately complain about errors and refuse to run until
-they are corrected.
+使用这种设置后，Puppet 将立即输出错误信息并拒绝运行，直至所有的配置清单均正确。

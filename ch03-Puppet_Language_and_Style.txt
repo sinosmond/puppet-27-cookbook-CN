@@ -1,35 +1,33 @@
 ﻿[[chapter03]]
-== Puppet Language and Style
+== Puppet 语言及其写作风格
 
 [quote, Larry Wall,]
 Computer language design is just like a stroll in the park. Jurassic Park, that is.
 
-In this chapter we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Using community Puppet style
-- Using modules
-- Using standard naming conventions
-- Using embedded Ruby
-- Writing manifests in pure Ruby
-- Iterating over multiple items
-- Writing powerful conditional statements
-- Using regular expressions in if statements
-- Using selectors and case statements
-- Testing if values are contained in strings
-- Using regular expression substitutions
+- {Recipe301}
+- {Recipe302}
+- {Recipe303}
+- {Recipe304}
+- {Recipe305}
+- {Recipe306}
+- {Recipe307}
+- {Recipe308}
+- {Recipe309}
+- {Recipe310}
+- {Recipe311}
 
 
 [quote, Edsger W. Dijkstra,]
 Elegance is not a dispensable luxury, but a factor that decides between success
 and failure.
 
-In this chapter you'll learn to write elegant Puppet manifests. By elegant in this context I mean
-readable, efficient, and consistent code which conforms to community usage.
+在本章，你将学习如何书写优雅的 Puppet 配置清单。“优雅”的含义体现在几个方面：
+可读性、高效性、书写符合社区规范的代码。
 
-We'll look at how to organize and structure your code into modules following community
-conventions, so that other people will find it easy to read and maintain your code. I'll also
-show you some powerful features of the Puppet language which will let you write concise,
-yet expressive, manifests.
+我们将会看到，如何遵循社区规范将你的代码组织并构造成模块，以便他人能很容易地阅读和维护你的代码。
+我还会向你展示一些 Puppet 语言的强大功能，使你写出更简洁而传神的配置清单。
 
 
 include::recipes/ch03sec01-using_community_puppet_style.txt[]

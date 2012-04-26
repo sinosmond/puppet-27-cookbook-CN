@@ -1,13 +1,12 @@
-﻿[[ch04sec01]]
-=== Using arrays of resources
+[[ch04sec01]]
+=== {Recipe401}
 
-Anything you can do to a resource, you can do to an array of resources. Use this idea to refactor
-your manifests to make them shorter and clearer.
+你可以将一切均视为 Puppet 的资源，你也可以使用数组资源。
+使用这种想法，可以重构你的配置清单，使其更加简洁而清晰。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Identify a class in your manifest where you have several instances of the same kind
-   of resource -- for example, packages:
+1. 在你的配置清单中，将同一类型资源的几个实例定义在一个类中，例如：++packages++：
 +
 ----
 package { "sudo" : ensure => installed }
@@ -18,8 +17,7 @@ package { "cron" : ensure => installed }
 package { "rubygems" : ensure => installed }
 ----
 
-2. Group them together and replace them with a single +package+ resource using an
-   array as follows:
+2. 使用如下的方法用数组将它们组织在一起并用一个 +package+ 资源代替：
 +
 ----
 package { [ "cron",
@@ -33,13 +31,12 @@ package { [ "cron",
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Most of Puppet's resource types can accept an array instead of a single name, and will
-create one instance for each of the elements in the array. All the parameters you provide for
-the resource (for example, +ensure => installed+) will be assigned to each of the new
-resource instances.
+绝大多数的 Puppet 资源类型都可以使用数组来替换单个的资源名，
+并会为每个数组的元素创建一个实例。
+你为资源提供的所有参数（例如：++ensure => installed++）都会分配给每个新的资源实例。
 
-==== See also
+==== {Seealso}
 
-- <<ch03sec06,Iterating over multiple items>> in Chapter 3
+- 第 3 章的 <<ch03sec06,{Recipe306}>> 一节

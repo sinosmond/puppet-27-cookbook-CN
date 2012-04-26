@@ -1,17 +1,17 @@
-﻿[[ch03sec06]]
-=== Iterating over multiple items
+[[ch03sec06]]
+=== {Recipe306}
 
-It's one darned thing after another! *Arrays* are a powerful feature in Puppet; wherever you
-want to perform the same operation on a list of things, an array may able to help. You can
-create an array just by putting its contents in square brackets:
+该死的东西一个接一个！ **数组**（**Arrays**）是 Puppet 的一个强大特性；
+不论何时，你要对列表中的元素执行相同的操作，数组就会帮你的忙。 
+你可以创建一个数组，将所有的数组元素放在一对方括号中并以逗号间隔，例如：
 
 ----
 $lunch = [ "franks", "beans", "mustard" ]
 ----
 
-==== How to do it…
+==== {Howtodoit}
 
-Add the following code to your manifest:
+在你的配置清单中添加如下代码：
 
 ----
 $packages = [ "ruby1.8-dev",
@@ -26,23 +26,22 @@ $packages = [ "ruby1.8-dev",
 package { $packages: ensure => installed }
 ----
 
-Run Puppet, and note that each package should now be installed.
+运行 Puppet，值得注意的是现在每个软件包都应该被安装。
 
-==== How it works…
+==== {Howitworks}
 
-Where Puppet encounters an array as the name of a resource, it creates a resource for
-each element in the array. In the preceding example, a new +package+ resource is created
-for each of the packages in the +$packages+ array, with the same parameters (+ensure =>
-installed+). This is a very compact way of instantiating lots of similar resources.
+当 Puppet 遇到数组作为资源名的情况时，它会对数组中的每个元素创建一个资源。
+在前面的例子中，对 +$packages+ 数组中的每一个包，
+使用相同的参数（++ensure => installed++）创建了一个新的 +package+ 资源。 
+这是对很多类似的资源进行实例化的一个非常紧凑的方式。
 
-==== There's more…
+==== {Theresmore}
 
-If you thought arrays were exciting, wait till you hear about hashes.
+如果你听到哈希（hash），会比数组更兴奋。
 
-===== Hashes
+===== 哈希
 
-A *hash* is like an array, but each of the elements can be stored and looked up by name.
-For example:
+**哈希**（**hash**）与数组类似，但它的每个元素都可以通过名字存储和查找。例如：
 
 ----
 $interface = { name    => 'eth0',
@@ -51,16 +50,17 @@ $interface = { name    => 'eth0',
 notice("Interface ${interface[name]} has address ${interface[address]}")
 ----
 
+的执行结果为：
+
 ....
 Interface eth0 has address 192.168.0.1
 ....
 
-Hash values can be anything that you can assign to a variable: strings, function calls,
-expressions, or even other hashes or arrays.
+你可以给哈希赋任意的值：字符串、函数调用、表达式、甚至其它哈希或数组。
 
-===== Creating arrays with the split function
+===== 使用 split 函数创建数组
 
-You can declare literal arrays using square brackets, as follows:
+你可以使用方括号来声明文字数组，例如：
 
 ----
 define lunchprint() {
@@ -75,7 +75,7 @@ Lunch included beans
 Lunch included chips
 ----
 
-But Puppet can also create arrays for you from strings, using the +split+ function, as follows:
+但是 Puppet 还可以使用 +split+ 函数从一个字符串创建数组，例如：
 
 ----
 $menu = "egg beans chips"
@@ -87,20 +87,19 @@ Lunch included beans
 Lunch included chips
 ----
 
-Note that +split+ takes two arguments; the first being the string it has to split. The second is
-the character to split on; in this example, a single space. As Puppet works its way through the
-string, when it encounters a space, it will interpret it as the end of one item and the beginning
-of the next. So, given the string +"egg beans chips"+, this will be split into three items.
+注意 +split+ 函数携带两个参数：第一个参数是要被拆分的字符串；第二个参数是拆分间隔符，
+在本例中是一个空格。当 Puppet 遍历字符串时，一遇到空格就将其视为一个元素的结束和下一个元素的开始。
+所以，给定的字符串 ++"egg beans chips"++ 将被拆分为三个元素。
 
-The character to split on can be any character, or a string:
+拆分间隔符可以是任意字符或字符串：
 
 ----
 $menu = "egg and beans and chips"
 $items = split($menu, ' and ')
 ----
 
-It can also be a regular expression; for example, a set of alternatives separated by a +|+
-(pipe) character:
+拆分间隔符也可以是正则表达式（regular expression），例如：一个多选一集合可以使用 +|+
+(pipe) 符号来做间隔：
 
 ----
 $lunch = "egg:beans,chips"

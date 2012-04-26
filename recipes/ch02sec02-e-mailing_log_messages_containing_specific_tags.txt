@@ -1,28 +1,27 @@
-﻿[[ch02sec02]]
-=== E-mailing log messages containing specific tags
+[[ch02sec02]]
+=== {Recipe202}
 
-If, like most sysadmins, you feel like you don't get enough e-mail, you'll be looking for a way
-to generate more. Another type of Puppet report is called +tagmail+. This will e-mail the log
-messages to any address you specify.
+像大多数系统管理员一样，如果没有收到足够的邮件，你会寻找一种方法生成邮件。
+另外一种 Puppet 报告形式被称为 ++tagmail++。这会根据你设定的 e-mail
+地址将日志信息发送到你指定的邮箱。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Add +tagmail+ to the comma-separated list of reports in +puppet.conf+:
+1.  在 +puppet.conf+ 文件中为 reports 添加以逗号分割的 +tagmail+ 选项： 
 +
 ----
 [master]
 reports = store,tagmail
 ----
 
-2. Add some *tags* and associated e-mail addresses in the file +/etc/puppet/tagmail.conf+. 
-For example, this line will e-mail all log messages to me:
+2. 在 +/etc/puppet/tagmail.conf+ 文件中，添加一些 **标签（tags）**并指定相应的
+   e-mail 地址。例如：下面的配置行将所有的日志消息发送到 john@bitfieldconsulting.com ：  
 +
 ----
 all: john@example.com
 ----
 
-3. When Puppet runs, you will get an e-mail that looks like the following:
+3. 一旦 Puppet 运行，你就会收到一份类似如下内容的 e-mail：
 +
 ----
 From: report@cookbook.bitfieldconsulting.com
@@ -35,37 +34,37 @@ Mon Jan 17 08:42:30 -0700 2011 //cookbook.bitfieldconsulting.com/
 Puppet (info): Applying configuration version '1295278949'
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Puppet looks at each line in +tagmail.conf+ and sends any messages matching the tag
-to the e-mail address specified. The special tag +all+ matches all messages. The tag +err+
-matches errors as shown in the following code snippet:
+Puppet 在 +tagmail.conf+ 配置文件中查找每一行配置，
+匹配标签（tag）并将消息发送到指定的邮箱。名为 +all+ 的特殊标签会匹配所有的消息。
+名为 +err+ 的标签会匹配所有的错误消息：
 
 ----
 err: john@example.com
 ----
 
-You can list as many rules as you like in the +tagmail.conf+ file, and Puppet will send e-mails
-for all rules that match. In the following example, errors go to one address, and web server
-related messages go to another:
+你可以在 +tagmail.conf+ 文件中定义多个规则， Puppet 会为所有匹配的规则发送邮件。
+在下面的例子中，错误消息发送到一个邮件地址，
+而与 web 服务器相关的消息发送到另一个邮件地址：
 
 ----
 err: puppetmaster@example.com
 webserver: webteam@example.com
 ----
 
-==== There's more…
+==== {Theresmore}
 
-The +tagmail+ reports are a powerful feature which you may need to experiment with a bit so
-that you can get the most out of them. I have given a few tips to help you in the following text.
++tagmail+ 报告是一个非常强大的特性， 你可能需要在实践中才能获得相关的体会。
+下面列出了一些有用的技巧。
 
-===== What are tags?
+===== 什么是标签？
 
-Tags are explained in later <<ch02sec13,Using tags>> in this book, but for reporting purposes,
-it's enough to
-know that a *tag* can be the name of a node or a class. For example, the tag +webserver+ is
-matched if a machine includes the class webserver. You can also add a tag explicitly, using
-the +tag+ function as follows:
+在 <<ch02sec13,{Recipe213}>> 一节中将会对标签做更详细的解释，但为了能使用标签的报告特性，
+现在只要知道 *tag* 可以为节点（node）或类（class）命名就足够了。例如：
++webserver+ 标签匹配所有执行 webserver 类的客户端。
+
+你也可以像下面这样使用 +tag+ 函数直接添加一个标签：
 
 ----
 class exim {
@@ -77,26 +76,25 @@ class exim {
 }
 ----
 
-===== Specifying multiple tags, or excluding tags
+===== 指定多个标签或排除指定的标签
 
-You can specify a comma-separated list of tags in +tagmail.conf+, and also exclude certain
-tags by using an exclamation point (!).
+你可以在 +tagmail.conf+ 文件中以逗号间隔方式指定一个标签列表，
+也可以在某个标签之前使用叹号（!）排除这个标签。
 
 ----
 all, !webserver: puppetmaster@example.com
 ----
 
-===== Sending reports to multiple e-mail addresses
+===== 发送报告到多个 e-mail 地址
 
-You can send messages to multiple, comma-separated e-mail addresses as shown in the
-following code-snippet:
+你可以将消息同时发送到多个地址，用如下的方式使用逗号分割多个 e-mail 地址：
 
 ----
 err: puppetmaster@example.com, sysadmin@example.com
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch02sec01,Generating reports>> in this chapter
-- <<ch02sec03,Creating graphical reports>> in this chapter
-- <<ch02sec13,Using tags>> in this chapter
+- 本章的 <<ch02sec01,{Recipe201}>> 一节
+- 本章的 <<ch02sec03,{Recipe203}>> 一节
+- 本章的 <<ch02sec13,{Recipe213}>> 一节

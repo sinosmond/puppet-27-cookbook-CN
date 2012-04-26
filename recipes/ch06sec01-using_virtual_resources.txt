@@ -1,12 +1,10 @@
-﻿[[ch06sec01]]
-=== Using virtual resources
+[[ch06sec01]]
+=== {Recipe601}
 
-What are virtual resources and why do we need them? Let's look at a typical situation, where
-virtual resources might come in useful.
-
-You are responsible for two applications, +facesquare+ and +twitstagram+. Both are web
-apps running on Apache. The definition for +facesquare+ might look something like the
-following:
+什么是虚拟资源（Virtual Resource），我们为什么要需要它们？
+下面我们来看一个可能会使用虚拟资源的典型例子。
+你负责管理 +facesquare+ 和 +twitstagram+ 两个应用程序，他们都是运行在 Apache 上的 Web 应用程序。
++facesquare+ 的定义看起来可能像这样：
 
 ----
 class app::facesquare
@@ -15,7 +13,7 @@ class app::facesquare
 }
 ----
 
-The definition for +twitstagram+ might look like the following:
++twitstagram+ 的定义看起来可能像这样：
 
 ----
 class app::twitstagram
@@ -24,7 +22,7 @@ class app::twitstagram
 }
 ----
 
-All is well until you need to consolidate both apps onto a single server as follows:
+一切都很好，直到你需要将两个应用程序整合到单个服务器上：
 
 ----
 node micawber
@@ -34,8 +32,8 @@ node micawber
 }
 ----
 
-Now Puppet will complain, because you tried to define two resources with the same name:
-+apache2-mpm-worker+. The following error will be shown:
+现在 Puppet 会出错，因为你试图用相同的名字 +apache2-mpm-worker+ 定义两个 +package+ 资源。
+错误输出信息如下：
 
 ....
 err: Could not retrieve catalog from remote server: Error 400 on SERVER:
@@ -45,45 +43,38 @@ redefine at /etc/puppet/modules/app/manifests/twitstagram.pp:2 on node
 cookbook.bitfieldconsulting.com
 ....
 
-You could remove the duplicate package definition from one of the classes, but then it would
-fail if you tried to include the +app+ class on another server that didn't already have Apache.
+你可以从其中的一个类中移除重复的包定义，但是这样话，如果试图在另一个服务器包含 +app+
+类时，就会因为没有准备好 Apache 而失败。
 
-You can get round this problem by putting the Apache package in its own class and then using
-+include apache+; Puppet doesn't mind you including the same class multiple times. But this
-has the disadvantage that every potentially conflicting resource must have its own class.
-
-Virtual resources to the rescue. A virtual resource is just like a normal resource, except that it
-starts with an @ character, shown as follows:
+通过在自己的类中放置 Apache 的包资源并使用 +include apache+ 包含它，你就可以解决这个问题， 
+因为 Puppet 不介意多次包含一个相同的类。但是这有一个缺点，即每个具有潜在冲突的资源都必须有它自己的类。
+虚拟资源可以解决这个问题。虚拟资源就像是个普通的资源，特别之处在于它以 @ 字符开始，例如：
 
 ----
 @package { "apache2-mpm-worker": ensure => installed }
 ----
 
-You can think of it as being like an 'FYI' resource: I'm just telling you about this resource, and
-I don't actually want you to do anything with it yet. Puppet will read and remember virtual
-resource definitions, but won't actually create the resource until you say so.
+你可以把它看作是个 'FYI（仅供参考）' 资源：我只是告诉你这个资源，但不希望你用它做任何事情。
+Puppet 将会读取并记住虚拟资源定义，但实际上不会创建这个资源，直到你明确指出要创建此资源。
 
-To create the resource, use the +realize+ function as follows:
+要创建这个资源，使用如下的 +realize+ 函数：
 
 ----
 realize( Package["apache2-mpm-worker"] )
 ----
 
-You can call +realize+ as many times as you want on the resource and it won't result in a
-conflict. So, virtual resources are the way to go when several different classes all require the
-same resource and they may need to co-exist on the same node.
+对于你想要的资源，可以多次调用 +realize+ 而且不会产生冲突。
+因此，虚拟资源用于：当在几个不同的类中都需要相同的资源，且它们可能会在相同的节点上共存。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Create a new module +app+:
+1. 创建名为 +app+ 的新模块：
 +
 ....
 # mkdir -p /etc/puppet/modules/app/manifests
 ....
 
-2. Create the file +/etc/puppet/modules/app/manifests/facesquare.pp+ with
-   the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/app/manifests/facesquare.pp+ 文件：
 +
 ----
 class app::facesquare
@@ -92,8 +83,7 @@ class app::facesquare
 }
 ----
 
-3. Create the file +/etc/puppet/modules/app/manifests/twitstagram.pp+ with
-   the following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/app/manifests/twitstagram.pp+ 文件：
 +
 ----
 class app::twitstagram
@@ -102,8 +92,7 @@ class app::twitstagram
 }
 ----
 
-4. Create the file +/etc/puppet/modules/admin/manifests/virtualpackages.pp+
-   with the following contents:
+4. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/virtualpackages.pp+ 文件：
 +
 ----
 class admin::virtual-packages
@@ -112,7 +101,7 @@ class admin::virtual-packages
 }
 ----
 
-5. Include the following on the node:
+5. 在一个节点上包含如下代码：
 +
 ----
 node cookbook
@@ -123,13 +112,13 @@ node cookbook
 }
 ----
 
-6. Run Puppet.
+6. 运行 Puppet。
 
-==== How it works…
+==== {Howitworks}
 
-You define the package as a virtual resource in one place, the +admin::virtual-packages+
-class. All nodes can include this class and you can put all your virtual packages in it. None of
-them will actually be installed on a node, until you call +realize+:
+你可以在 +admin::virtual-packages+ 类中定义一个包的虚拟资源。
+所有节点都可以包含这个类，并且你可以将所有虚拟资源都放在此类中。
+这些虚拟资源都不会实际安装到节点上，直到你调用 ++realize++：
 
 ----
 class admin::virtual-packages
@@ -138,8 +127,7 @@ class admin::virtual-packages
 }
 ----
 
-Every class that needs the Apache package can call +realize+ on the following virtual
-resource:
+每个需要 Apache 包的类都可以对虚拟资源调用 +realize+ ：
 
 ----
 class app::twitstagram
@@ -148,32 +136,29 @@ class app::twitstagram
 }
 ----
 
-Puppet knows that because you made the resource virtual, you intended multiple references
-to the same package, and didn't just accidentally create two resources with the same name.
-So, it does the right thing.
+Puppet 知道如何处理它，因为你设置了相应的虚拟资源，你打算多次引用同一个包, 
+而不会意外地创建具有相同名子的两个资源。所以，这正确地实现了我们的需求。
 
-==== There's more…
+==== {Theresmore}
 
-To realize virtual resources, you can also use the *collection* syntax:
+为了实现（realize）虚拟资源，你也可以使用 *collection* 语法：
 
 ----
 Package <| title = "apache2-mpm-worker" |>
 ----
 
-The advantage of this syntax is that you're not restricted to the resource name; you could also
-use a tag, for example:
+使用这种语法的好处是，你不仅可以指定资源名，而且可以指定 tag，例如：
 
 ----
 Package <| tag = "security" |>
 ----
 
-Or, you can just specify all instances of the resource type, by leaving the query section blank
-as follows:
+或者，你可以指定资源类型的所有实例，在查询部分保留一个空格即可：
 
 ----
 Package <| |>
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch06sec02,Managing users with virtual resources>> in this chapter.
+- 本章的 <<ch06sec02,{Recipe602}>> 一节

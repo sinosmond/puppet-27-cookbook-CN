@@ -1,17 +1,16 @@
-﻿[[ch06sec04]]
-=== Managing users' customization files
+[[ch06sec04]]
+=== {Recipe604}
 
-Users, like cats, often feel the need to mark their territory. Unlike cats, users tend to
-customize their shell environments, terminal colors, aliases, and so on. This is usually
-achieved by a number of dotfiles in their home directory: for example, +.bash_profile+.
+用户，与猫一样，常常觉得有必要标记他们的领地。
+与猫不同，用户往往要定制自己的 shell 环境，如终端显示的颜色、别名等。
+这通常是通过用户家目录下的一些以点开始的环境文件实现的，例如：++.bash_profile++。
 
-You can add this to your Puppet-based user management by modifying the
-+user::virtual::ssh_user+ class, so that it can optionally include any dotfiles that are
-present in the Puppet repository.
+通过修改上一节的 +user::virtual::ssh_user+ 类，你可以将环境文件添加到基于 Puppet 的用户管理中。
+在这个类中，你可以有选择地为客户提供 Puppet 文件仓库中的任何以点开头的文件。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Modify the user::virtual class as follows:
+1. 对 +user::virtual+ 类做如下修改：
 +
 ----
 class user::virtual
@@ -55,28 +54,27 @@ class user::virtual
 }
 ----
 
-2. Create the file +/etc/puppet/modules/user/files/john-bashrc+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/user/files/john-bashrc+ 文件：
 +
 ----
 export PATH=$PATH:/var/lib/gems/1.8/bin
 ----
 
-3. Create the file +/etc/puppet/modules/user/files/john-bash_profile+
-   with the following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/user/files/john-bash_profile+ 文件：
 +
 ----
 . ~/.bashrc
 ----
 
-4. Run Puppet.
+4. 运行 Puppet。
 
 
-==== How it works…
+==== {Howitworks}
 
-We've added a new define, +user_dotfile+. This will be called once for each +dotfile+
-that the user wants to have. In the example, +john+ has two dotfiles: +.bashrc+ and 
-+.bash_profile+. These are declared as follows:
+我们添加了一个名为 +user_dotfile+ 的 ++define++。 
+对于用户要使用的每个 +dotfile+ 都要调用这个 +define+ 一次。 
+在本例中，+john+ 用户有两个 ++dotfiles++：++.bashrc++ 和 ++.bash_profile++。
+其声明如下：
 
 ----
 @ssh_user { "john":
@@ -85,22 +83,21 @@ that the user wants to have. In the example, +john+ has two dotfiles: +.bashrc+ 
 }
 ----
 
-You can supply either a single +dotfile+, or a list of them in array form, as shown previously.
+你既可以指定一个 +dotfile+，也可以像本例那样指定一个数组形式的列表。
 
-For each +dotfile+, +user_dotfile+ will look for a corresponding source file in the 
-+modules/user/files+ directory. For example, with the +bashrc+ +dotfile+, Puppet will look for the
-following:
+对于每个 +dotfile+，+user_dotfile+ 将在 +modules/user/files+ 目录下查找相应源的文件。
+例如，对名为 +bashrc+ 的 ++dotfile++，Puppet 将查找：
 
 ----
 modules/user/files/john-bashrc
 ----
 
-This will be copied to the node as the following:
+这将被拷贝为客户节点的如下文件：
 
 ----
 /home/john/.bashrc
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch06sec02,Managing users with virtual resources>> in this chapter.
+- 本章的 <<ch06sec02,{Recipe602}>> 一节

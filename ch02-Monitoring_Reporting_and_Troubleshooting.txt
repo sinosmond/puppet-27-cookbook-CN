@@ -1,36 +1,35 @@
 ﻿[[chapter02]]
-== Monitoring, Reporting, and Troubleshooting
+== 监控、报告和排错
 
 [quote, Error message,]
 Found problem more than one. However, this does not mean that relevant part
 is thing by mistake. Could be fertilized by special purpose in other application
 program.
 
-In this chapter, we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Generating reports
-- E-mailing log messages containing specific tags
-- Creating graphical reports
-- Producing automatic HTML documentation
-- Drawing dependency graphs
-- Testing your Puppet manifests
-- Doing a dry run
-- Detecting compilation errors
-- Understanding Puppet errors
-- Logging command output
-- Logging debug messages
-- Inspecting configuration settings
-- Using tags
-- Using run stages
-- Using environments
+- {Recipe201}
+- {Recipe202}
+- {Recipe203}
+- {Recipe204}
+- {Recipe205}
+- {Recipe206}
+- {Recipe207}
+- {Recipe208}
+- {Recipe209}
+- {Recipe210}
+- {Recipe211}
+- {Recipe212}
+- {Recipe213}
+- {Recipe214}
+- {Recipe215}
 
-We've all had the experience of sitting in an exciting presentation about some new technology,
-and then rushing home to play with it. Of course, once you start experimenting with it, you
-immediately run into problems. What's going wrong? Why doesn't it work? How can I see
-what's happening under the hood? This chapter will help you answer some of these questions,
-and give you the tools to solve common Puppet problems. We'll also see how you can generate
-useful reports on your Puppet infrastructure, and how Puppet can help you monitor and
-troubleshoot your network as a whole.
+大家都有这样的经验：当看到一些新技术时会莫名的兴奋，急着赶回家进行实验。
+当然，一旦你开始尝试使用它，马上就会遇到问题。
+这是怎么回事呢？它为什么不工作呢？我怎么能看到引擎盖下发生了什么呢？
+本章将帮助你回答这些问题，并为你介绍解决常见的 Puppet 问题的工具。
+我们还会看到：如何对你的 Puppet 基础设施生成有用的报告，
+以及 Puppet 如何帮你对整个网络进行监视和故障排查。
 
 
 include::recipes/ch02sec01-generating_reports.txt[]

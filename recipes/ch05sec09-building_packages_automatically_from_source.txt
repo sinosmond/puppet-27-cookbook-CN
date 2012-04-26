@@ -1,25 +1,25 @@
-﻿[[ch05sec09]]
-=== Building packages automatically from source
+[[ch05sec09]]
+=== {Recipe509}
 
-Tarballs can seriously damage your health. While using a *distro* or third-party package, or
-rolling your own package is always preferable to building software from source, sometimes it
-has to be done. Creating Debian packages (or any other flavor of packages) can be a lengthy
-and error-prone process, and there may not always be the time or budget available to do this.
+源码压缩包（**tarball**）会严重损害你的健康。你既可以使用 **发行版**（**distro**）或第三方软件包，
+同时从源码包构建你自己的软件包也是可取的，这有时还会有许多工作要做。
+创建 Debian 软件包（或者其他风格的软件包）会是一个漫长而容易出错的过程，
+而且你可能没有时间或预算构建它。
 
-If you have to build a program from source, Puppet can at least help with this process. The
-general procedure is to automate what you would otherwise do manually:
+如果你必须从源代码构建你的程序，至少 Puppet 可以帮你实现这一过程。
+一般地构建过程是自动化的，否则你就得手工构建：
 
-- Download the source *tarball*
-- Unpack the tarball
-- Configure and build the program
-- Install the program
+- 下载源码包
+- 解压源码包
+- 配置（Configure）并构建（build）程序
+- 安装已构建的程序
 
-In this example we'll build *OpenSSL* from source (though for production you should use the
-distro package, but it makes a useful demonstration).
+在下面的例子中，我们将从源码构建 **OpenSSL**（虽然在生产环境中你应该使用发行版提供的软件包，
+但这是一个有用的演示示例）。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 exec { "build-openssl":
@@ -34,7 +34,7 @@ exec { "build-openssl":
 }
 ----
 
-2. Run Puppet (it may take a while!):
+2. 运行 Puppet （这可能会执行一段时间！）：
 +
 ....
 # puppet agent --test
@@ -49,70 +49,68 @@ notice: Finished catalog run in 554.00 seconds
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-The +exec+ command is in five separate stages, delimited by +&&+ operators. This means that
-should any sub-command fail, the whole command will stop and fail. It's a useful construct
-where you want to make sure each sub-command has succeeded before going on to the next.
++exec+ 命令被 +&&+ 运算符分割成了五个阶段。也就是说每个阶段的命令若执行失败，
+整个命令将会失败且停止运行。
+当你想确保每个子命令都成功运行之后才运行下一个子命令时，这是一种有用的构造方法。
 
-1. The first stage downloads the source tarball:
+1. 第一阶段，下载源码包：
 +
 ....
 /usr/bin/wget ftp://ftp.openssl.org/source/openssl-0.9.8p.tar.gz
 ....
 
-2. The second stage unpacks it:
+2. 第二阶段，解压源码包：
 +
 ....
 /bin/tar xvzf openssl-0.9.8p.tar.gz
 ....
 
-3. The third stage changes working directory to the source tree:
+3. 第三阶段，进入源码树的目录：
 +
 ....
 cd openssl-0.9.8p
 ....
 
-4. The fourth stage runs the configure script (this is usually where you will need to
-   specify any options or customizations):
+4. 第四阶段，运行配置脚本（通常还会指定一些自定义选项）：
 +
 ....
 ./Configure linux-generic32
 ....
 
-5. The final stage builds and installs the software:
+5. 最后阶段，创建并安装软件：
 +
 ....
 make install
 ....
 
-6. So that this lengthy process isn't run every time Puppet runs, we specify a file that the
-   build creates:
+6. 由于这是一个漫长的过程，你不想每次运行 Puppet 时都运行它，我们指定了一个条件，
+   即被创建的文件是否应经存在：
 +
 --
 ....
 creates => "/usr/local/ssl/bin/openssl",
 ....
 
-If you need to force a rebuild for whatever reason, remove this file.
+无论出于任何原因，如果需要重建，你可以删除此文件。
 --
 
-7. Things don't always compile first time. In case of problems, we specify the +logoutput+
-   parameter which will show us what the build process is complaining about:
+7. 错误并非只发生在首次编译的情况。在出现问题时，我们指定了 +logoutput+ 参数，
+   它将为我们显示编译或构建过程中的出错信息：
 +
 ----
     logoutput => on_failure,
 ----
 
-8. Finally, because the compilation may take a while, we set a zero +timeout+ parameter
-   (Puppet times out +exec+ commands after 5 minutes by default):
+8. 最后，因为编译过程可能会持续一段时间，所以将 +timeout+ 参数设置成了 0
+   （默认情况下，Puppet 执行 +exec+ 命令 5 分钟后就会超时）：
 +
 ----
     timeout => 0,
 ----
 
-==== There's more…
+==== {Theresmore}
 
-If you have to build quite a few packages from source, it may be worth converting the
-preceding recipe into a +define+ function, so that you can use more or less the same
-code to build each package.
+如果你有一批必须从源代码构建的软件，那么将上述的 +exec+ 放入一个 +define+
+函数会使这一构建过程便得更方便，因为你可以使用大致相同的代码构建每个包。

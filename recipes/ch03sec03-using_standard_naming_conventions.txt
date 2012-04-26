@@ -1,28 +1,24 @@
 ﻿[[ch03sec03]]
-=== Using standard naming conventions
+=== {Recipe303}
 
 [quote, Phil Karlton,]
 There are only two hard problems in computer science: cache invalidation, naming
 things, and off-by-one errors.
 
-Choosing appropriate and informative names for your modules and classes will be a big help
-when it comes to maintaining your code. This is even more true if other people need to read
-and work on your manifests.
+当你维护代码时会发现，选择适当而有意义的信息为你的模块或类命名是由很大帮助的。
+尤其是当其他人需要阅读或基于你编写的配置清单工作时，这种命名方法是十分必要的。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Name modules after the software or service they manage: for example, +apache+
-   or +haproxy+.
+1. 模块应该以被管理的软件或服务命名，例如：+apache+ 或 ++haproxy++。
 +
-Name classes within modules after the function or service they provide to the
-module: for example, +apache::vhosts+ or +rails::dependencies+.
+用跟在模块之后的功能或提供的服务为模块中的类命名，例如：+apache::vhosts+ 或
+++rails::dependencies++。
 +
-If a class within a module disables the service provided by that module, name
-it as +disabled+. For example, a class that disables Apache should be named 
-+apache::disabled+.
+如果在模块中提供了禁用服务的功能，将其命名为 ++disabled++。例如一个禁用 Apache
+的类应该命令为 ++apache::disabled++。
 
-2. If a node provides multiple services, have the node definition include one module
-   or class named for each service. For example:
+2. 如果一个节点需要提供多种服务，请在节点的定义中包含一个类或者每个服务的类名。例如：
 +
 ----
 node server014 inherits server {
@@ -34,14 +30,12 @@ node server014 inherits server {
 }
 ----
 
-3. The module that manages users should be named +user+.
-4. Within the +user+ module, declare your virtual users within the class +user::virtual+
-5. Within the +user+ module, subclasses for particular groups of users should be named
-   after the group such as +user::sysadmins+, or +user::contractors+.
-6. When you need to override a class for some specific node or service, inherit that
-   class and prefix the name of the subclass with the node. For example, if your node
-   +cartman+ needs a special SSH configuration, and you want to override the +ssh+ class,
-   do it as follows:
+3. 管理用户的模块应该命名为 ++user++。
+4. 在 +user+ 模块中，声明虚拟用户的类应命名为 ++user::virtual++。
+5. 在 +user+ 模块中，一个特定的用户组应该命名为子类，例如 +user::sysadmins+
+   或 ++user::contractors++。
+6. 当你需要覆盖某些特定节点或服务的类时，继承该类并以节点名作为子类名的前缀。
+   例如，如果节点 +cartman+ 需要一个特殊的 SSH 配置且要覆盖 +ssh+ 类，可以这样做：
 +
 ----
 class cartman_ssh inherits ssh {
@@ -49,26 +43,26 @@ class cartman_ssh inherits ssh {
 }
 ----
 
-7. When using Puppet to deploy configuration files for different services, name the file
-   after the service, but with a suffix indicating what kind of file it is. For example:
+7. 当使用 Puppet 为不同的服务部署配置时，被 Puppet 解析后传出的文件应该以服务开头，
+   随后跟上指示文件功能的后缀。例如：
 +
 --
-- Apache +init+ script -- +apache.init+
-- Log rotation configuration snippet for Rails -- +rails.logrotate+
-- Nginx +vhost+ file for +mywizzoapp+ -- +mywizzoapp.vhost.nginx+
-- MySQL configuration for standalone server -- +standalone.mysql+
+- Apache +init+ 脚本 -- +apache.init+
+- Rails 的日志滚动配置片段 -- +rails.logrotate+
+- Nginx 为 +mywizzoapp+ 应用所做的 +vhost+ 配置 -- +mywizzoapp.vhost.nginx+
+- 独立运行的 MySQL 服务器的配置 -- +standalone.mysql+
 
-If you need to manage, for example, different Ruby versions, name the class after the
-version it is responsible for, such as +ruby192+ or +ruby186+.
+如果你要管理不同的 Ruby 版本，可以使用添加了版本号的类名，表示由此类负责特定版本的管理，
+例如 +ruby192+ 或 ++ruby186++。
 --
 
-==== There's more…
+==== {Theresmore}
 
-The Puppet community maintains a set of best practice guidelines for your Puppet
-infrastructure which includes some hints on naming: http://projects.puppetlabs.com/projects/1/wiki/Puppet_Best_Practice.
+Puppet 社区维护着一套 Puppet 基础设施的最佳实践准则，其中包括对命名的提示：
+http://projects.puppetlabs.com/projects/1/wiki/Puppet_Best_Practice2 。
 
-Some people prefer to include multiple classes on a node by using a comma-separated list,
-rather than separate +include+ statements. For example:
+一些人更愿意在一个节点中使用逗号分割的列表包含多个类，而不是使用分离的
++include+ 语句。例如：
 
 ----
 node server014 inherits server {
@@ -80,9 +74,7 @@ node server014 inherits server {
 }
 ----
 
-This is a matter of style, but I prefer to use separate +include+ statements, one to a line,
-because it makes it easier to copy and move around class inclusions between nodes without
-having to tidy up the commas and indentation every time.
+这是个风格问题，但我更愿意使用分离的 +include+ 语句，一行包含一个模块或类，
+因为这样可以更容易地在节点之间复制或移动，而无需每次都要整理逗号和缩进的问题。
 
-I mentioned inheritance in a couple of the preceding examples. If you're not sure what this is,
-don't worry: I'll explain it in detail in the next chapter.
+我在前面的例子中曾几次提到过继承。如果你不知道这是什么，不要担心：我会在下一章详细解释。

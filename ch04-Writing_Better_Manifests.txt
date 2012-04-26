@@ -1,39 +1,37 @@
 ﻿[[chapter04]]
-== Writing Better Manifests
+== 书写更优质的配置清单
 
 [quote, Bjarne Stroustrup,]
 There are only two kinds of programming languages: those people always bitch
 about and those nobody uses.
 
-In this chapter we will cover the following topics:
+在本章中，我们将学习如下内容：
+
+- {Recipe401}
+- {Recipe402}
+- {Recipe403}
+- {Recipe404}
+- {Recipe405}
+- {Recipe406}
+- {Recipe407}
+- {Recipe408}
+- {Recipe409}
+- {Recipe410}
+- {Recipe411}
 
 
-- Using arrays of resources
-- Using define resources
-- Using dependencies
-- Using node inheritance
-- Using class inheritance and overriding
-- Passing parameters to classes
-- Writing reusable, cross-platform manifests
-- Getting information from the environment
-- Importing dynamic information
-- Importing data from CSV files
-- Passing arguments to shell commands
+你的 Puppet 配置清单实际上就是你所管理的整个基础设施的活生生的文档。
+保持配置清单的整洁和良好组织使其更容易维护和理解是个明智之举。
+Puppet 为你方便管理代码提供了许多工具，其中包括：
 
+- 数组（Arrays）
+- 定义（Defines）
+- 依赖（Dependencies）
+- 继承（Inheritance）
+- 类参数（Class parameters）
 
-Your Puppet manifest is the living documentation for your entire infrastructure. Keeping it tidy
-and well organized is a great way to make it easier to maintain and understand. Puppet gives
-you a number of tools to do this, including the following:
-
-- Arrays
-- Defines
-- Dependencies
-- Inheritance
-- Class parameters
-
-We'll see how to use all of these and more. As you read through the chapter, try out the
-examples, and look through your own manifests to see where these features might help you
-simplify and improve your Puppet code.
+我们将看到如何使用上面的所有工具（甚至更多）。通过对本章的阅读，尝试使用这些例子做实验，
+看看利用这些功能是否能帮你简化和改善你的 Puppet 代码。
 
 
 include::recipes/ch04sec01-using_arrays_of_resources.txt[]

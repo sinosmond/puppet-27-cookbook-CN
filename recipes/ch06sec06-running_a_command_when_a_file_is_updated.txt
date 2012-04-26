@@ -1,34 +1,32 @@
-﻿[[ch06sec06]]
-=== Running a command when a file is updated
+[[ch06sec06]]
+=== {Recipe606}
 
-It's a very common pattern to have Puppet take some action whenever a particular file is
-updated. For example, in the +rsync+ config snippet example, each snippet file called an +exec+
-to update the main +rsyncd.conf+ file when it changed.
+当某个特定的文件更新后 Puppet 就该采取一些行动，这是一个非常常见的模式。
+例如，在 +rsync+ 配置片段的例子中，一旦修改了某个片段文件，就会调用 +exec+
+资源更新主配置文件 ++rsyncd.conf++。
 
-An +exec+ resource will normally be run every time Puppet runs, unless you specify one of the
-following parameters:
+每次运行 Puppet，++exec++ 资源都会被运行，除非指定了如下参数中的一个：
 
 - creates
 - onlyif
 - unless
 - refreshonly => true
 
-The +refreshonly+ parameter means that the +exec+ should only be run if it receives a
-+notify+ from another resource (such as a file, for example).
++refreshonly+ 参数的意思是：仅当从其他资源（例如一个文件资源）获得一个 +notify+
+才执行 +exec+ 资源。
 
-==== Getting ready…
+==== {Gettingready}
 
-Install the +nginx+ package (actually, we just want the stock config file, but this is the easiest
-way to get it):
+安装 +nginx+ 包（实际上，我们只需要配置文件，但这是获得它的最简单方式）:
 
 ....
 
 # apt-get install nginx
 ....
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a new module +nginx+ with the usual directory structure as follows:
+1. 创建一个 +nginx+ 模块，其目录结构如下：
 +
 ....
 # mkdir /etc/puppet/modules/nginx
@@ -36,8 +34,7 @@ way to get it):
 # mkdir /etc/puppet/modules/nginx/manifests
 ....
 
-2. Create the file +/etc/puppet/modules/nginx/manifests/nginx.pp+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/nginx/manifests/nginx.pp+ 文件：
 +
 ----
 class nginx {
@@ -62,25 +59,25 @@ class nginx {
 }
 ----
 
-3. Copy the +nginx.conf+ file into the new module:
+3. 复制系统中的 +nginx.conf+ 文件到模块的相应目录：
 +
 ....
 cp /etc/nginx/nginx.conf /etc/puppet/modules/nginx/files
 ....
 
-4. Add the following to your manifest:
+4. 添加如下代码到你的配置清单：
 +
 ----
 include nginx
 ----
 
-5. Make a test change to Puppet's copy of the +nginx.conf+ file:
+5. 对复制到 Puppet 中的 +nginx.conf+ 文件做个小改动，以便进行后续的测试：
 +
 ....
 # echo \# >>/etc/puppet/modules/nginx/files/nginx.conf
 ....
 
-6. Run Puppet:
+6. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -119,16 +116,16 @@ notice: Finished catalog run in 1.69 seconds
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-With most services, you'd simply define a service resource, which gets a +notify+ from the
-+config+ file. This causes Puppet to restart the service, so that it can pick up the changes.
+对于大多数服务来说，你应该简单地定义一个服务资源，它从配置文件获得 ++notify++。
+这会使 Puppet 重启服务，从而应用改变之后的更新。
 
-However, +nginx+ sometimes doesn't restart properly, especially when restarted by Puppet, and
-so I cooked up this remedy for one site to have Puppet run `/etc/init.d/nginx reload`
-instead of restarting it. Here's how it works.
+然而，+nginx+ 有时不能正确的重新启动，尤其是当使用 Puppet 重新启动时，
+所以我为某个站点炮制了一个让 Puppet 运行 `/etc/init.d/nginx reload` 的补救措施，
+用它替代服务的重启。下面阐述它是如何工作的。
 
-The +exec+ resource has the +refreshonly+ parameter set to true as follows:
+将 +exec+ 资源中的 +refreshonly+ 参数设置成 ++true++：
 
 ----
 exec { "reload nginx":
@@ -138,9 +135,9 @@ exec { "reload nginx":
 }
 ----
 
-So, it will only run if it receives a notify.
+所以，仅当它获得通知才会运行。
 
-The +config+ file resource supplies the necessary +notify+ if it's changed:
+如果配置文件发生改变，就提供所需的 ++notify++：
 
 ----
 file { "/etc/nginx/nginx.conf":
@@ -149,18 +146,17 @@ file { "/etc/nginx/nginx.conf":
 }
 ----
 
-Whenever Puppet needs to update this file, it will also run the exec, which will call the
-following command to pick up the changes.:
+每当 Puppet 更新了这个配置文件，它就会运行 ++exec++，
+这将会调用如下命令重新加载修改后的配置文件：
 
 ....
 /usr/sbin/service nginx reload
 ....
 
-If a service supports the +reload+ command, this will send the +daemon+ a signal to re-read its
-+config+ files without interrupting service.
+如果服务支持 +reload+ 命令参数，就会在不中断服务的情况下为 +daemon+
+发出一个重新读取配置文件的进程信号。
 
-In fact, in this example, it would be better to define a new +restart+ command for the +nginx+
-service, such as the following:
+实际上，对于本例，更好的方法是为 +nginx+ 服务定义如下的 +restart+ 命令：
 
 ----
 service { "nginx":
@@ -168,23 +164,41 @@ service { "nginx":
 }
 ----
 
-But I wanted to share with you some real code that I wrote which demonstrates the 
-+notify -> Exec+ technique, and at the time either I didn't know about +restart+ or it didn't exist yet.
-As a general pattern, though, you'll find it useful for any situation, where an action needs to be
-taken when a file is updated.
+但是我想要和你分享一些我写的用于展示 +notify -> Exec+ 技术的实际代码，
+并且那时，我还不知道 +restart+ 而且它也不存在。 
+不过作为一种通用的模式，当更新文件后需要采取某种行动时，你会发现它有用。
 
+==== {Theresmore}
 
-==== There's more…
+每当遇到资源更新就要采取某些行动的情况，你就可以使用这个类似的模式。可能的用途包括：
 
-You can use a similar pattern anywhere some action needs to be taken every time a resource
-is updated. Possible uses might include the following:
+- 触发服务重新加载配置文件
+- 运行语法检查，然后再重新启动服务
+- 连接 +config+ 片段
+- 运行测试
+- 链接 +exec+ 资源
 
-- Triggering service reloads
-- Running a syntax check before restarting a service
-- Concatenating +config+ snippets
-- Running tests
-- Chaining execs
+如果当一个文件（假设名为 somefile）更新后需要执行多个命令，那么在每个命令的 +exec+ 
+资源声明中都使用 +subscribe => File[somfile],+ 
+（即一旦检测到 somefile 文件的变化就重新执行 +exec+ 资源）会更简单，
+而不是在 +file+ 资源中使用 +notify+ 执行命令。 效果是一样的。
 
-If you have several commands that all need to be run when a single file is updated, it might be
-easier to have all the commands +subscribe+ to the file, rather than have the file +notify+ the
-commands. The effect is the same.
+[NOTE]
+.译者注
+==========
+你也可以在 +service+ 资源定义中使用 ++subscribe++，
+例如在一个 Redhat 风格的系统中，你可以使用如下的 +service+ 声明：
+
+----------
+    service { "nginx":
+        enable    => true,
+        ensure    => running,
+        restart   => "/etc/init.d/nginx reload",
+        subscribe => [ File["/etc/nginx/nginx.conf"],
+                       File["/etc/sysconfig/nginx"] ]
+    }
+----------
+
+在上例中，使用数组为 +subscribe+ 指定了两个要检测的文件，
+也就是说，一旦检测到两个文件中的任何一个发生变化就重启服务。
+==========

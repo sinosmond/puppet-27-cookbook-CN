@@ -1,37 +1,36 @@
-﻿[[ch08sec05]]
-=== Managing firewalls with iptables
+[[ch08sec05]]
+=== {Recipe805}
 
 [quote, Kreitzberg and Shneiderman,]
 Programming can be fun, so can cryptography; however they should not be
 combined.
 
-The programming language C has been described as a 'write-only' language; it's so terse and
-efficient that it can be difficult to understand even code that you've written yourself. The same
-might be said of iptables, the Linux kernel's built-in packet filtering firewall. Raw `iptables`
-rules look something like this:
+C 编程语言被形容为 “只写” 的语言；它是如此的简洁、高效，
+甚至你自己读自己写过的代码都可能很难理解。
+同样地，Linux 内核内置的包过滤防火墙的 iptables 的配置也是如此。 
+一条原始的 `iptables` 命令规则看上去像这样：
 
 ....
 iptables -A INPUT -d 10.0.2.15/32 -p tcp -m tcp --dport 80 -j ACCEPT
 ....
 
-Unless you derive a sense of machismo from mastering apparently meaningless strings of line
-noise, which admittedly is an occupational disease of UNIX sysadmins, it would be nice to be
-able to express firewall rules in a more symbolic and readable way. Puppet can help, because
-we can use it to abstract away some of the implementation detail of `iptables` and define
-firewall rules by reference to the services they control:
+除非你会因为掌握了命令行的这些似乎毫无意义的字符串而获得男子气概
+（诚然这是 UNIX 系统管理员的职业病），
+否则，能够以更加象征性和可读性的方式来表达防火墙规则是更好的选择。
+Puppet 在这方面可以为我们提供帮助，因为我们可以用它对 `iptables` 的实现细节进行抽象，
+并通过参考管理员所控制的服务角色来定义防火墙规则，例如：
 
 ----
 iptables::role { "web-server": }
 ----
 
-==== Getting ready…
+==== {Gettingready}
 
-You will need the +append_if_no_such_line+ utility function we created in the section,
-<<ch05sec01,Making quick edits to config files>> in Chapter 5.
+你需要我们在第 5 章 <<ch05sec01,{Recipe501}>> 一节中创建的 +append_if_no_such_line+ 函数。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create an iptables module:
+1. 创建一个 +iptables+ 模块：
 +
 ....
 # mkdir /etc/puppet/modules/iptables
@@ -39,8 +38,7 @@ You will need the +append_if_no_such_line+ utility function we created in the se
 # mkdir /etc/puppet/modules/iptables/files
 ....
 
-2. Create the file +/etc/puppet/modules/iptables/manifests/init.pp+ with
-   the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/iptables/manifests/init.pp+ 文件：
 +
 ----
 class iptables {
@@ -75,9 +73,9 @@ class iptables {
 
     exec { "run-iptables":
         cwd         => "/root/iptables",
-        command     => "/usr/bin/test -f hosts/${hostname} && /
-         root/iptables/iptables.sh && /sbin/iptables-save >/etc/
-         iptables.rules",
+        command     => "/usr/bin/test -f hosts/${hostname} && 
+         /root/iptables/iptables.sh && /sbin/iptables-save >
+         /etc/iptables.rules",
         refreshonly => true,
     }
 
@@ -106,8 +104,7 @@ class iptables {
 }
 ----
 
-3. Create the file +/etc/puppet/modules/iptables/files/iptables.sh+ with the
-   following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/iptables/files/iptables.sh+ 文件：
 +
 [source,bash]
 ----
@@ -150,8 +147,7 @@ echo -e "Test remote login and then:\n iptables-save \
  >/etc/iptables.rules"
 ----
 
-4. Create the file +/etc/puppet/modules/iptables/files/names+ with
-   the following contents:
+4. 使用如下内容创建 +/etc/puppet/modules/iptables/files/names+ 文件：
 +
 ----
 # Servers
@@ -182,8 +178,7 @@ export WEB_SSL=443
 export ZABBIX=10051
 ----
 
-5. Create the file +/etc/puppet/modules/iptables/files/common.role+ with
-   the following contents:
+5. 使用如下内容创建 +/etc/puppet/modules/iptables/files/common.role+ 文件：
 +
 ----
 # Common rules for all hosts
@@ -214,8 +209,7 @@ iptables -A INPUT -p tcp --dport 1434 -j DROP # SQL server
 iptables -A INPUT -p tcp --dport 2967 -j DROP # SSC-agent
 ----
 
-6. Create the file +/etc/puppet/modules/iptables/files/web-server.role+
-   with the following contents:
+6. 使用如下内容创建 +/etc/puppet/modules/iptables/files/web-server.role+ 文件：
 +
 ----
 # Access to web
@@ -225,22 +219,21 @@ iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${WEB} -j ACCEPT
 iptables -A OUTPUT -p tcp --dport ${SMTP} -j ACCEPT
 ----
 
-7. Create the file +/etc/puppet/modules/iptables/files/puppet-server.role+
-   with the following contents:
+7. 使用如下内容创建 +/etc/puppet/modules/iptables/files/puppet-server.role+ 文件：
 +
 ----
 # Access to puppet
 iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${PUPPET} -j ACCEPT
 ----
 
-8. Include the following on your Puppetmaster node:
+8. 在你的 Puppetmaster 节点上包含如下内容：
 +
 ----
 iptables::role { "web-server": }
 iptables::role { "puppet-server": }
 ----
 
-9. Run Puppet:
+9. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -326,7 +319,7 @@ successfully
 notice: Finished catalog run in 4.86 seconds
 ....
 
-10. Check that the required rules have been installed as follows:
+10. 检查要求的规则是否已被安装：
 +
 ....
 # iptables -nL
@@ -373,91 +366,90 @@ LOG    all  --  0.0.0.0/0  0.0.0.0/0    LOG
 DROP   all  --  0.0.0.0/0  0.0.0.0/0
 ....
 
-==== How it works…
+==== {Howitworks}
 
-In order to create a suitable set of firewall rules, we need to know the main IP address of the
-machine in question, and also what services it is running. We also want to add some common
-rules that all machines will have (allow SSH, for example), and to run a series of `iptables`
-commands that will activate the rules we've generated. Having done this, we want to save the
-rules so that they can be reactivated at boot time. So here's how it's all done.
+为了创建一套合适的防火墙规则，我们需要知道节点的主 IP 地址以及其运行了哪些服务。
+我们还需要添加一些所有的机器都要设置的共同规则（例如，允许 SSH），并运行一系列的
+`iptables` 命令以激活我们已经生成的规则。
+之后我们还要保存这些规则，以便使这些规则可以在开机时恢复执行。
+下面介绍所有的这一切是如何完成的。
 
-First, we create a +names+ file that defines shell variables for some commonly-used ports. This
-means when we define firewall rules we can refer to a named variable like +${MYSQL}+ instead
-of the numeric value +3306+ for the MySQL port.
+首先，我们创建一个 +names+ 文件为常用的端口定义 shell 变量。
+这意味着，当我们定义防火墙规则时，可以引用变量，例如对于 MySQL 服务可以使用变量
++${MYSQL}+ 取代数值端口号 ++3306++。
 
-The +common.role+ file contains some useful rules for all machines. Modify these to suit your
-own installation (for example, you might allow SSH access only from specific IP ranges).
++common.role+ 文件包含了一些对所有机器都有用的规则。编辑这个文件以适应你自己的所有机器
+（例如，你可能仅允许从指定的 IP 范围访问 SSH）。
 
-The +web-server.role+ and +puppet-server.role+ files contain rules for these specific
-roles. Add more files to define the roles you need on your network: for example, database
-servers, application workers, DNS servers, and so on. The rules are in the following format:
++web-server.role+ 和 +puppet-server.role+ 文件包含了两个特定角色的规则。
+你可以添加更多的文件用于定义你的网络中所需的众多角色：例如，数据库服务器、应用服务器、
+DNS 服务器，等等。文件中所有的规则都具有如下的格式：
 
 ----
 iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${WEB} -j ACCEPT
 ----
 
-Usually, the only part you need to modify is the +${WEB}+: substitute another named port such
-as +${POSTGRES}+, defined in the +names+ file. Add more definitions to the +names+ file if you
-need them.
+通常，你只需要修改 +${WEB}+ 这部分：将其替换为另一个端口名（定义在 +names+ 文件中）
+的变量引用（例如 ++${POSTGRES}++）。如果你需要更多的端口名，在 +names+ 文件中添加相应的定义。
 
-The +iptables.sh+ script reads all of these other files and executes the required `iptables`
-commands. Puppet executes this script whenever any of the dependent files change, so all
-you need to do to refresh the firewall is to check in a change and run Puppet.
++iptables.sh+ 脚本读取其他的所有文件并执行规则要求的 `iptables` 命令。
+每当相关文件有任何改变，Puppet 就执行这个脚本，因此要想刷新防火墙，
+你需要做的工作就是改变相关的配置并运行 Puppet。
 
-Puppet also saves the current ruleset to +/etc/iptables.rules+. In order to reload the
-ruleset when the machine boots, Puppet adds a line to the +/etc/network/interfaces+
-file to do this:
+Puppet 还会将当前的规则集保存在 +/etc/iptables.rules+ 文件中。
+为了让机器重启后加载规则集文件，Puppet 在 +/etc/network/interfaces+ 文件中添加了如下一行：
 
 ----
 pre-up iptables-restore < /etc/iptables.rules
 ----
 
-What all this means is that you can create a suitable firewall for a machine simply by including
-a line like this in the relevant module:
+所有这一切意味着，在相关的模块中（例如 +apache+ 模块），
+你只要简单地包含如下一行即可创建相应的防火墙：
 
 ----
 iptables::role { "web-server": }
 ----
 
-Once the firewall is activated, any packets that don't match the rules will be blocked and logged
-in +/var/log/messages+. Check this file to help troubleshoot any problems with the firewall.
+一旦防火墙被激活，任何不符合规则的数据包将被阻止并记录到 +/var/log/messages+ 日志文件。
+检查这个文件，以帮助解决防火墙的任何问题。
 
-==== There's more…
+==== {Theresmore}
 
-If you have certain specific machines that will be referenced in your rules (for example, your
-monitoring server) you can add it to the +names+ file like this:
+如果在你的规则中引用了某些特定的机器（例如，你的监控服务器），
+可以在 +names+ 文件中添加如下的定义：
 
 ----
 MONITOR=10.0.2.15
 ----
 
-Then in a suitable place (such as +common.role+) you can allow access from this machine to,
-for example, the NRPE port:
+然后在适当的位置（例如 +common.role+ 文件中），你可以允许来自这台机器的访问，
+例如，允许来自监控服务器对指定主机 NRPE 端口的访问规则如下：
 
 ----
-iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} -s ${MONITOR} --dport
- ${NRPE} -j ACCEPT
+iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} -s ${MONITOR}
+ --dport ${NRPE} -j ACCEPT
 ----
 
-You can also do this for database servers and anything else where you need to reference a
-specific address, network, or IP range in a +.role+ file.
+你也可以用这种方法指定数据库服务器，以及在 +.role+ 文件中需要引用特定的 IP 地址、
+网络地址和地址范围等情况。
 
-Dynamically generating the firewall ruleset like this can be very useful for cloud infrastructures
-where the list of servers is constantly changing as new ones are created and destroyed. All
-you need to do to have any resource trigger a firewall rebuild is to add:
+像这样动态生成防火墙规则集对于云基础设施是非常有用的，
+云中的服务器列表会因为节点的创建和销毁而不断地变化。
+对于需要触发防火墙重建的任何资源，你只要在此资源中添加如下代码即可：
 
 ----
 notify => Exec["run-iptables"],
 ----
 
-So you might have a "master server list" that you maintain in version control or update
-automatically from a cloud API such as Rackspace or Amazon EC2. This list might be a +file+
-resource in Puppet that can trigger a firewall rebuild, so every time you check in a change
-to the master list, every machine that runs Puppet will update its firewall accordingly.
+你可能有一个由版本控制系统维护的或通过 *cloud API* （例如，Rackspace 或 Amazon EC2）
+自动更新的 “主服务器列表（master server list）”。
+可以在 Puppet 中将这个列表定义成一个 +file+ 资源，通过在此资源中使用 +notify+
+参数即可触发防火墙的重建，所以每次当你检入（check in）主服务器列表的变化，
+每台机器上运行的 Puppet 将相应地更新其防火墙。
 
-Of course, such a high degree of automation means that you need to be quite careful about
-what you check in, or you can take your whole infrastructure offline by mistake.
+当然，这种高度的自动化意味着你需要对你检入的内容格外小心，
+因为任何错误都可能会导致整个基础设施离线。
 
-A good way to test changes is to use a Git branch for your Puppet manifests, which is only
-applied on one or two servers. Once you have verified that the changes are good you can
-merge them into the master branch and roll them out.
+测试变更的一种好方法是对用于测试的 Puppet 配置清单使用一个单独的 Git 分支，
+在分支中仅将变更应用到一到两台服务器。一旦你验证了变更的正确性，
+就可以将其合并到主分支并回滚到主分支。

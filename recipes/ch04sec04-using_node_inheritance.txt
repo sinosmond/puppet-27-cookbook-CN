@@ -1,14 +1,12 @@
-﻿[[ch04sec04]]
-=== Using node inheritance
+[[ch04sec04]]
+=== {Recipe404}
 
-It's a brave (or foolish) sysadmin who puts all her servers in one basket. Let's say you have
-dedicated servers hosted with three different providers: WreckSpace, GoDodgy, and VerySlow.
-They have different data centers and geographical locations, so you will need to make small
-modifications to your config for servers hosted with each provider. You have several different
-types of servers, but they are distributed randomly across the three providers.
+将所有服务器都放在一个篮子里的系统管理员是勇敢的（或者说是愚蠢的）。
+比方说，你将服务器托管在三个不同的提供商：WreckSpace、GoDodgy 和 VerySlow。
+他们有不同的数据中心且分布在不同的地理位置，所以你需要对服务器配置做一些小的改动，
+以适应每个提供商。你有几种类型的服务器，它们随机分布在三个不同的提供商。
 
-One way to implement this in Puppet would be to set a variable in the node definition that tells
-the node where it is:
+使用 Puppet 的一种实现方法是在节点定义中设置一个变量用于告知每个节点处于哪个提供商：
 
 ----
 node webserver127 {
@@ -32,15 +30,13 @@ node loadbalancer5 {
 }
 ----
 
-As you can see, this results in a lot of duplication. It would be much easier if we simply
-defined a kind of node that is a +WreckSpace+ server, for example, and then we could create
-nodes which *inherit* from that node, including only the classes that determine what it does:
-+loadbalancer+ or +webserver+.
+正如你看到的，结果中存在大量的重复行。而使用下面的方法会比上面的方法容易得多。例如：
+首先简单地定义一种 +WreckSpace+ 节点，然后使用从这个节点 **继承**（**inherit**）
+的方法创建新节点，在新节点中只需要包含它要执行的类：比如 +loadbalancer+ 或 +webserver+ 即可。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a base class for all your nodes, which contains only the classes that every
-   node has as follows:
+1. 为所有的节点创建一个基类，它仅包含每个节点都要执行的类，例如：
 +
 ----
 node server {
@@ -52,8 +48,7 @@ node server {
 }
 ----
 
-2. Create three different subclasses of this +server+ node, each with the appropriate
-   +provider+ variable:
+2. 通过这个 +server+ 节点创建三个不同的子类，每个子类都设置了适当的 +provider+ 变量：
 +
 ----
 node wreckspace_server inherits server {
@@ -69,8 +64,7 @@ node veryslow_server inherits server {
 }
 ----
 
-3. Now, let's say you need to create a new web server in +VerySlow+. To do this, just
-   inherit from +veryslow_server+:
+3. 现在，为了要在 +VerySlow+ 创建一个新的 Web 服务器，仅需要从 +veryslow_server+ 继承即可：
 +
 ----
 node webserver904 inherits veryslow_server {
@@ -78,13 +72,13 @@ node webserver904 inherits veryslow_server {
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-When one node inherits from another, it picks up the entire configuration that the parent node
-had. You can then add anything which makes this particular node different.
+当一个节点继承自另一个节点，它会应用父节点的所有配置。
+然后你可以添加任何代码，从而使得这个节点成为有别于其他节点的特殊节点。
 
-You can have a node inherit from a node that inherits from another node, and so on. You can't
-inherit from more than one node though -- so you can't have, for example:
+你可以配置一个节点继承自另外一个节点，而另外一个节点也可以继承自其它节点等。
+但是你不能继承自多个节点（即不能多重继承），因此不能使用如下方式定义节点：
 
 ----
 node movable_server inherits gododgy_server, veryslow_server,
@@ -93,10 +87,9 @@ wreckspace_server {
 }
 ----
 
-==== There's more…
+==== {Theresmore}
 
-Just as with a normal node definition, you can specify a list of node names that will all inherit
-the same definition:
+与定义一个普通节点一样，你可以指定一个节点列表，这些节点都继承自相同的定义：
 
 ----
 node webserver1, webserver2, webserver3 inherits wreckspace_server {
@@ -104,7 +97,7 @@ node webserver1, webserver2, webserver3 inherits wreckspace_server {
 }
 ----
 
-Alternatively, you can also have a regular expression that will match multiple servers:
+另外，你也可以使用正则表达式匹配多个服务器节点：
 
 ----
 node /webserver\d+.veryslow.com/ inherits veryslow_server {
@@ -112,6 +105,6 @@ node /webserver\d+.veryslow.com/ inherits veryslow_server {
 }
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch04sec05,Using class inheritance and overriding>> in this chapter
+- 本章的 <<ch04sec05,{Recipe405}>> 一节

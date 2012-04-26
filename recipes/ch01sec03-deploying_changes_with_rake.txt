@@ -1,26 +1,26 @@
-﻿[[ch01sec03]]
-=== Deploying changes with Rake
+[[ch01sec03]]
+=== {Recipe103}
 
-Like everyone who makes his living with a keyboard, I hate unnecessary typing. If you
-are using the workflow described in the section on using version control, you can add
-some automation to make this process a little easier. There are several tools that can run
-commands for you on remote servers, including Capistrano and Fabric, but for this example
-we'll use Rake.
+每个人的生活都离不开键盘，但我讨厌不必要的敲打。
+如果你使用 <<ch01sec01,{Recipe101}>> 所描述的工作流程，
+可以添加一些自动化任务使这个处理过程更加容易。
+有许多工具可以帮助我们在远程机器上执行命令，包括 Capistrano（https://github.com/capistrano/capistrano[]）和
+Fabric（https://github.com/fabric/fabric[]），但在本例中，我们将使用 Rake（http://rake.rubyforge.org/[]）。
 
-==== Getting ready
+==== {Gettingready}
 
-If you don't have Rake installed already, run the following command:
+若你还没有安装 Rake， 运行如下的命令：
 
 ..........
 apt-get install rake
 ..........
 
-You'll need a working Internet connection.
+执行这个命令，你需要一个 Internet 连接。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a file in the top level of your Puppet working copy named +Rakefile+ that
-   looks like this:
+1. 在你的 Puppet 配置清单工作副本的顶级目录下创建一个名为 +Rakefile+ 的文件，
+   文件内容看上去像这样：
 +
 ----
 PUPPETMASTER = 'cookbook'
@@ -32,15 +32,13 @@ task :deploy do
 end
 ----
 
-2. When you make changes in your working copy of the Puppet manifests, you can
-   simply run:
+2. 当你在本地副本上应用 Puppet 配置清单的改动时，可以简单地运行命令：
 +
 ............
 $ rake deploy
 ............
 
-3. Rake will take care of updating the Git repo and refreshing the Puppetmaster's
-   working copy for you:
+3. Rake 将会更新 Git 仓库并刷新 Puppetmaster 的工作目录副本：
 +
 ............
 $ git push
@@ -61,7 +59,7 @@ Fast-forward
  create mode 100644 Rakefile
 ............
 
-4. You can also add a Rake task to run Puppet on the client machine:
+4. 你也可以添加一个 Rake 任务用于在客户端上运行 Puppet：
 +
 ----
 task :apply => [:deploy] do
@@ -78,24 +76,26 @@ task :apply => [:deploy] do
 end
 ----
 
-5. When you want to test your changes on the client machine, run the following command:
+5. 当你要在指定客户端上测试你所做的变更时，可以运行如下的命令：
 +
+--
 .......
 rake CLIENT=cookbook apply
 .......
 
-6. Replace +cookbook+ with the name of the client machine, or set the +CLIENT+
-   environment variable so that Rake knows which machine to run Puppet on.
-+
+替换 +cookbook+ 为你客户端的名字，或设置 +CLIENT+ 环境变量，使
+Rake 知道你要在哪个客户机上运行 Puppet。
+
 ..........
 info: Caching catalog for cookbook
 info: Applying configuration version '1292865016'
 info: Creating state file /var/lib/puppet/state/state.yaml
 notice: Finished catalog run in 0.03 seconds
 ..........
+--
 
-7. If you want to see what changes Puppet would make, without actually changing
-   anything, use the `--noop` flag:
+6. 如果你只想查看 Puppet 将会做些什么，而不是实际应用这些变更，
+   你可以使用 `--noop` 标志：
 +
 ----
 task :noop => [:deploy] do
@@ -104,34 +104,33 @@ task :noop => [:deploy] do
 end
 ----
 
-8. Now you can run:
+7. 现在你可以运行：
 +
 ........
 $ rake noop
 ........
 +
-This will show you a preview of the changes.
+这将会显示一个变更预览。
 
 
-==== How it works…
+==== {Howitworks}
 
-A +Rakefile+ consists of a series of tasks, identified by the +task+ keyword. The task definition
-is a set of steps, in this case the sequence of shell commands required to push your manifest
-changes to the master repo, and update the Puppetmaster's working copy.
+一个 +Rakefile+ 文件由若干任务组成，任务由关键字 +task+ 来标识。 
+任务定义了一系列的操作步骤，在本例中，使用一系列的 shell 命令推送你的配置清单到主版本仓库，
+然后更新 Puppetmaster 上的工作副本。
 
-Tasks can be linked, so that one depends on the other. For example, in our +Rakefile+ the
-+apply+ task is linked to deploy, so that whenever you run `rake` apply, Rake will make
-sure the +deploy+ task is done first, and the +apply+ task next.
+任务可以互相引用，因为一个任务可能会依赖其它任务。例如，在我们的 +Rakefile+ 中，
++apply+ 任务引用了 +deploy+ 任务，每当你运行 `rake apply` ，Rake 会先确保完成
++deploy+ 任务，然后再执行 +apply+ 任务。
 
-==== There's more…
+==== {Theresmore}
 
-You can extend this +Rakefile+ to automate more tasks, including running a syntax check
-on the Puppet manifests before updating them, and even bootstrapping a new machine
-with Puppet. Rake is a powerful tool and can be a big help in managing a large network
-with Puppet.
+你可以扩展这个 +Rakefile+ 实现更多的自动化任务，包括在更新 Puppet
+配置清单之前运行语法检查, 甚至可以在引导启动过程中使用 Puppet 来初始化你的新机器。
+Rake 是一个功能强大的工具，在使用 Puppet 管理大型网络时会为我们提供很大的帮助。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec01,Using version control>> in this chapter
-- <<ch01sec10,Creating a decentralized Puppet architecture>> in this chapter
-- <<ch01sec02,Using commit hooks>> in this chapter
+- 本章的 <<ch01sec01,{Recipe101}>> 一节
+- 本章的 <<ch01sec10,{Recipe110}>> 一节
+- 本章的 <<ch01sec02,{Recipe102}>> 一节

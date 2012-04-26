@@ -1,22 +1,18 @@
-﻿[[ch05sec02]]
-=== Using Augeas to automatically edit config files
+[[ch05sec02]]
+=== {Recipe502}
 
-Of course, the great thing about standards is that there are so many of them. Sometimes
-it seems like every application config file format is slightly different, and writing regular
-expressions to parse and modify all of them can be a tiresome business.
+当然，有关标准的事物是如此之多。有时每个应用程序的配置格式都略有不同，
+书写正则表达式来解析和修改所有这些配置文件是一项很烦人的工作。
 
-Thankfully, Augeas is here to help. Augeas is a tool which aims to simplify working with
-different config file formats, by presenting them all as a simple tree of values. Puppet's
-Augeas support allows you to create +augeas+ resources which can make the required
-config changes intelligently and automatically.
+幸好 Augeas 在这方面可以帮助我们。Augeas 是一个旨在简化使用不同配置文件格式工作的工具，
+它将不同格式的配置文件统一呈现为一个简单的包含所有配置项的树状结构。
+Puppet 的 Augeas 支持允许你创建 +augeas+ 资源，它可以智能地自动地为所需的配置做相应的改变。
 
-==== Getting ready…
+==== {Gettingready}
 
-Before we can use Augeas, we need to install it. The following Puppet code will add Augeas
-to your setup.
+在使用 Augeas 之前需要先安装它。如下的 Puppet 代码将添加 Augeas 到你的配置。
 
-1. Create the file +/etc/puppet/modules/admin/manifests/augeas.pp+ with
-   the following contents:
+1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/augeas.pp+ 文件：
 +
 ----
 class admin::augeas {
@@ -29,7 +25,7 @@ class admin::augeas {
 }
 ----
 
-2. Include the following class on a node:
+2. 在一个节点上包含此类：
 +
 ----
 node cookbook {
@@ -37,7 +33,7 @@ node cookbook {
 }
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -50,10 +46,9 @@ notice: Finished catalog run in 21.96 seconds
 ....
 
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create the file +/etc/puppet/modules/admin/manifests/ipforward.pp+
-   with the following contents:
+1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/ipforward.pp+ 文件：
 +
 ----
 class admin::ipforward {
@@ -66,7 +61,7 @@ class admin::ipforward {
 }
 ----
 
-2. Include this class on a node:
+2. 在一个节点上包含此类：
 +
 ----
 node cookbook {
@@ -75,7 +70,7 @@ node cookbook {
 }
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -87,7 +82,7 @@ returns: executed successfully
 notice: Finished catalog run in 3.53 seconds
 ....
 
-4. Check that the setting has been correctly applied with the following command:
+4. 使用如下命令检查配置是否生效：
 +
 ....
 # sysctl -p |grep forward
@@ -95,25 +90,23 @@ net.ipv4.ip_forward = 1
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-This is what is going on in the preceding code:
+下面将描述前面的代码是如何工作的：
 
-1. We declare an +augeas+ resource named +enable-ip-forwarding+:
+1. 我们声明了一个名为 +enable-ip-forwarding+ 的 +augeas+ 资源：
 +
 ----
 augeas { "enable-ip-forwarding":
 ----
 
-2. We specify that we want to make changes in the context of the
-   file +/etc/sysctl.conf+:
+2. 我们指定要实施改变的文件 ++/etc/sysctl.conf++：
 +
 ----
     context => "/files/etc/sysctl.conf",
 ----
 
-3. The parameter +changes+ is passed an array of settings that we want to
-   make (in this case only one):
+3. 将我们需要改变的设置作为一个数组（本例中只有一个数组元素）传递给 +changes+ 参数：
 +
 --
 ----
@@ -122,35 +115,33 @@ augeas { "enable-ip-forwarding":
     ],
 ----
 
-In general Augeas changes take the following form:
+通常使用 Augeas 改变设置需用如下的格式：
 
 ----
 set <parameter> <value>
 ----
 
-Augeas uses a set of translation files called *lenses* to enable it to write these settings
-in the appropriate format for the given config file. In this case, the setting will be
-translated into a line such as the following in +/etc/sysctl.conf+:
+Augeas 使用一套名为 *lenses* 的转换文件，使其能够为给定的配置文件以适当的格式改写设置。
+在本例中，此设置将转换为 +/etc/sysctl.conf+ 文件中的如下一行：
 
 ----
 net.ipv4.ip_forward=1
 ----
 --
 
-==== There's more…
+==== {Theresmore}
 
-The +/etc/sysctl.conf+ file is used as the example because it can contain a wide variety
-of kernel settings, and you may want to change these settings for all sorts of different
-purposes and in different Puppet classes. You might want to enable IP forwarding for a
-router class as in the preceding example, but you might also want to tune the value of
-+net.core.somaxconn+ for a load-balancer class.
+之所以使用 +/etc/sysctl.conf+ 文件做例子，是因为它包含了各种各样的内核设置，
+你可能想要在不同的 Puppet 类中因各种不同的目的而改变这些设置。
+在前面的例子中，我们为一个路由器的类启用了 IP 转发，
+然而你也可以为一个负载均衡的类调整 +net.core.somaxconn+ 的值。
 
-This means that simply "Puppetizing" the +/etc/sysctl.conf+ file and distributing it as a text
-file won't work, because you might have several different and conflicting versions, depending
-on the setting you want to modify. Augeas is the right solution here because you can define
-+augeas+ resources in different places which modify the same file, such that they won't conflict.
+这意味着简单地对 +/etc/sysctl.conf+ 文件“Puppet化”（"Puppetizing"）
+并分发它不能胜任所有的情况，因为你要修改的设置根据不同的服务需求可能会有不同，
+从而引发版本冲突。Augeas 则是这种情况的正确解决方案，因为你可以在不同的位置定义 +augeas+
+资源去修改相同的配置文件，这样就不会引起冲突。
 
-Augeas is a powerful tool that ships with lenses for most of the standard Linux config files,
-and you can write your own for rare or proprietary config formats if you need to manage
-these. For more about using Puppet and Augeas, visit the page on the Puppet Labs wiki: 
-http://projects.puppetlabs.com/projects/1/wiki/Puppet_Augeas.
+Augeas 是个强大的工具，使用 lenses 可以转换绝大多数标准的 Linux 配置文件，
+而且如果需要管理自己的专有格式的配置文件，你也可以书写自己的专有配置格式。
+更多关于使用 Puppet 和 Augeas 的信息，请访问 Puppet Labs 的 wiki 页面： 
+http://projects.puppetlabs.com/projects/1/wiki/Puppet_Augeas 。

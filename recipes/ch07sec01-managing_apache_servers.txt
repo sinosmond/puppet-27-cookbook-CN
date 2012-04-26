@@ -1,13 +1,12 @@
-﻿[[ch07sec01]]
-=== Managing Apache servers
+[[ch07sec01]]
+=== {Recipe701}
 
-Apache is a popular web server, except with those who have to configure it. Puppet can ease
-the pain of managing Apache servers to a certain extent.
+Apache 是一款流行的 web 服务器，然而对于其配置者来说并不轻松。
+Puppet 可以在一定程度上缓解配置者因管理 Apache 服务器所带来的痛苦。 
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Create an Apache module, if you don't have one:
+1. 如果 Apache 模块还不存在就创建它：
 +
 ....
 # mkdir /etc/puppet/modules/apache
@@ -15,8 +14,7 @@ the pain of managing Apache servers to a certain extent.
 # mkdir /etc/puppet/modules/apache/manifests
 ....
 
-2. Create the file +/etc/puppet/modules/apache/manifests/init.pp+ with
-   the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/apache/manifests/init.pp+ 文件：
 +
 ----
 class apache {
@@ -41,13 +39,13 @@ class apache {
 }
 ----
 
-3. Add the following code to a node:
+3. 在一个节点中添加如下代码：
 +
 ----
 include apache
 ----
 
-4. Run Puppet:
+4. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -71,11 +69,13 @@ conf]: Scheduling refresh of Service[apache2]
 notice: Finished catalog run in 39.45 seconds
 ....
 
-==== There's more…
+==== {Theresmore}
 
-In the next section, we'll look at how to create virtual host definitions for Apache. However, you
-may find that you need special configuration options for the Apache server as a whole. You could
-set these by deploying +apache2.conf+ with Puppet, but it's neater to put a config snippet into +/etc/apache2/conf.d+. For example, you could add the following to +init.pp+:
+在下一节中，我们将看到如何为 Apache 定义虚拟主机的内容。
+然而你可能会发现，你需要为整个 Apache 服务器（包括虚拟主机）提供特殊的配置选项。
+你可以使用 Puppet 通过部署 +apache2.conf+ 来配置这些选项，
+但是将配置片段放在 +/etc/apache2/conf.d+ 目录中会更加整洁清晰。
+例如，你可以在 +init.pp+ 中添加如下代码：
 
 ----
 define snippet() {
@@ -86,7 +86,7 @@ define snippet() {
 }
 ----
 
-and include the following code snippet on a node:
+并在节点上包含如下的代码片段：
 
 ----
 apache::snippet { "site-specific.conf": }

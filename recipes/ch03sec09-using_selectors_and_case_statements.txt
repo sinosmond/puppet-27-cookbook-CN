@@ -1,17 +1,17 @@
-﻿[[ch03sec09]]
-=== Using selectors and case statements
+[[ch03sec09]]
+=== {Recipe309}
 
 [quote, Sign,]
 Smarts is the most exclusive club in town. Everyone welcome.
 
-Sometimes it's important to be selective. Although you could write any conditional statement
-using +if+, Puppet provides a couple of extra forms to help you express conditionals more
-easily such as the selector and the case statement.
+有时选择性是很重要的。尽管你可以使用 +if+ 书写任何条件语句，
+但 Puppet 还提供了帮助你更容易地表达条件的额外形式，例如：
+选择器（selector）和 case 语句。
 
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 在你的配置清单中添加如下代码：
 +
 ----
 $systemtype = $operatingsystem ? {
@@ -20,13 +20,13 @@ $systemtype = $operatingsystem ? {
     "RedHat" => "redhatlike",
     "Fedora" => "redhatlike",
     "CentOS" => "redhatlike",
-    default => "redhatlike",
+    default  => "redhatlike",
 }
 
 notify { "You have a ${systemtype} system": }
 ----
 
-2. Next, add the following to your manifest:
+2. 接下来，再添加如下代码：
 +
 ----
 class debianlike {
@@ -50,52 +50,43 @@ case $operatingsystem {
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Our example demonstrates both the selector and the +case+ statement, so let's see in detail
-how each of them works.
+上面的例子同时演示了选择器（selector）和 +case+ 语句，让我们来看看它们是如何工作的。
 
-- *Selector*
+- *selector*
 +
-In the first example, we used a selector (the +?+ operator) to choose a value for the 
-+$systemtype+ variable depending on the value of +$operatingsystem+. This is
-similar to the ternary operator in C or Ruby, but instead of choosing between two
-possible values, you can have as many values as you like.
+在第一个例子中，我们使用了一个选择器（操作符 ++?++）根据变量  +$operatingsystem+
+的值为 +$systemtype+ 变量赋值。 这类似于 C 语言和 Ruby 语言中的三元运算符，
+不同之处在于三元运算符只能在两个可选值之间选择，而此处的选择器则可以提供你想要的多个值。
 +
-Puppet will compare the value of +$operatingsystem+ to each of the possible
-values we have supplied such as Ubuntu, Debian, and so on. These values could
-be regular expressions (for a partial string match, or to use wildcards, for example),
-but in our case we have just used literal strings. As soon as it finds a match, the
-selector expression returns whatever value is associated with the matching string.
-If the value of +$operatingsystem+ is Fedora, for example, the selector expression
-will return the string +redhatlike+ and so this will be assigned to the variable
-+$systemtype+.
+Puppet 会与 +$operatingsystem+ 的每一个可能的值（如 Ubuntu、Debian等）一一做比较。
+这些值可以是正则表达式（例如，部分字符串匹配，或使用通配符），但在本例中我们仅仅使用了文本字符串。
+一旦发现匹配的值，选择器表达式就会返回与其相关的匹配字符串。
+例如，如果 +$operatingsystem+ 的值是 Fedora，选择器表达式就会返回字符串
++redhatlike+ 并将其赋予变量 ++$systemtype++。
 
-- *Case* statement
+- *Case* 语句
 +
-Unlike selectors, the +case+ statement does not return a value. +case+ statements
-are handy when you want to execute different code depending on the value of
-some expression. In our second example, we used the +case+ statement to include
-either the class +debianlike+, or the class +redhatlike+, depending on the value
-of +$operatingsystem+.
+与选择器不同，+case+ 语句不会返回任何值。 +case+ 语句适用于，
+当你想根据一个表达式的不同的值执行不同代码的情况。
+在我们的第二个例子中，使用 +case+ 语句根据 +$operatingsystem+ 的值或者包含
++debianlike+ 类，或者包含 +redhatlike+ 类。
 +
-Again, Puppet compares the value of +$operatingsystem+ to a list of potential
-matches. These could be regular expressions, or strings, or as in our example,
-comma-separated lists of strings. When it finds a match, the associated code
-between curly braces is executed. So if the value of +$operatingsystem+ is
-+Ubuntu+, then the code +include debianlike+ will be executed.
+再次指出，Puppet 会根据 +$operatingsystem+ 值与潜在的匹配列表进行比较。
+这些匹配列表可以是正则表达式，或者是字符串，或者像我们的例子中一样使用
+逗号间隔的字符串列表。
+当 Puppet 在匹配列表中找到一个匹配值，就会执行与此匹配项相关的大括号之间的代码。所以，
+如果 +$operatingsystem+ 的值是 ++Ubuntu++，那么 +include debianlike+ 就会被执行。
 
+==== {Theresmore}
 
-==== There's more…
+一旦你掌握了选择器和 +case+ 语句的基本用法，你会发现下面的技巧非常有用。
 
-Once you've got to grips with basic use of selectors and +case+ statements, you may find the
-following tips useful.
+===== 正则表达式
 
-===== Regular expressions
-
-As with +if+ statements, you can use regular expressions with selectors and +case+ statements,
-and you can also capture the values of matched groups and refer to them using +$1+, +$2+, and
-so on.
+与 +if+ 语句一样，你可以在选择器和 +case+ 语句中使用正则表达式，并且你也可以
+捕获匹配组的值，并使用 ++$1++、++$2++ 等引用它们的值。
 
 ----
 case $lsbdistdescription {
@@ -108,10 +99,9 @@ case $lsbdistdescription {
 }
 ----
 
-===== Defaults
+===== 默认值
 
-Both selectors and +case+ statements let you specify a +default+ value, which is chosen if
-none of the other options match:
+选择器和 +case+ 语句都可以让你指定一个 +default+ 值，当没有其他匹配项时就使用这个默认值：
 
 ----
 $lunch = "Sausage and chips"
@@ -123,6 +113,8 @@ $lunchtype = $lunch ? {
 
 notify { "Your lunch was ${lunchtype}": }
 ----
+
+结果为：
 
 ....
 Your lunch was unhealthy

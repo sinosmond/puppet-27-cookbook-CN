@@ -1,34 +1,32 @@
-﻿[[ch01sec06]]
-=== Using autosign
+[[ch01sec06]]
+=== {Recipe106}
 
-In cryptography, as in life, you have to be careful what you sign. Normally, when you introduce
-a new client to the Puppetmaster, you need to generate a certificate request on the client, and
-then sign it on the master. However, you can skip this step by enabling *autosigning*.
+在密码学中，跟生活一样，在你签名时必须小心慎重。一般地，当你要为 Puppetmaster
+介绍一个新的客户端加入时，需要先在客户端上生成一个证书请求（certificate request），
+然后到 Puppetmaster 上签署这个证书请求。
+然而，你可以使用 *自动签名（autosigning）* 跳过这一步骤。
 
-==== How to do it…
+==== {Howtodoit}
 
-Create the file +/etc/puppet/autosign.conf+ on the Puppetmaster with the following
-contents: 
+在 Puppetmaster 上创建文件 +/etc/puppet/autosign.conf+ ，包含如下内容：
 
 ----
 *.example.com
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Puppet checks any incoming certificate requests to see if they match a line from +autosign.conf+.
-Any certificate requests from clients with a hostname matching +*.example.com+ will
-be automatically signed by the Puppetmaster.
+Puppet 会检查所有的证书请求是否匹配 +autosign.conf+ 中任何一行。
+任何能匹配客户端主机名 +*.example.com+ 的证书请求，Puppetmaster 都会为其自动签名。
 
 [IMPORTANT]
 =============
-This is a potential security problem, since it amounts to trusting
-any client that can connect to the Puppetmaster. For this reason, autosigning
-is not recommended. If you do use it, make sure that the Puppetmaster
-is protected by a firewall that allows only approved clients or IP ranges to
-connect. A more secure approach is *pre-signing*.
+这里存在一个潜在的安全问题，因为这相当于 Puppetmaster 信任了任何可以连接到它的客户端
+（只要主机名匹配）。基于这种原因，不推荐你使用自动签名。
+如果你确信要使用自动签名，请确保 Puppetmaster 被防火墙保护，且只允许信任的客户端或者
+IP 地址段连接 Puppetmaster。更安全的做法是使用 **预签名（pre-signing）**。
 =============
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec07,Pre-signing certificates>> in this chapter
+- 本章的 <<ch01sec07,{Recipe107}>>  一节

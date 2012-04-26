@@ -1,26 +1,23 @@
-﻿[[ch09sec06]]
-=== Using Foreman
+[[ch09sec06]]
+=== {Recipe906}
 
-*Foreman* is a web-based Puppet management tool like Puppet Dashboard, but more
-ambitious. Foreman can manage not only Puppet reporting, nodes and manifest configuration,
-but also provision new machines for you. If you need to build large numbers of servers
-automatically, or if you frequently rebuild servers, Foreman will help with this process.
+*Foreman* 是一个基于 Web 的类似于 Puppet Dashboard 的 Puppet 管理工具，但它更为雄心勃勃。
+Foreman 不仅可以管理 Puppet 报告、节点和配置清单，而且可以为你供应新机器。
+如果你需要自动创建大量的服务器或者你需要频繁地重建服务器，Foreman 将有助于你实现这一过程。
 
-==== Getting ready…
+==== {Gettingready}
 
-1. Add the Foreman package repo to your system, following the instructions at
-   http://theforeman.org/projects/foreman/wiki/Installation_instructions.
-2. Install the Foreman package as follows:
+1. 在你的系统中添加 Foreman 包的仓库，参考说明：
+   http://theforeman.org/projects/foreman/wiki/Installation_instructions 。
+2. 安装 Foreman 包：
 +
 ....
 # apt-get update
 # apt-get install foreman
 ....
 
-3. You will be prompted to select a database, so choose +mysql+, +pgsql+, or +sqlite+
-   depending which one you want to use.
-4. Install one of the following packages depending which database you selected in
-   the previous step:
+3. 系统将提示你选择一种数据库，请根据需要选择 ++mysql++、++pgsql++ 或 ++sqlite++。
+4. 根据选择的数据库，安装你的数据库所依赖的软件包：
 +
 ....
 # apt-get install foreman-mysql
@@ -28,85 +25,79 @@ automatically, or if you frequently rebuild servers, Foreman will help with this
 # apt-get install foreman-sqlite3
 ....
 
-5. Copy the file +/etc/foreman/extras/puppet/foreman/files/foremanreport.rb+
-   to your Puppet custom report directory (usually +/usr/lib/ruby/1.8./puppet/reports+)
-   and name it foreman.rb as follows:
+5. 复制文件 +/etc/foreman/extras/puppet/foreman/files/foremanreport.rb+
+   到你的 Puppet 自定义报告目录（通常是 ++/usr/lib/ruby/1.8/puppet/reports++）
+   并将其重命名为 ++foreman.rb++：
 +
 ....
 # cp /etc/foreman/extras/puppet/foreman/files/foreman-report.rb \
      /usr/lib/ruby/1.8/puppet/reports/foreman.rb
 ....
 
-6. Edit the +foreman.rb+ file to set the URL of your Foreman server as follows:
+6. 编辑 +foreman.rb+ 文件设置你的 Foreman 服务器 URL：
 +
 ----
 # URL of your Foreman installation
 $foreman_url="http://cookbook.bitfieldconsulting.com:3000"
 ----
 
-7. Edit your +puppet.conf+ and add the +foreman+ report type to the list of enabled
-   reports:
+7. 编辑你的 +puppet.conf+ 添加 +foreman+ 报告类型到已启用的报告类型列表：
 +
 ----
 [master]
 reports = store,log,foreman
 ----
 
-8. Restart the Puppet server to enable this new report.
+8. 重新启动 Puppetmaster 使新配置的报告生效。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Start the Foreman server:
+1. 启动 Foreman 服务器：
 +
 ....
 # /usr/share/foreman/script/server -e production
 ....
 
-2. Browse to the web interface at the URL you previously set at http://cookbook.bitfieldconsulting.com:3000.
+2. 使用你之前设置的 URL（http://cookbook.bitfieldconsulting.com:3000）浏览 Foreman 的 web 界面。
 +
 --
-You should see Foreman's initial welcome page as shown in the following screenshot:
+你应该看到如下的 Foreman 初始欢迎界面：
 
 image::image/ch09sec06_1.png[]
 --
 
-3. Now run Puppet on a client:
+3. 现在，在一个客户端运行 Puppet：
 +
 --
 ....
 # puppet agent --test
 ....
 
-Go to the *Reports* section in the Foreman web interface. You should see a report for
-the client where you just ran Puppet as shown in the following screenshot:
+在 Foreman 的 Web 界面中进入 *Reports* 标签页，如图所示，你会看到刚刚运行的客户报告：
 
 image::image/ch09sec06_2.png[]
 --
 
-4. Go to the Dashboard page and you will see an *OVERVIEW* of all your clients (just one
-   in this case, but you get the idea).
+4. 进入 Dashboard 标签页你会看到一个针对所有客户的 *OVERVIEW* （本例中只有一个客户）。
 +
 image::image/ch09sec06_3.png[]
 
 
-==== There's more…
+==== {Theresmore}
 
-We've only touched on the basics of Foreman here. Now that you've got it set up, you can
-experiment with the different reports, graphs, and other information available in Foreman.
-These become more valuable when you have many hosts to look after, and want to see
-statistics about how Puppet is running across the whole network.
+此处我们仅仅接触到了 Foreman 的一些基本功能。既然已经运行了一个配置好的 Foreman，
+你就可以尝试不同的报告、图表、以及 Foreman 提供的其他信息。
+当你有很多主机需要管理，并希望看到 Puppet 如何跨越整个网络的运行统计时，
+这些信息会变得更有价值。
 
-The other major feature of Foreman is provisioning: it can use PXEboot and Kickstart to build
-virtual or physical servers from scratch, sign your Puppet certificates automatically, and run
-Puppet to bring the machine up to production status. For more information about how to do
-this, see the Foreman documentation: http://theforeman.org/projects/foreman/wiki/Unattended_installations.
+Foreman 的另一个主要特性是供应：它可以使用 PXEboot 和 Kickstart
+从头创建物理服务器或虚拟服务器，对 Puppet 证书进行自动签名，并运行 Puppet 将机器带入生产状态。
+欲了解更多有关如何实现的详细信息，请查阅 Foreman 文档： http://theforeman.org/projects/foreman/wiki/Unattended_installations 。
 
 
 [NOTE]
 ========
-If you decide to use Foreman in production, it's probably worthwhile
-setting up an Apache virtual host for it rather than using the Webrick
-server that ships with Foreman. Webrick is useful for testing, but it's
-not really a production-grade web server.
+如果你决定将 Foreman 用于生产环境，就值得为其设置 Apache 虚拟主机，
+而不是使用 Webrick 带动 Foreman。
+Webrick 对测试环境很有用，但它不是真正的生产级别的 Web 服务器。
 ========
-

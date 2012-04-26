@@ -1,24 +1,24 @@
 ﻿[[ch03sec05]]
-=== Writing manifests in pure Ruby
+=== {Recipe305}
 
-¿ Hablas español? Learning languages can be fun, but not everyone wants to do it. Puppet
-has sometimes been criticized for requiring you to write manifests in its own dedicated
-configuration language, rather than an existing general-purpose language such as Ruby.
+你会说西班牙语吗？学习一门语言可能会很有趣，但并非所有人都想这么做。 Puppet
+有时会因为它使用自己专用的配置语言而不是现存的通用语言（如 Ruby）书写配置清单而遭到批评。
 
-Not everyone considers this a drawback. The computer scientist Dennis Ritchie remarked:
+不是每个人都认为这是个缺点。计算机科学家 Dennis Ritchie 说：
 
 [quote, Dennis Ritchie,]
 A language that doesn't have everything is actually easier to program in than
 some that do.
 
-Whatever your views, this criticism no longer applies -- Puppet has experimental support for
-writing manifests in Ruby, which is quite usable in production even though it is still at a fairly
-early stage. You can mix and match Ruby and Puppet files within your manifests; Puppet will
-determine the language based on the file extension: +.rb+ for Ruby files, +.pp+ for Puppet files.
+无论你是什么观点，这种批评已不再适用。因为 Puppet 已经拥有了使用 Ruby
+语言书写配置清单的实验性支持，这在生产环境上是相当有用的，即使还处于早期开发阶段。 
+在你的配置清单中可以混合使用两种语言，Puppet 以文件扩展名进行区别，扩展名 +.rb+
+表示用 Ruby 语言书写的配置清单文件，而扩展名 +.pp+ 表示 Puppet 专用的配置语言文件。
 
-The *domain-specific language (DSL)* for writing manifests in Ruby looks very similar to the
-standard Puppet language. In the following example I'll show you how to turn a typical Puppet
-manifest into Ruby. The original manifest in Puppet's language is as follows:
+为了书写配置清单使用的 Ruby 的 **特定领域语言**（**domain-specific language，DSL**）
+看上去与标准的 Puppet 语言非常相似。
+在下面的例子中，我将向你展示如何将典型的 Puppet 配置清单转换成 Ruby 的。
+Puppet 语法的原始配置清单如下：
 
 ----
 class admin::exim {
@@ -37,10 +37,9 @@ class admin::exim {
 }
 ----
 
-==== How to do it…
+==== {Howtodoit}
 
-Create the file +/etc/puppet/modules/admin/manifests/exim.rb+ with the following
-contents:
+使用如下内容创建 +/etc/puppet/modules/admin/manifests/exim.rb+ 文件：
 
 [source,ruby]
 ----
@@ -58,53 +57,57 @@ hostclass "admin::exim" do
 end
 ----
 
-Include this class on a node and run Puppet.
+在一个节点中包含这个类并运行 Puppet。
 
-==== How it works…
+==== {Howitworks}
 
-1. The keyword hostclass declares a class, just like class in Puppet: +hostclass  admin::exim do+
-2. We then have a +do … end+ block which is the equivalent of curly braces in Puppet.
-3. Resources are declared by calling a function named after the resource type: for
-   example, +package+ or +service+: +package "exim4", :ensure => :installed+
-4. Parameters are passed to the function as a comma-separated list, with the
-   parameter names quoted or given a leading colon to make them a Ruby
-   symbol: +:ensure => :running,+
+1. 关键字 hostclass 声明一个类，就像 Puppet 中的 class：+hostclass  admin::exim do+
+2. 然后跟一个 +do … end+ 语句块，这相当于 Puppet 的一对大括号。
+3. 通过在资源类型后调用函数来声明资源：
+   例如 +package+ 或 ++service++：++package "exim4", :ensure => :installed++
+4. 传递给函数的参数是一个用逗号分割的列表，参数必须要用双引号括起来，
+   或者在参数前使用前导的冒号使其成为 Ruby symbol 对象： ++:ensure => :running,++
 +
-Again built-in Puppet names such as +:installed+ or +:running+ are Ruby symbols.
+--
+又如，像 +:installed+ 或 +:running+ 这样的 Puppet 内置名字都是 Ruby 的 symbol 对象。
 
-5. When we need to refer to resources to indicate a relationship, as with +:require+,
-   the resource identifier is given as a string with the resource type capitalized and the
-   name in square brackets: +require => "Package[exim4]"+
+[NOTE]
+.译者注
+============
+有关 Ruby Symbol 的详细介绍请参考：
+http://www.ibm.com/developerworks/cn/opensource/os-cn-rubysbl/
+============
+--
+
+5. 当我们需要引用资源来表示相互关系时，就要使用 ++:require++，
+   资源标识符通过首字母大写的资源类型跟上写在一对方括号中的资源名给出，例如：
+   +require => "Package[exim4]"+
 +
-We can call a function like template by just using its name and round brackets, and
-passing its arguments as an array delimited by square brackets: +:content => template(["admin/exim4.conf"]),+.
+在调用像模板这样的函数时可以使用函数名跟一对圆括号，在圆括号中传递的参数是
+一对用方括号声明的数组，例如：++:content => template(["admin/exim4.conf"]),++。
 
+==== {Theresmore}
 
-==== There's more…
+Ruby DSL 尚处于早期开发阶段。试验虽然有趣，除非你有使用 Ruby 的令人信服的理由否则先别用它，
+至今我仍旧使用标准的 Puppet 语言。或许将来 Ruby DSL 会被广泛应用，但在此期间，
+你会发现没有它的生活会更轻松。然而，若你坚持要使用它，下面介绍几个非常有用的提示。
 
-The Ruby DSL is at an early stage. It's fun to experiment with, but unless there are really
-compelling reasons for using Ruby, I'd stick to the standard Puppet language for now. It's quite
-possible that in the future the Ruby DSL will become widely used, but in the meantime, you'll
-find life easier without it. If you do want to use it, however, the following text contains a couple
-of handy hints.
+===== 变量
 
-===== Variables
-
-While you can use Ruby variables just as you normally would in a Ruby program, you can
-access your Puppet variables by using +scope.lookupvar+ as follows:
+当你像常规的 Ruby 程序一样使用 Ruby 变量时，可以使用 +scope.lookupvar+
+访问你的 Puppet 变量，例如：
 
 ----
 notice( "I am running on node %s" % scope.lookupvar("fqdn") )
 ----
 
-gives:
+将得到：
 
 ....
 notice: I am running on node cookbook.bitfieldconsulting.com
 ....
 
-To set a variable so that it is in scope within your Puppet manifest, use +scope.setvar+
-as follows:
+要在你的 Puppet 配置清单范围内设置变量，使用 ++scope.setvar++，例如：
 
 ----
 require 'time'
@@ -113,20 +116,19 @@ notice( "At the third stroke, the time sponsored by Bitfield
 Consulting will be: %s" % scope.lookupvar("now") )
 ----
 
-The preceding code results in the following:
+上面的代码将获得如下结果：
 
 ....
 notice: At the third stroke, the time sponsored by Bitfield Consulting
 will be: Wed Mar 23 05:58:16 -0600 2011
 ....
 
-===== Documentation
+===== 文档
 
-You can find more about how to use the Ruby DSL, including more advanced topics such
-as virtual resources and collections, on the Puppet Labs site: http://projects.puppetlabs.com/projects/1/wiki/Ruby_Dsl.
+你可以在 Puppet Labs 网站找到更多如何使用 Ruby DSL 的详细资料，包括诸如
+*virtual resources* 和 *collections* 这样的高级主题： http://projects.puppetlabs.com/projects/1/wiki/Ruby_Dsl 。
 
-Ken Barber has supplied some syntax examples giving a direct comparison between Puppet
-and Ruby DSL constructs at https://github.com/bobsh/puppet-rubydsl-examples.
+Ken Barber 提供了一些语法例子,并对 Puppet 语法和 Ruby DSL 结构做了比较，网址在 https://github.com/bobsh/puppet-rubydsl-examples 。
 
-Finally, James Turnbull has written a blog post showing a more advanced use of Ruby to
-connect to a MySQL server: http://www.puppetlabs.com/blog/using-ruby-inthe-puppet-ruby-dsl/.
+最后，James Turnbull 发布过一篇 blog， 展示了使用 Ruby 连接 MySQL 服务器的高级方法：
+http://www.puppetlabs.com/blog/using-ruby-inthe-puppet-ruby-dsl/ 。

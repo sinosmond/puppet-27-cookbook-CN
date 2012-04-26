@@ -1,9 +1,8 @@
-﻿[[ch01sec02]]
-=== Using commit hooks
+[[ch01sec02]]
+=== {Recipe102}
 
-It would be nice if we knew there was a syntax error in the manifest before we even
-committed it. You can have Puppet check the manifest using the `puppet parser validate`
-command:
+如果我们在提交配置清单之前能够发现其中的语法错误将会是个好消息。
+检查 Puppet 配置清单的语法可以使用 `puppet parser validate` 命令：
 
 .....................
 # puppet parser validate /etc/puppet/manifests/site.pp
@@ -11,19 +10,19 @@ err: Could not parse for environment production: Syntax error at end of
 file at /etc/puppet/manifests/site.pp:3
 .....................
 
-This is especially useful because a mistake anywhere in the manifest will stop Puppet from
-running on any node, even on nodes that don't use that particular part of the manifest. So
-checking in a bad manifest can cause Puppet to stop applying updates to production for some
-time, until the problem is discovered, and this could potentially have serious consequences.
+这种语法检查是特别有用的，因为配置清单中的任何一个错误将使运行 Puppet 的节点停止工作，
+甚至不会应用配置清单中错误代码的节点也会停止工作。
 
-The best way to avoid this is to automate the syntax check by using a *pre-commit hook* in
-your version control repo.
+因此，导入（check in）一个有错误的配置清单，将导致 Puppet 应用这些更新到生产环境使其停止运行，
+直到问题被发现，这可能会产生严重的后果。
 
-==== How to do it…
+避免错误发生的最好方法是在你的版本控制仓库中使用 *pre-commit hook* 自动执行语法检查。
 
-If you are using Git for version control, you can add a script, +.git/hooks/pre-commit+
-that syntax checks all files about to be committed. This example is taken from the Puppet
-Labs wiki:
+==== {Howtodoit}
+
+如果你使用的是 Git 版本控制系统，可以添加一个脚本 +.git/hooks/pre-commit+ 
+用于为你提交的所有配置清单文件执行语法检查。
+下面的脚本示例来自 Puppet Labs wiki: http://projects.puppetlabs.com/projects/puppet/wiki/ 。
 
 [source,bash]
 ----
@@ -50,12 +49,17 @@ do
         case $indexfile in
             *.pp )
                 # Check puppet manifest syntax
-                git cat-file blob :0:$indexfile | puppet parser \
-                  validate --ignoreimport > $error_msg ;;
+                #git cat-file blob :0:$indexfile | puppet \
+                # --color=false --parseonly --ignoreimport > $error_msg
+                # Updated for 2.7.x
+                puppet parser validate $indexfile > $error_msg
+                ;;
             *.erb )
                 # Check ERB template syntax
-                git cat-file blob :0:$indexfile | erb -x -T - | ruby \
-                  -c 2> $error_msg > /dev/null ;;
+                # -P : ignore lines which start with "%" 
+                git cat-file blob :0:$indexfile | erb -P -x -T - |\
+                  ruby -c 2> $error_msg > /dev/null
+                ;;
         esac
         if [ "$?" -ne 0 ]
         then
@@ -75,9 +79,9 @@ then
 fi
 ----
 
-==== How it works…
+==== {Howitworks}
 
-The commit hook script will prevent you from committing any files with syntax errors:
+这个提交钩子脚本 +.git/hooks/pre-commit+ 会防止你提交任何有语法错误的配置清单文件：
 
 .............
 # git commit -m "spot the deliberate mistake" manifests/site.pp
@@ -86,14 +90,15 @@ file; expected '}' at /etc/puppet/manifests/site.pp:3
 manifests/site.pp: Error: 1 syntax errors found, aborting commit.
 .............
 
-==== There's more…
+==== {Theresmore}
 
-You can find this script, and more details about it, on the Puppet Labs wiki: 
+你可以在 Puppet Labs wiki: 
 http://projects.puppetlabs.com/projects/1/wiki/Puppet_Version_Control
+上找到有关这个脚本的更多详细信息。
 
-You can use a similar +update+ hook to prevent broken manifests from being pushed to the
-Puppetmaster: see the wiki page for details.
+你也可以使用类似的 +update+ 钩子防止有语法错误的配置清单推送到 Puppetmaster：
+查看同样的 wiki 页面也可以获得使用 +update+ 钩子的详细信息。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec01,Using version control>> in this chapter
+- 本章的 <<ch01sec01,{Recipe101}>> 一节

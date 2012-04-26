@@ -1,26 +1,25 @@
-﻿[[ch07sec05]]
-=== Managing Drupal sites
+[[ch07sec05]]
+=== {Recipe705}
 
-*Drupal* is a content management system that lets you build websites quickly by plugging
-together canned modules, and makes it relatively easy for users to create and edit their own
-content. It's particularly suited to management with Puppet because there is a powerful
-command-line tool, +drush+, which you can use to install and manage Drupal sites.
+*Drupal* 是一个内容管理系统，它通过插拔组装一系列罐装的模块让你快速构建网站, 
+它使用户创建和编辑自己的内容变的相对容易。
+Drupal 特别适合使用 Puppet 来管理，因为有一个强大的命令行工具 ++drush++，
+你可以使用这个工具安装、管理 Drupal 站点。
 
-If we combine the automation power of +drush+ with the recipes that we already created for
-MySQL databases and Apache virtual hosts, we can build a recipe that installs everything
-necessary for a Drupal site with a single resource.
+如果我们将自动化管理 Drupal 站点的 +drush+ 工具与我们已经创建的用于管理 
+MySQL 数据库和 Apache 虚拟主机的 Puppet 处方相结合, 
+就可以使用单一资源创建一个安装 Drupal 站点所需一切的新处方。
 
-==== Getting ready…
+==== {Gettingready}
 
-1. Create a new +drupal+ module as follows:
+1. 创建一个新的 +drupal+ 模块如下：
 +
 ....
 # mkdir /etc/puppet/modules/drupal
 # mkdir /etc/puppet/modules/drupal/manifests
 ....
 
-2. Create the file +/etc/puppet/modules/drupal/manifests/init.pp+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/drupal/manifests/init.pp+ 文件：
 +
 ----
 class drupal {
@@ -73,9 +72,9 @@ class drupal {
 ----
 
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to +init.pp+ within the +drupal+ class:
+1. 在 +init.pp+ 文件的 +drupal+ 类中添加如下内容：
 +
 ----
 define site( $password, $sitedomain = "" ) {
@@ -110,7 +109,7 @@ define site( $password, $sitedomain = "" ) {
 }
 ----
 
-2. Add the following to a node:
+2. 添加如下内容到一个节点：
 +
 ----
 drupal::site { "crispinfo.com":
@@ -118,7 +117,7 @@ drupal::site { "crispinfo.com":
 }
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -156,37 +155,36 @@ Exec[site-install-crispinfo.com]/returns: executed successfully
 notice: Finished catalog run in 22.51 seconds
 ....
 
-4. Create an +/etc/hosts+ entry pointing +crispinfo.com+ to the node you're using (if
-it's not already set in DNS) as follows:
+4. 在 +/etc/hosts+ 文件中创建一个条目将 +crispinfo.com+ 指向你正在使用的节点 IP
+   （如果还没设置 DNS）：
 +
 ----
 10.0.2.15 crispinfo.com
 ----
 
-5. Check the site in a web browser to make sure everything has been properly created.
-   You should see the Drupal login prompt as shown in the following screenshot:
+5. 在浏览器中检查站点，以确保一切都已经正确创建。你应该看到 Drupal 的登录提示，在下图所示：
 +
 image::image/ch07sec05.png[]
++
+使用由 `drush site-install` 创建的默认的管理员登录，用户名为 +admin+ 其口令为 ++admin++。
+显然你应该为实际生产线上的站点设置强壮的口令
+（查看 +drush+ 文档获得如何使用命令行工具设置的信息）。
 
-The default administrator login created by `drush site-install` is username +admin+ and
-password +admin+. Obviously you should set a stronger password for production sites (see the
-+drush+ documentation for how to do this on the command line).
+==== {Howitworks}
 
-==== How it works…
+真是神奇呀！尤其是 +drupal+ 类首先安装 drush，然后使用它安装 Drupal 的核心代码
+（你可以通过修改 $drupalversion 的值改变版本）。
 
-Magic! Specifically -- the +drupal+ class first installs drush, and then uses it to install the Drupal
-core code (you can change the version used by altering the value of $drupalversion).
++drupal::sitedefine+ 为你想要创建的每个站点运行 `drush site-install` 。
+在我们的例子中，创建了一个名为 +crispinfo.com+ 的站点并为其传递了站点数据库使用的口令，
+其余的工作都由 +drush+ 去完成。
 
-The +drupal::sitedefine+ runs `drush site-install` for each site you want to create.
-In our example, we created a site called +crispinfo.com+ and passed in the database
-password; +drush+ does the rest.
++drupal::site+ 也为我们的站点创建了所需的 *Apache 虚拟主机*
+（使用本章 <<ch07sec02,{Recipe702}>> 一节中的处方) 和 *MySQL 数据库*
+（使用本章 <<ch07sec04,{Recipe704}>> 一节中的处方）。
 
-+drupal::site+ also creates the necessary *Apache vhost* for our site 
-(using the recipe <<ch07sec02,Creating Apache virtual hosts>> in this chapter) and a MySQL database
-(using the recipe <<ch07sec04,Creating MySQL databases and users>> in this chapter).
+==== {Theresmore}
 
-==== There's more…
-
-+drush+ can do a great deal to help you manage Drupal sites, including updating Drupal core
-code, installing modules and themes, managing users, and backing up your databases. You
-can find out more about +drush+ at http://drush.ws/.
+要管理 Drupal 站点，+drush+ 可以帮你做很多事，包括更新 Drupal 的核心代码、
+安装模块和主题模板、管理用户以及备份站点数据库等。
+你可以在 http://drush.ws/ 找到更多关于 +drush+ 的信息。

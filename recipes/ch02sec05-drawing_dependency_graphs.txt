@@ -1,24 +1,22 @@
-﻿[[ch02sec05]]
-=== Drawing dependency graphs
+[[ch02sec05]]
+=== {Recipe205}
 
-Dependencies can get complicated quickly, and it's easy to end up with a *circular
-dependency* (where A depends on B which depends on A) which will cause Puppet to
-complain and stop work. Fortunately, Puppet's `--graph` option makes it easy to generate a
-diagram of your resources and the dependencies between them, which can be a big help in
-fixing such problems.
+依赖关系会迅速变得复杂起来，并且很容易形成 **循环依赖**（**circular dependency**）
+（即 A 依赖 B，B 又依赖 A），这将导致 Puppet 发生错误并停止工作。
+幸运的是， Puppet 的 `--graph` 选项可以很容易生成一个资源之间的依赖关系图，
+它可以帮助我们解决循环依赖的问题。
 
-==== Getting ready…
+==== {Gettingready}
 
-Install the +graphviz+ package to view the diagram files as shown in the following code snippet:
+使用如下命令安装查看图片文件所需的 +graphviz+ 软件包：
 
 ......
 # apt-get install graphviz
 ......
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create the file +/etc/puppet/modules/admin/manifests/ntp.pp+ with the
-   following code containing a circular dependency:
+1. 创建 +/etc/puppet/modules/admin/manifests/ntp.pp+ 文件，添加包含如下循环依赖的代码：
 +
 ----
 class admin::ntp {
@@ -40,13 +38,13 @@ class admin::ntp {
 }
 ----
 
-2. Copy your existing ntp.conf file into Puppet:
+2. 复制已存在的 ntp.conf 文件到 Puppet：
 +
 ......
 # cp /etc/ntp.conf /etc/puppet/modules/admin/files
 ......
 
-3. Include this class on a node:
+3. 在一个节点上包含这个类：
 +
 ----
 node cookbook {
@@ -54,7 +52,7 @@ node cookbook {
 }
 ----
 
-4. Run Puppet as follows:
+4. 运行 Puppet：
 +
 ......
 # puppet agent --test
@@ -69,27 +67,27 @@ OmniGraffle or GraphViz
 notice: Finished catalog run in 0.42 seconds
 ......
 
-5. Run Puppet with the `--graph` option as suggested:
+5. 使用上面建议的 `--graph` 选项运行 Puppet：
 +
 ......
 # puppet agent --test --graph
 ......
 
-6. Check that the graph files have been created:
+6. 检查已经创建的图片文件：
 +
 ......
 # ls /var/lib/puppet/state/graphs/
 expanded_relationships.dot relationships.dot resources.dot
 ......
 
-7. Create a graphic of the relationships graph:
+7. 创建一个图形化的关系依赖图
 +
 ......
 # dot -Tpng -o relationships.png \
   /var/lib/puppet/state/graphs/relationships.dot
 ......
 
-8. View the graphic with the following command:
+8. 使用如下命令查看关系依赖图：
 +
 ......
 # eog relationships.png
@@ -98,31 +96,26 @@ expanded_relationships.dot relationships.dot resources.dot
 image::image/ch02sec05.png[]
 
 
-==== How it works…
+==== {Howitworks}
 
-When you run `puppet --graph` (or enable the +graph+ option in +puppet.conf+) Puppet
-will generate three graphs in *DOT* format (a graphics language).These are as follows:
+当你运行 `puppet --graph` （或者在 +puppet.conf+ 文件中启用 +graph+ 选项），
+Puppet 会生成三个 *DOT* 格式（一种图形语言）的文件。三个文件分别是：
 
-- +resources.dot+: shows the hierarchical structure of your classes and resources,
-  but without dependencies
-- +relationships.dot+: shows the dependencies between resources as arrows,
-  as in the preceding example
-- +expanded_relationships.dot+: is a more detailed version of the relationships graph
+- ++resources.dot++：显示资源的类和层次结构，但没有依赖关系
+- ++relationships.dot++：以箭头显示资源之间的依赖关系，如上图所示
+- ++expanded_relationships.dot++：一个更详细版本的关系图
 
-The +dot+ tool (part of the +graphviz+ package) will convert these to an image format such as
-PNG for viewing.
++dot+ 工具（是 +graphviz+ 软件包的一部分） 可以将这些文件转换为 PNG 格式进行查看。
 
-In the relationships graph, each resource in your manifest is shown as a balloon, with arrowed
-lines connecting them to indicate the dependencies. You can see that in our example, the
-dependencies between +File["/etc/ntp.conf"]+ and +Package["ntp"]+ form a circle.
+在关系图中，你的配置清单中的每个资源显示为一个气球，
+用带箭头的线连接它们表示依赖关系。
+从上面的例子中我们可以看到，在 +File["/etc/ntp.conf"]+
+和 +Package["ntp"]+ 之间存在循环依赖关系。
 
-To fix the circular dependency problem, all you need to do is remove one of the dependency
-lines and thus break the circle.
+为了解决循环依赖问题，你要做的就是删除一条依赖关系线，从而打破循环。
 
-==== There's more…
+==== {Theresmore}
 
-Resource and relationship graphs can be useful even when you don't have a bug to find. If
-you have a very complex network of classes and resources, studying the resources graph
-can help you see where to simplify things. Similarly, when dependencies become too
-complicated to understand from reading the manifest, the graphs can be a much more
-useful form of documentation.
+即使你不用去寻找错误（bug），资源和其关系图也非常有用。
+如果你为一个非常复杂的网络设计类和资源，研究资源关系图可以让你看起来更简单。
+同样，当依赖关系变得过于复杂，通过阅读配置清单难于理解时，关系图比文档就显得更为有用。

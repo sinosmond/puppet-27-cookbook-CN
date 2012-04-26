@@ -1,5 +1,5 @@
 ﻿[[chapter08]]
-== Servers and Cloud Infrastructure
+== 服务器和云基础设施
 
 [quote, J. Lubbock,]
 Rest is not idleness, and to lie sometimes on the grass under trees on a summer's
@@ -7,22 +7,22 @@ day, listening to the murmur of the water, or watching the clouds float across t
 sky, is by no means a waste of time.
 
 
-In this chapter we will cover the following topics:
+在本章中，我们将学习如下内容：
 
-- Deploying a Nagios monitoring server
-- Building high-availability services using Heartbeat
-- Managing NFS servers and file shares
-- Using HAProxy to load-balance multiple web servers
-- Managing firewalls with iptables
-- Managing EC2 instances
-- Managing virtual machines with Vagrant
+- {Recipe801}
+- {Recipe802}
+- {Recipe803}
+- {Recipe804}
+- {Recipe805}
+- {Recipe806}
+- {Recipe807}
 
-As powerful as Puppet is for managing the configuration of a single server, its true benefits
-become apparent only when controlling networks of many machines. In this chapter we'll
-explore ways of using Puppet to help you monitor your infrastructure, create high-availability
-clusters, share files across your network, set up automated firewalls, use load-balancing to
-get more out of the machines you have, and create new virtual machines in the cloud and
-on the desktop.
+
+Puppet 的强大不仅在于它可以管理配置单台服务器还可以控制网络中的大量服务器，
+只有控制大量服务器时才能真正显现其效益。
+在本章中我们将探讨：如何使用 Puppet 帮助你监控基础设施，
+创建高可用性集群，跨越网络分享文件，设立自动的防火墙，
+为你的众多后端服务器实现负载均衡，以及在云中或桌面上创建新虚拟机。
 
 
 include::recipes/ch08sec01-deploying_a_nagios_monitoring_server.txt[]

@@ -1,19 +1,18 @@
-﻿[[ch04sec02]]
-=== Using define resources
+[[ch04sec02]]
+=== {Recipe402}
 
 [quote, 'Hard Times',]
-Girl number twenty unable to define a horse!" said Mr. Gradgrind.—Charles
-Dickens.
+Girl number twenty unable to define a horse!" said Mr. Gradgrind. -- Charles Dickens.
 
-Unless you know how to define what you want, you won't get it. In the preceding example, we
-saw how to reduce redundant code by grouping identical resources into arrays. However, this
-technique is limited to resources where all the parameters are the same. When you have a set
-of resources that have some parameters in common and some different, you need to use a
-+define+ resource to group them together.
+除非你知道如何定义你想要什么，不然不会得到预期的结果。
+在上一节的示例中，我们看到了如何将同类资源组合成数组从而减少冗余代码。
+然而，这种技术有一个限制，那就是所有的资源必须使用相同的参数。
+当你有一组资源拥有一些公用的参数而其中一些资源确有不同的参数时，
+就需要使用 +define+ 资源将它们组合在一起。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 在配置清单中添加如下代码：
 +
 ----
 define tmpfile() {
@@ -25,7 +24,7 @@ define tmpfile() {
 tmpfile { ["a", "b", "c"]: }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ....
 notice: /Stage[main]//Node[cookbook]/Tmpfile[a]/File[/tmp/a]/
@@ -36,33 +35,31 @@ notice: /Stage[main]//Node[cookbook]/Tmpfile[c]/File[/tmp/c]/
 ensure: defined content as '{md5}bc6e6f16b8a077ef5fbc8d59d0b931b9'
 ....
 
-==== How it works…
+==== {Howitworks}
 
-You can think of a *define* as being like a cookie-cutter. It describes a pattern that Puppet
-can use to create lots of similar resources. Any time you declare a +tmpfile+ instance in your
-manifest, Puppet will insert all the resources contained in the +tmpfile+ definition.
+你可以认为 *define* 就像是一个饼干切割器。它描述了一种模式，Puppet
+可以用它创建许多类似的资源。任何时候你都可以在你的配置清单中声明
++tmpfile+ 实例，Puppet 将会插入包含在 +tmpfile+ 定义中的所有资源。
 
-In our example, the definition of +tmpfile+ contains a single +file+ resource, whose +content+
-is +"Hello, world"+, and whose +path+ is +/tmp/${name}+. If you declared an instance of
-+tmpfile+ with the name +foo+ as follows:
+在我们的例子中， +tmpfile+ 定义包含了一个 +file+ 资源，其 +content+
+是 +"Hello, world"+，其 +path+ 是 ++/tmp/${name}++。
+如果你用名字 +foo+ 声明了一个 +tmpfile+ 实例，如下所示：
 
 ----
 tmpfile { "foo": }
 ----
 
-then, Puppet would create a file with the path +/tmp/foo+. In other words, +${name}+ in
-the definition will be replaced by the name of any actual instance that Puppet is asked to
-create. It's almost as though we created a new kind of resource: a +tmpfile+, which has one
-parameter: its name.
+那么，Puppet 将会创建一个路径为 +/tmp/foo+ 的文件。换句话说，定义中的 +${name}+
+会被要求 Puppet 要创建的实例名字所代替。这就像是我们创建了一个新的资源类型：
+++tmpfile++，它包含一个参数：即其名字。
 
-Just like with regular resources, we don't have to pass just one name: we can provide an array of
-names and Puppet will create a number of +tmpfile+ instances, as in the preceding example.
+与常规资源一样，我们不仅可以为其传递一个字符串的名字，我们还可以提供一个数组名，
+Puppet 会对每一个数组元素创建一个 +tmpfile+ 实例，就像上面的例子那样。
 
-==== There's more…
+==== {Theresmore}
 
-In the preceding example, we created a +define+ where the only parameter that varies
-between instances is the name. But we can add whatever parameters we want, so long
-as we declare them in the definition:
+在上面的例子中，我们定义的 +define+ 仅有一个名字参数，不同实例的名字不同。
+但是我们可以为其添加任何我们想要的参数，只要我们在 +define+ 中声明这些参数即可：
 
 ----
 define tmpfile( $greeting ) {
@@ -72,13 +69,13 @@ define tmpfile( $greeting ) {
 }
 ----
 
-and pass values to them when we declare an instance of the resource as follows:
+当我们声明一个资源的实例时，可以为其传递参数值，例如：
 
 ----
 tmpfile{ "foo": greeting => "Hello, world" }
 ----
 
-You can declare multiple parameters as a comma-separated list:
+你可以使用逗号间隔的列表同时声明多个参数：
 
 ----
 define webapp( $domain, $path, $platform ) {
@@ -92,9 +89,9 @@ webapp { "mywizzoapp":
 }
 ----
 
-This is a powerful technique for abstracting out everything that's common to certain
-resources, and keeping it in one place so that you *Don't Repeat Yourself*. In the preceding
-example, there might be many individual resources contained within +webapp:+ packages,
-config files, source code checkouts, virtual hosts, and so on. But all of them are the same for
-every instance of +webapp+ except the parameters we provide. These might be referenced in a
-template, for example, to set the domain for a virtual host.
+这是对某些常见的资源进行抽象的一项强大的技术，抽象出资源之间的共性并保存在一个地方，
+你就**不必每次都做重复劳动**（**Don't Repeat Yourself**）。
+在上面的例子中，+webapp+ 里或许有许多独立的资源：软件包（packages）、配置文件（config files）、
+源码检出（source code checkouts)、虚拟主机（virtual hosts）等等， 
+但是除了我们为 +webapp+ 提供的参数不同之外，所有实例要执行的工作都相同。
+这些可能会在模板中引用，例如：为一个虚拟主机设置域名。

@@ -1,23 +1,23 @@
-﻿[[ch01sec07]]
-=== Pre-signing certificates
+[[ch01sec07]]
+=== {Recipe107}
 
-Because of the security implications, it's best to avoid using autosign if you can help it. In
-general, if you want to automate adding a large number of clients, it's better to pre-generate
-the certificates on the Puppetmaster and then push them to the client as part of the build
-process. You can use `puppet cert --generate <hostname>` to do this.
+因为存在安全隐患，如果你能辅助签名过程，最好避免使用自动签名。
+在一般情况下，如果你想自动加入大量的客户端，最好在 Puppetmaster
+上预先生成证书，然后将其作为构建过程的一部分推送给客户端。
+你可以使用 `puppet cert --generate <hostname>` 命令生成预签名证书（pre-signed certificate）。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Generate a pre-signed certificate for +client1.example.com+ with the following command:
+1. 使用如下命令为 +client1.example.com+ 生成预签名证书：
 +
 .......
 puppet cert --generate client1.example.com
 .......
 +
-Puppet will now generate and sign a client certificate in the name of +client1.example.com+.
+Puppet 现在将为客户端 +client1.example.com+ 生成并签署客户端证书。
 
-2. Transfer the three required files; the private key, the client certificate, and the CA
-   certificate, to the new client. These are found in the following locations:
+2. 传输三个所需的文件到新的客户端：包括客户端私钥、客户端证书和 CA 证书。
+   这三个文件位于：
 +
 -----
 /etc/puppet/ssl/private_keys/client1.example.com.pem
@@ -25,10 +25,9 @@ Puppet will now generate and sign a client certificate in the name of +client1.e
 /etc/puppet/ssl/certs/ca.pem
 -----
 +
-Transfer these to the corresponding directories on the client, and it will then be
-authenticated without the certificate request step. Note that the location of Puppet's
-SSL certs varies according to the +ssldir+ setting in +puppet.conf+.
+复制上述三个文件到客户端相应的目录下，Puppet 会自动进行身份验证从而省略证书请求这一步骤。
+值得注意的是 Puppet 的 SSL 证书的位置依赖于 +puppet.conf+ 中的 +ssldir+ 设置。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec06,Using autosign>> in this chapter
+- 本章的 <<ch01sec06,{Recipe106}>> 一节

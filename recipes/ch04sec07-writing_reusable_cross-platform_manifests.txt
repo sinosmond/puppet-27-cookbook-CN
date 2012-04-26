@@ -1,28 +1,23 @@
-﻿[[ch04sec07]]
-=== Writing reusable, cross-platform manifests
+[[ch04sec07]]
+=== {Recipe407}
 
-Every system administrator dreams of a unified, homogeneous infrastructure, of identical
-machines all running the same version of the same OS. As in other areas of life, however, the
-reality is often messy and doesn't conform to the plan.
+每个系统管理员都梦想着使用统一的、同质的基础设施，相同的机器都运行相同的操作系统的版本相同。
+正如生活中的其他领域一样，现实往往是凌乱的、往往与理想情况不符。
 
-You are probably responsible for a bunch of assorted servers of varying age and architecture,
-running different kernels from different OS distributions, often scattered across different data
-centers and ISPs.
+你很可能会负责管理一堆使用年限不同、架构不同、运行不同发行版本的不同内核的服务器，
+常常是分散在不同的数据中心和不同的互联网服务供应商（ISP）。
 
-This situation should strike terror into the hearts of sysadmins of the "SSH in a +for+ loop"
-persuasion, because executing the same commands on every server can have different,
-unpredictable, and even dangerous results.
+在这种情况下，应该劝说系统管理员心中对在 +for+ 循环中执行 SSH（"SSH in a +for+ loop"）的恐惧，
+因为在每个服务器上即使执行相同的命令，也可能产生不同的、不可预知的、甚至是危险的结果。
 
-We should certainly strive to bring older servers up to date and get everything as far as
-possible working on a single reference platform to make administration simpler, cheaper, and
-more reliable. But until we get there, Puppet makes coping with heterogeneous environments
-slightly easier.
+当然，我们应该努力将旧服务器进行更新，并将一切尽可能工作在一个单一的参考平台之上，
+从而使管理更简单，更廉价，更可靠。但在达到这一目标之前，我们可以使用 Puppet，
+它可以使我们更容易地应对异构环境（heterogeneous environments）。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. If you have servers in different data centers that need slightly different network
-   configuration, for example, use the node inheritance technique to encapsulate the
-   differences:
+1. 如果你有一些放置在不同数据中心的服务器，这些服务器需要略有不同的网络配置，
+   例如，使用节点继承技术来封装差异：
 +
 ----
 node wreckspace_server inherits server {
@@ -30,10 +25,9 @@ node wreckspace_server inherits server {
 }
 ----
 
-2. Where you need to apply the same manifest to servers with different OS distributions,
-   the main differences will probably be the names of packages and services, and the
-   location of config files. Try to capture all these differences into a single class, using
-   selectors to set global variables:
+2. 你需要应用相同的配置清单到运行着不同 OS 发行版本的服务器，其重要差别可能在于软件包名、
+   服务名以及配置文件的存放位置。可以通过在一个类中使用选择器（selectors）
+   捕获这些差异并设置全局变量的值：
 +
 --
 ----
@@ -43,9 +37,8 @@ $ssh_service = $operatingsystem? {
 }
 ----
 
-Then you needn't worry about the differences in any other part of the manifest; when
-you refer to something, use the variable in confidence that it will point to the right
-thing in each environment:
+之后你就不用担心配置清单其他部分的差异了，当你要提及这些时，
+你可以放心的使用变量，它会根据具体环境正确的指向相应的正确值：
 
 ----
 service { $ssh_service:
@@ -54,10 +47,8 @@ service { $ssh_service:
 ----
 --
 
-3. Often we need to cope with mixed architectures; this can affect the paths to
-   shared libraries, and also may require different versions of packages. Again, try to
-   encapsulate all the required settings in a single +architecture+ class which sets
-   global variables:
+3. 我们经常需要配合不同的架构；这可能会影响共享库的路径，也可能需要不同版本的软件包。
+   同样地，尝试在一个单一的 +architecture+ 类中封装所需要的全局变量的值：
 +
 --
 ----
@@ -67,8 +58,8 @@ $libdir = $architecture ? {
 }
 ----
 
-Then you can use these wherever an architecture-dependent value is required, in
-your manifests or even in templates:
+之后在需要一个架构相关的值时，你就可以引用这些全局变量的值，
+无论是在配置清单中引用还是在模板中引用均可：
 
 ----
 ; php.ini
@@ -78,11 +69,11 @@ extension_dir = <%= libdir %>/php/modules
 ----
 --
 
-==== How it works…
+==== {Howitworks}
 
-The advantage of this approach (which could be called "top-down") is that you only need to
-make your choices once. The alternative, bottom-up approach, would be to have a selector or
-+case+ statement everywhere a setting is used:
+这种方法的优点（可以称为“自上而下”）是你仅需要进行一次选择。
+另一种是自下而上的方法，使用这种方法，在全部配置清单中你随处可见
+使用 +selector+ 或 +case+ 语句的设置：
 
 ----
 service { $operatingsystem? {
@@ -92,31 +83,28 @@ service { $operatingsystem? {
 }
 ----
 
-This not only results in lots of duplication, but makes the code harder to read. And when a
-new operating system is added to the mix, you'll need to make changes throughout the whole
-manifest, instead of just in one place.
+这不仅会产生许多重复代码，而且使代码难于阅读。另外，当需要管理一种新的操作系统时，
+你必须在所有的配置清单中进行修改，而不是只修改一处。
 
-==== There's more…
+==== {Theresmore}
 
-If you are writing a module for public distribution (for example on Puppet Forge), you can make
-it much more valuable by making it as cross-platform as possible. As far as you can, test it on
-lots of different distributions, platforms, and architectures, and add the appropriate variables
-so it works everywhere.
+如果你正在为一个公共的发布（例如 Puppet Forge）编写模块，
+使其尽可能的跨平台会让模块变得更有价值。尽你所能，在不同发布、不同平台、不同架构上测试，
+并且添加适当的变量，使模块尽可能的应用到各种情况。
 
-If you use a public module and adapt it to your own environment, consider updating the public
-version with your changes if you think they might be helpful to other people.
+如果你正在使用一个公共模块，并修改它适应自己的环境，
+如果你认为你的修改可能会帮助到其他人，可以考虑向公共版本提交你的更新。
 
-Even if you are not thinking of publishing a module, bear in mind that it may be in production
-use for a long time and may have to adapt to many changes in the environment. If it's
-designed to cope with this from the start, it'll make life easier for you - or whoever ends up
-maintaining your code.
+即使你不想发布你的模块，请铭记：一个模块可能会在生产环境中运行很长一段时间，
+并且可能会对其做许多适应环境的改变。
+如果从设计模块的一开始就考虑到这些，那么你（或者最终维护你的代码人）的生活将会变得更轻松。
 
 [quote, Dave Carhart,]
 Always code as if the guy who ends up maintaining your code will be a violent
 psychopath who knows where you live.
 
-==== See also
+==== {Seealso}
 
-- <<ch04sec04,Using node inheritance>> in this chapter
-- <<ch04sec05,Using class inheritance and overriding>> in this chapter
-- <<ch09sec08,Using public modules>> in Chapter 9
+- 本章的 <<ch04sec04,{Recipe404}>> 一节
+- 本章的 <<ch04sec05,{Recipe405}>> 一节
+- 第 9 章的 <<ch09sec08,{Recipe908}>> 一节

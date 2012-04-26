@@ -1,14 +1,15 @@
-﻿[[ch07sec02]]
-=== Creating Apache virtual hosts
+[[ch07sec02]]
+=== {Recipe702}
 
-Virtual hosts are a great application for ERB templates, because they generally use similar
-boilerplate code for every instance, with just one or two variables. Obviously, for certain sites
-or applications you will need specific options in the virtual host definition, and this template
-won't apply -- but it should save you some trouble for simple sites.
+使用 ERB 模板配置虚拟主机是一种常见的应用，
+因为每个虚拟主机配置的实例通常都使用类似的样板代码，只有一两个变量的值不同而已。 
+显然，对于某些网站或应用程序来说，你需要在虚拟主机的定义中指定特殊的配置选项，
+然而这些特殊选项又不能通过一个简单的模板来配置 -- 但是，不管怎样，
+使用一个模板配置一些简单的站点将会节省时间、避免重复劳动。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add this to +/etc/puppet/modules/apache/manifests/init.pp+:
+1. 添加如下代码到 ++/etc/puppet/modules/apache/manifests/init.pp++：
 +
 ----
 define site( $sitedomain = "", $documentroot = "" ) {
@@ -42,8 +43,7 @@ define site( $sitedomain = "", $documentroot = "" ) {
 }
 ----
 
-2. Create the file +/etc/puppet/modules/apache/templates/vhost.erb+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/apache/templates/vhost.erb+ 文件：
 +
 ----
 <VirtualHost *:80>
@@ -66,13 +66,13 @@ define site( $sitedomain = "", $documentroot = "" ) {
 </VirtualHost>
 ----
 
-3. Add this to a node:
+3. 添加如下代码到一个节点：
 +
 ----
 apache::site { "keithlard.com": }
 ----
 
-4. Run Puppet:
+4. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -102,18 +102,17 @@ notice: Finished catalog run in 3.79 seconds
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-The +define+ function +apache::site+ uses the +vhost.erb+ template to generate an Apache
-virtual host definition. By default, the domain of the site is assumed to be the same as the
-name of the site instance, in this case, +keithlard.com+. So when Puppet sees the following:
+名为 +apache::site+ 的 +define+ 使用 +vhost.erb+ 模板生成 Apache 虚拟主机的定义。
+默认情况下，假设站点的域名与站点实例的名字相同，本例中是 ++keithlard.com++。
+所以当 Puppet 看到如下代码时：
 
 ----
 apache::site { "keithlard.com": }
 ----
 
-it will use +keithlard.com+ as the site domain. If you want to specify a domain, add the
-+sitedomain+ parameter:
+它就使用 +keithlard.com+ 作为站点域名。如果你要指定不同的域名，请添加 +sitedomain+ 参数：
 
 ----
 apache::site { "networkr_production":
@@ -125,12 +124,11 @@ apache::site { "networkr_staging":
 }
 ----
 
-The beauty of the template system is that if you want to make a slight change to the
-configuration for all sites (for example, changing the admin e-mail address) you can do
-it once in the template and Puppet will update all virtual hosts accordingly.
+模板系统的优秀之处在于：如果你想为所有站点重新配置一个值（例如，更改管理员的 e-mail 地址），
+你只需要修改一次模板，Puppet 就会根据模板相应地更新所有的虚拟主机。
 
-Similarly, if you need to specify a different +DocumentRoot+ for the virtual host than the
-default (+/var/www/${name}+), just add a +documentroot+ parameter as follows:
+同样地，如果你需要为虚拟主机指定与默认值（++/var/www/${name}++）不同的 ++DocumentRoot++，
+请添加如下的 +documentroot+ 参数：
 
 ----
 apache::site { "communitysafety.org":
@@ -138,28 +136,28 @@ apache::site { "communitysafety.org":
 }
 ----
 
-==== There's more…
+==== {Theresmore}
 
-In the preceding example, we only used one variable in the template, but you can have as
-many as you like. These can also be *facts* such as:
+在前面的例子中，我们只在模板中定义了一个变量，但只要你愿意，你可以使用更多的变量。
+它们也可以是 **facts**，例如：
 
 ----
 ServerName <%= fqdn %>
 ----
 
-or Ruby expressions:
+或者 Ruby 表达式：
 
 ----
 ServerAdmin<%= emails["admin"] %>
 ----
 
-or any Ruby code you want such as:
+或者任何你要执行的 Ruby 代码：
 
 ----
 ServerAdmin <%= vhost_domain == 'coldcomfort.com' ? 'seth@coldcomfort.
 com' : 'flora@poste.com' %>
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch05sec05,Using array iteration in templates>> in Chapter 5
+- 第 5 章的 <<ch05sec05,{Recipe505}>> 一节

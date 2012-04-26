@@ -1,17 +1,14 @@
-﻿[[ch05sec08]]
-=== Setting up a gem repository
+[[ch05sec08]]
+=== {Recipe508}
 
-It's every system administrator's dream: yet another incompatible packaging system. If
-you manage Ruby or Rails applications, you'll need to deal with Rubygems. Maintaining
-your own **gem repository** has many of the same advantages as having an APT repository.
-You can control availability and package versions, and you can also use it to distribute your
-own gems if you need to.
+使用另外的不兼容的包系统是每个系统管理员的梦想。
+如果你要管理 Ruby 或 Rails 应用程序，就需要处理 Rubygems。
+与维护自己的 APT 仓库一样，维护你自己的 *gem 仓库* 会有很多优点。
+你可以控制包的可用性和包的版本，也可以根据需要发布你自己的 Rubygems。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. Create the file +/etc/puppet/modules/repo/manifests/gem-server.pp+ with
-   the following contents:
+1. 使用如下内容创建 +/etc/puppet/modules/repo/manifests/gem-server.pp+ 文件：
 +
 ----
 class repo::gem-server {
@@ -36,8 +33,7 @@ class repo::gem-server {
 }
 ----
 
-2. Create the file +/etc/puppet/modules/repo/files/gemrepo.conf+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/repo/files/gemrepo.conf+ 文件：
 +
 [source,apache]
 ------
@@ -54,7 +50,7 @@ class repo::gem-server {
 </VirtualHost>
 ------
 
-3. Add the following to your manifest:
+3. 在配置清单的节点中添加如下代码：
 +
 ----
 node cookbook {
@@ -62,7 +58,7 @@ node cookbook {
 }
 ----
 
-4. Run Puppet:
+4. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -93,34 +89,31 @@ notice: Finished catalog run in 6.52 seconds
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-The principle is exactly the same as in the APT repository example. We define a directory
-where the gem repository will live, and a virtual host definition in Apache to enable it to
-serve requests for +gems.bitfieldconsulting.com+.
+其原理与 APT 仓库的例子是完全一样的。我们首先定义了一个 gem 仓库的存放目录，
+然后定义了一个 Apache 的虚拟主机，使其能够响应 +gems.bitfieldconsulting.com+ 的请求。
 
-==== There's more…
+==== {Theresmore}
 
-Again, your gem repository will be more useful if you put something in it. We'll find out how to
-do that in the following text. We will also show you how to configure your nodes to access the
-gem repository.
+与 APT 仓库类似，仅有空仓库是无用的，下面将演示如何将 gem 包纳入仓库，
+以及如何配置你的节点访问自己的 gem 仓库。
 
-===== Adding gems
+===== 添加 gem 仓库
 
-Adding new gems to your repository is simple. Put the gem file in +/var/gemrepo/gems+ and
-run this command in the +/var/gemrepo+ directory:
+向你的仓库添加新的 gems 包很简单。将 gem 文件存入 +/var/gemrepo/gems+ 目录，
+然后在 +/var/gemrepo+ 目录下运行如下命令即可：
 
 ....
 # gem generate_index
 ....
 
-===== Using the gem repo
+===== 使用 gem 仓库
 
-As with the APT repository, make sure that your nodes know about the hostname
-+gems.bitfieldconsulting.com+, either by deploying a host entry with Puppet, or configuring
-it in DNS.
+像使用 APT 仓库一样，首先确保你的节点能够解析主机名 ++gems.bitfieldconsulting.com++，
+既可以使用 Puppet 部署 host 资源，也可以通过配置 DNS 实现。
 
-Then you can specify a package in Puppet as follows:
+然后在 Puppet 中使用如下代码指定一个 gem 软件包：
 
 ----
 package { "json":

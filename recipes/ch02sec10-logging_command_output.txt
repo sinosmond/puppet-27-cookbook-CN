@@ -1,13 +1,12 @@
-﻿[[ch02sec10]]
-=== Logging command output
+[[ch02sec10]]
+=== {Recipe210}
 
 [quote, Little Britain,]
 Computer says no.
 
-Detailed feedback on problems can be helpful. When you use +exec+ resources to run
-commands on the node, it's not always easy to find out why they haven't worked. Puppet
-will give you an error message if a command returns a non-zero exit status. The error will be
-similar to the following:
+一个问题的详细反馈会对解决问题有帮助。当你使用 +exec+ 资源在节点上执行命令时，
+并不总能轻易地找出其为何命名没有正确执行。如果命令返回一个非零的退出状态，Puppet
+就会返回类似如下的错误消息：
 
 ----
 err: /Stage[main]//Node[cookbook]/Exec[this-will-fail]/returns: change
@@ -15,12 +14,12 @@ from notrun to 0 failed: /bin/ls file-that-doesnt-exist returned 2
 instead of one of [0] at /etc/puppet/manifests/nodes.pp:10
 ----
 
-Often we would like to see the actual output from the command that failed, rather than just
-the numerical exit status. You can do this with the +logoutput+ parameter.
+通常我们希望看到执行失败时的输出，而不仅仅是一个退出的状态码。
+你可以使用 +logoutput+ 参数实现。
 
-==== How to do it…
+==== {Howtodoit}
 
-Define an +exec+ resource with the +logoutput+ parameter as follows:
+用 +logoutput+ 参数定义如下的 +exec+ 资源：
 
 ----
 exec { "this-will-fail":
@@ -29,9 +28,9 @@ exec { "this-will-fail":
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Now, if the command fails, Puppet will also print its output:
+现在，如果命令执行失败，Puppet 同时会打印命令的错误输出：
 
 ......
 notice: /Stage[main]//Node[cookbook]/Exec[this-will-fail]/returns: /bin/
@@ -41,9 +40,9 @@ from notrun to 0 failed: /bin/ls file-that-doesnt-exist returned 2
 instead of one of [0] at /etc/puppet/manifests/nodes.pp:11
 ......
 
-==== There's more…
+==== {Theresmore}
 
-You can set this to be the default for all +exec+ resources by defining the following:
+你可以如下的配置为所有的 +exec+ 资源设置打印错误输出的默认值：
 
 ----
 Exec {
@@ -51,7 +50,7 @@ Exec {
 }
 ----
 
-If you want to see the command output whether it succeeds or fails, use the following:
+若不管命令执行成功与否，你都想看到其输出，需使用如下的配置：
 
 ----
     logoutput => true,

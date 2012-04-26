@@ -1,17 +1,16 @@
-﻿[[ch03sec08]]
-=== Using regular expressions in if statements
+[[ch03sec08]]
+=== {Recipe308}
 
 [quote, Jamie Zawinski,]
 Some people, when confronted with a problem think; 'I know, I'll use regular
 expressions.' Now they have two problems.
 
-Another kind of expression you can test in +if+ statements and other conditionals is the
-*regular expression*. A regular expression is a powerful way of comparing strings using
-pattern matching.
+你可以在 +if+ 语句中表达式，即 **正则表达式**（**regular expression**）。
+正则表达式是一种使用模式匹配的强大的字符串比较方式。
 
-==== How to do it…
+==== {Howtodoit}
 
-Add the following to your manifest:
+在你的配置清单中添加如下代码：
 
 ----
 if $lsbdistdescription =~ /LTS/ {
@@ -23,31 +22,27 @@ if $lsbdistdescription =~ /LTS/ {
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-Puppet treats the text supplied between the forward slashes as a regular expression that
-specifies what the text to be matched is. If the match as a whole succeeds, the +if+ expression
-will be true and so the code between the first set of curly braces will be executed.
+Puppet 将两个各斜线之间的文本当做正则表达式对待，两个各斜线之间的文本就是要匹配的内容。
+如果正则表达式匹配成功，++if++ 表达式为真，第一个大括号之间的代码就会被执行。
 
-If you wanted instead to do something and the text does not match, use +!\~+ rather than +=~+
-as shown in the following code snippet:
+若要使用匹配的反逻辑，即不匹配，需要使用 +!\~+ 替代 +=~+ ，例如：
 
 ----
 if $lsbdistdescription !~ /LTS/ {
 ----
 
-==== There's more…
+==== {Theresmore}
 
-As Jamie Zawinski hinted, regular expressions are very powerful, but can be difficult to
-understand and debug. If you find yourself using a regular expression so complex that
-you can't see what it does at a glance, think about simplifying your design to make it
-easier. However, one particularly useful feature of regular expressions is the ability to
-capture patterns.
+正如 Jamie Zawinski 指出的，正则表达式虽然强大，但难于理解和调试。
+如果你发现自己所写的正则表达式相当复杂，以至于一眼看上去不能被理解，
+就应该考虑简化设计使正则表达式更易懂。
+然而，正则表达式的一个特别有用的功能是能够捕获模式。
 
-===== Capturing patterns
+===== 捕捉模式
 
-You can not only match text using a regular expression, but also capture the matched text
-and store it in a variable:
+你不仅可以使用正则表达式匹配文本，还也以捕获匹配的文本并将其存储在变量中：
 
 ----
 $input = "Puppet is better than manual configuration"
@@ -61,16 +56,16 @@ You said 'Puppet is better than manual configuration'. Looks like you're
 comparing Puppet to manual configuration!
 ....
 
-The variable +$0+ stores the whole matched text (assuming the overall match succeeded).
-If you put brackets around any part of the regular expression, that creates a *group* and any
-matched groups will also be stored in variables. The first matched group will be +$1+, the
-second +$2+, and so on, as in the preceding example.
+变量 +$0+ 存储了所有匹配的文本（假设整体匹配成功）。
+如果你将一不笨正则表达式置于一对圆括号中，就会创建一个 **组**（**group**），
+并且所有被匹配的组都会存储在变量中。
+第一个被匹配的组是 ++$1++，第二个是 ++$2++，以此类推，正如上例展示的那样。
 
-===== Regular expression syntax
+===== 正则表达式语法
 
-Puppet uses a subset of Ruby's regular expression syntax, so the following link may be
-helpful if you're not already familiar with regular expressions: http://gnosis.cx/publish/programming/regular_expressions.html.
+Puppet 使用了 Ruby 正则表达式语法（Regular expression syntax）的一个子集，如果你还不熟悉正则表达式，
+下面网址中的解释会对你有用： http://gnosis.cx/publish/programming/regular_expressions.html 。
 
-==== See also
+==== {Seealso}
 
-- <<ch03sec11,Using regular expression substitutions>> in this chapter
+- 本章的 <<ch03sec11,{Recipe311}>> 一节

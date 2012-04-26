@@ -1,19 +1,16 @@
-﻿[[ch02sec13]]
-=== Using tags
+[[ch02sec13]]
+=== {Recipe213}
 
-Tag, you're it! Sometimes one Puppet class needs to know about another -- or, at least, to
-know whether or not it's present. For example, a class that manages the firewall may need
-to know whether the node is a web server.
+标签（Tag），我们需要你！有时 Puppet 的一个类需要知道另一个类，或者至少要知道其是否已存在。
+例如，一个管理防火墙的类或许需要知道一个节点是否是 web 服务器。
 
-Puppet's +tagged+ function will tell you whether a named class or resource is present in the
-catalog for this node. You can also apply arbitrary tags to a node or class and check for the
-presence of these tags.
+Puppet 的 +tagged+ 函数会告诉你一个被命名的类或资源是否已经存在于这个节点的目录中。
+你还可以对一个节点或类应用任何标签并检查这些标签是否存在。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. To help you find out if you're running on a particular node or class of node, all nodes
-   are automatically tagged with the node name and the names of any parent nodes it
-   inherits from.
+1. 为了帮你辨别你是否运行在一个指定的节点或一组节点，所有节点会根据节点名被自动打标签，
+   并父节点那里继承名称。
 +
 ----
 node bitfield_server {
@@ -30,9 +27,8 @@ node cookbook inherits bitfield_server {
 }
 ----
 
-2. To help you tell whether a particular class is included on this node, all nodes are
-   automatically tagged with the names of all the classes they include, and their
-   parent classes.
+2. 为了告诉你一个指定的类是否被包含在一个节点，所有的节点会
+   用他们包含的所有类其父类的名字自动打标签：
 +
 ----
 include apache::port8000
@@ -46,7 +42,7 @@ if tagged("apache") {
 }
 ----
 
-3. If you want to set an arbitrary tag on a node, use the +tag+ function:
+3. 如果你想要在一个节点上设置指定的标签，则需使用 +tag+ 函数：
 +
 ----
 tag("old-slow-server")
@@ -55,7 +51,7 @@ if tagged("old-slow-server") {
 }
 ----
 
-4. If you want to set a tag on a particular resource, use the +tag+ *metaparameter*:
+4. 如果你想要对一个指定的资源设置标签，则需使用 +tag+ **元参数**（**metaparameter**）：
 +
 ----
 file { "/etc/ssh/sshd_config":
@@ -65,20 +61,19 @@ file { "/etc/ssh/sshd_config":
 }
 ----
 
-5. You can also use tags to determine which parts of the manifest to apply. If you use the
-   `--tags` option on the Puppet command-line, only those classes or resources tagged
-   with specific tags will be applied. For example, if you want to update only the `exim`
-   configuration, but not run any other parts of the manifest, use the following command:
+5. 你也可以使用标签来确定哪一部分配置清单将被应用。 如果你在 Puppet
+   的命令行上使用 `--tags` 选项，仅仅被打上了指定标签的类或资源被应用。
+   例如，你只想要更新 `exim` 的配置而不想运行其他部分的配置清单，执行如下命令：
 +
 ......
 # puppet agent --test --tags exim
 ......
 
 
-==== There's more…
+==== {Theresmore}
 
-You can use tags to create a collection of resources. For example if some service depends on
-a large number of file snippets, you can use the following:
+你可以使用标签创建一个资源的集合。例如，如果某服务依赖需要依赖一大批文件片段，
+你可以使用下面的配置：
 
 ----
 class firewall::service {
@@ -97,11 +92,10 @@ class myapp {
 }
 ----
 
-Here, we've specified that the +firewall+ service should be notified if any +file+ resource
-tagged +firewall-snippet+ is updated. All we need to do to add a firewall config snippet for
-any particular app or service is to tag it +firewall-snippet+, and Puppet will do the rest.
+在此，我们指定如果更新了被标记为 +firewall-snippet+ 的任何 +file+ 资源，
+就通知 +firewall+ 服务。 我们所要做的全部工作就是为特定的应用或服务添加防火墙配置片段，
+且应用或服务是打了 +firewall-snippet+ 标签的， 剩下的工作交由 Puppet 完成。
 
-Although we could add +notify => Service["firewall"]+ to each snippet resource, if
-our definition of the +firewall+ service were ever to change we would have to hunt down and
-update all the snippets accordingly. The tag lets us encapsulate the logic in one place, making
-future maintenance and refactoring much easier.
+虽然我们添加了 +notify => Service["firewall"]+ 到每一个资源片段，但是如果
+我们定义的 +firewall+ 服务不断变化，就不得不捕获这些变化并据此更新所有的片段。
+标签可以让我们把相应的代码进行逻辑封装，这样也使得将来的维护和重构会更加容易。

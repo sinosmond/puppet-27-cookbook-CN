@@ -1,19 +1,18 @@
-﻿[[ch06sec03]]
-=== Managing users' SSH access
+[[ch06sec03]]
+=== {Recipe603}
 
-The only secure server is one that's turned off. Nonetheless, a good approach to access
-control for servers is to use named user accounts with passphrase-protected SSH keys, rather
-than having users share an account with a widely-known password. Puppet makes this easy to
-manage, thanks to the built-in +ssh_authorized_key+ type.
+唯一安全的服务器是关闭的。尽管如此，对于服务器访问控制的一个好方法是，
+使用经过私钥短语保护的 SSH 密钥的用户帐户，
+而不是多个用户使用一个共享账号和一个众所周知的口令。
+Puppet 使这种管理变得简单，感谢其内置的 +ssh_authorized_key+ 类型。
 
-To combine this with virtual users, as described in the previous section, you can create a
-define, which includes both the +user+ and the +ssh_authorized_key+. This will also be
-useful for adding customization files and other per-user resources.
+将它与上一节讲述的虚拟用户相结合，你可以创建一个包括 +user+ 和
++ssh_authorized_key+ 的 ++define++。
+对于需要添加自定义文件和其他每用户自己的资源时，这也会是有用的。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Change the +user::virtual+ class that you created in the section on managing
-   users with virtual resources, to the following:
+1. 对上一节创建的 +user::virtual+ 类做如下修改：
 +
 ----
 class user::virtual
@@ -41,13 +40,13 @@ class user::virtual
 }
 ----
 
-2. Include the following on a node:
+2. 在一个节点上包含如下代码：
 +
 ----
 realize( User::Virtual::Ssh_user["phil"] )
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -64,10 +63,10 @@ Ssh_authorized_key[phil_key]/ensure: created
 notice: Finished catalog run in 1.04 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-We've created a new +define+ called +ssh_user+, which includes both the user resource itself,
-and the associated +ssh_authorized_key+, shown as follows:
+我们创建了一个名为 +ssh_user+ 的 +define+，它包括用户自身的 +user+
+资源以及与其相关的 +ssh_authorized_key+ 资源，内容如下：
 
 ----
 define ssh_user( $key )
@@ -85,7 +84,7 @@ define ssh_user( $key )
 }
 ----
 
-Then we create a virtual instance of +ssh_user+ for the user phil:
+然后我们对用户 phil 创建了 +ssh_user+ 的一个虚拟资源实例： 
 
 ----
     @ssh_user { "phil":
@@ -96,21 +95,20 @@ Then we create a virtual instance of +ssh_user+ for the user phil:
     }
 ----
 
-Recall that because the resource is virtual, Puppet will take note of it but won't actually create
-anything until +realize+ is called.
+回顾一下，因为资源是虚拟的，Puppet 会意识到这一点，所以它不会创建任何实际的资源，
+直到你调用 +realize+ 时才真正创建。
 
-Finally, we added the following to the node:
+最后，我们在节点中添加了如下代码：
 
 ----
     realize( User::Virtual::Ssh_user["phil"] )
 ----
 
-This actually creates the +user+ and the +authorized_keys+ file containing the user's public key.
+这会实际创建 +user+ 资源以及包含其公钥的 +authorized_keys+ 资源。
 
-==== There's more…
+==== {Theresmore}
 
-To use this idea with the organization of users into group classes that we saw in the previous
-section, modify the classes like the following:
+可以将这种思想应用到上一节提及的“组织用户到组类”中，修改相应类的代码为：
 
 ----
 class user::sysadmins
@@ -122,10 +120,10 @@ class user::sysadmins
 }
 ----
 
-The +search+, +User::Virtual+ is just to save on clutter; it allows you to refer to +Ssh_user+
-directly without prefixing it with +User::Virtual::+ every time.
+使用 +search User::Virtual+ 的目的仅仅是为了避免杂乱，这允许你直接引用 ++Ssh_user++，
+而不用每次都要使用 +User::Virtual::+ 前缀。
 
-You may get an error like the following:
+另外，你可能会遭遇如下的错误：
 
 ....
 err: /Stage[main]/User::Virtual/User::Virtual::Ssh_user[graham]/Ssh_
@@ -133,14 +131,12 @@ authorized_key[graham_key]: Could not evaluate: No such file or directory
 - /home/graham/.ssh
 ....
 
-
-It may be because you previously created the +graham+ user without having Puppet manage the
-home directory. In this situation, Puppet will not automatically create the +.ssh+ directory for the
-+authorized_keys+ file. Run the following command:
+这或许是因为你之前已经创建过 +graham+ 用户，但没有使用 Puppet 管理其自家目录。
+这种情况下，Puppet 不会自动创建 +authorized_keys+ 文件所需的 +.ssh+ 目录。
+运行如下的命令：
 
 ....
 # userdel graham
 ....
 
-To fix the problem, run Puppet again.
-
+之后再次运行 Puppet 即可解决此问题。

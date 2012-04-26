@@ -1,61 +1,58 @@
-﻿[[ch02sec06]]
-=== Testing your Puppet manifests
+[[ch02sec06]]
+=== {Recipe206}
 
 [quote, J.K. Galbraith,]
 If all else fails, immortality can always be assured by spectacular error.
 
-Trouble has a way of sneaking up on you like a bug on a windshield. The standard checks
-provided by monitoring tools like *Nagios* don't always cover everything you want to monitor.
-While metrics such as load average and disk space can be useful problem indicators', I like to
-be able to get higher-level information about the applications and services my machines provide.
+你总会遭遇麻烦，就像趴在你的挡风玻璃上的一只虫子。遗憾的是像 *Nagios*
+那样标准的检测监视工具也不能面面俱到地检测你要的一切。
+许多技术指标对于排错是很有帮助的，例如平均负载和磁盘占用，
+我更希望我的系统能提供关于应用和服务的更高系别的信息。
 
-For example, if you are running a web application, it's not enough to know that the web server
-is listening to connections on port 80 and responding with an +HTTP 200 OK+ status. It could
-just be returning the default Apache welcome page.
+例如，如果你运行的是一个 web 应用程序，你不能肯定它正监听 80 端口并能返回
++HTTP 200 OK+  状态。也许它只是返回 Apache 默认的欢迎页面。
 
-If your web application is an online store, for example, you might want to check the following:
+如果你的 web 应用程序是一个在线商店，例如：你可能希望检查以下几项：
 
-- Do we see expected text in the returned page (for example, "Welcome to FooStore")?
-- Can we log in as a user (if the application supports sessions)?
-- Can we search for a product and see the expected result?
-- Is the response time satisfactory?
+- 大家能否看到预期的页面（例如：“欢迎光临 FooStore”）?
+- 用户能否正常登录（假定应用程序支持 session 会话）?
+- 搜索某种产品能否返回期待的结果？
+- 响应时间是否令人满意？
 
-This kind of monitoring—focusing on the behavior of the application, rather than operational
-metrics of the server itself—is sometimes called *behavior-driven monitoring*.
+这种监控（专注于应用程序的行为，而不是对服务器自身指标的度量）
+经常被称作 **行为驱动的监控**（**behavior-driven monitoring**）。
 
-Just as developers often use behavior-driven tests to verify that the application does what it
-should when they make code changes, you can use behavior-driven monitoring to monitor it
-continuously in production.
+与开发者改变代码后经常使用行为驱动的测试（behavior-driven tests）
+来校验应用程序是否正常一样， 你可以在产品上线后持续地使用行为驱动的监控。
 
-In fact, thanks to a tool called `cucumber-nagios`, you can run the same tests the developers
-use. Lindsay Holmwood's wrapper for the popular *Cucumber* testing framework lets you run
-Cucumber-based tests under Nagios as though they were standard Nagios metrics.
+事实上，感谢有 `cucumber-nagios` 这样的工具存在，你可以和开发人员使用同样的测试。
+Lindsay Holmwood 为流行的 *Cucumber* 测试框架所做的封装可以让你运行针对 Nagios
+的基于 Cucumber 的测试，这似乎是对 Nagios 进行评估的标准方法。
 
-==== Getting ready
+==== {Gettingready}
 
-1. To install `cucumber-nagios`, you will need a few dependencies first. If you are
-   on Ubuntu or Debian, you will probably need to install *RubyGems* from source, as
-   `cucumber-nagios` needs RubyGems 1.3.6 or higher. Download the *tarball* from the
-   RubyGems site: http://rubygems.org/pages/download. Unpack it and run
-   `ruby setup.rb` to build and install the package.
-2. Next, you need to install a few more dependencies:
+1. 为了安装 `cucumber-nagios` ，你首先要安装依赖的包。如果你在用 Ubuntu 或 Debian，
+   可能需要从源代码安装 *RubyGems* ，因为 `cucumber-nagios` 需要 RubyGems 1.3.6
+   或更高的版本。 从 RubyGems 站点： http://rubygems.org/pages/download
+   下载 *tarball* 。 解压缩之后运行 `ruby setup.rb` 编译并安装此软件包。
+2. 接下来，你需要安装相关依赖包：
 +
 ......
 # apt-get install ruby1.8-dev libxml2-dev
 ......
 
-3. Finally, you can install `cucumber-nagios` itself as follows:
+3. 最后，使用如下命令安装 `cucumber-nagios` ：
 +
 ......
 # gem install cucumber-nagios
 ......
 
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Once RubyGems and all its dependencies have been installed, you can start writing
-   Cucumber tests. To do this, first use `cucumber-nagios` to help create a project
-   directory with everything you will need:
+1. 一旦 RubyGems 和相关依赖安装完成后，你就可以开始写 Cucumber 测试了。
+   要做到这一点，首先使用 `cucumer-nagios-gen`
+   来帮助我们创建一个项目目录和所需要的一切：
 +
 --
 ......
@@ -73,28 +70,27 @@ Generating with project generator:
     [ADDED] README
 ......
 
-Your new cucumber-nagios project can be found in +/root/mytest+.
+你新创建的 cucumber-nagios 项目可以在 +/root/mytest+ 找到。
 
-Next, install the necessary RubyGems with:
+下一步， 使用如下命令安装所需的 RubyGems：
 
 ......
 bundle install
 ......
 
-Your project has been initialized as a git repository.
+你的项目已经作为一个 git 仓库初始化了。
 --
 
-2. It's a good idea to run `bundle install` inside the project directory, as `cucumber-nagios`
-   advises you to do. This will bundle all the dependencies for `cucumber-nagios` 
-   inside the directory. Then you can move the project directory to any machine
-   and it will work.
+2. 有一个好主意是在项目目录里运行 `bundle install` ，因为 `cucumber-nagios`
+   建议你这么做。这样做的话 `cucumber-nagios` 会在项目目录里安装所有依赖的包。 
+   然后你就可以移动项目目录到其他任何一台机器，不必再安装依赖包就可以工作。
 +
 ......
 # cd mytest
 # bundle install
 ......
 
-3. Now we can start writing a test. As an example, let's test the home page on Google:
+3. 现在我们开始写测试。下面的例子用于测试 Google 的主页：
 +
 ......
 # cucumber-nagios-gen feature www.google.com home
@@ -103,8 +99,8 @@ Generating with feature generator:
 [ADDED] features/www.google.com/steps/home_steps.rb
 ......
 
-4. If you edit the +home.feature+ file, you will find that `cucumber-nagios` has
-   generated a basic initial test for you:
+4. 如果你要编辑 +home.feature+ 文件， 会发现 `cucumber-nagios`
+   已经为你生成了一个基本的测试：
 +
 --
 ----
@@ -116,7 +112,7 @@ Feature: www.google.com
     Then the request should succeed
 ----
 
-You can run this from the project directory as follows:
+你可以在项目下使用如下命令运行这个测试：
 
 ......
 # cucumber --require features features/www.google.com/home.feature
@@ -138,8 +134,8 @@ Feature: www.google.com
 ......
 --
 
-5. Assuming this works (if it doesn't, call Google), all you need to do to make this feature
-   a Nagios check is to run it with `cucumber-nagios` instead of cucumber:
+5. 架设一切正常（若不正常，请联系 Google）， 要对 Nagios 的检测使用此特性，
+   你要做的所有工作就是使用 `cucumber-nagios` 代替 `cucumber` ：
 +
 ......
 # bin/cucumber-nagios features/www.google.com/home.feature
@@ -149,19 +145,18 @@ failed=0; nosteps=0; total=2; time=0
 ......
 
 
-==== How it works…
+==== {Howitworks}
 
-Any script can be a Nagios monitoring plugin; it just has to return the appropriate exit status (0
-for OK, 1 for warning, and 2 for critical). `cucumber-nagios` wraps Cucumber tests to do this,
-and also prints out useful information which Nagios will report via the alert or the web interface.
+任何脚本都可以成为 Nagios 监控的一个插件； 它只是返回执行完成后退出的状态
+（0 为成功，1 为警告，2 为紧急）。`cucumber-nagios` 封装 Cucumber 来实现测试，
+并且打印出有用信息，而后 Nagios 将通过警告或者 web 接口发送报告。
 
-==== There's more…
+==== {Theresmore}
 
-By itself, this doesn't do anything very useful. However, Cucumber lets you write quite
-sophisticated interaction scripts with websites: you can fill in form fields, search, click buttons,
-match text on the page, and so on. Whatever features of your web application or service you
-want to monitor; first figure out what a user would do in a web browser, then automate those
-steps with Cucumber to create the monitoring script.
+就其本身而言，并非你在此做的所有工作都有用。但不管怎样，Cucumber
+可以让你写出十分复杂的 Web 交互脚本： 你可以填写表单字段、搜索、
+单击按扭、在页面上匹配文本等等。要监控你的 web 应用或服务的任何特性，
+首先弄清楚用户使用 web 浏览器的行为习惯，然后根据这些用户行为，
+使用 Cucumber 创建自动监控脚本。
 
-You can find out more about how to write tests for `cucumber-nagios` on the Cucumber
-website: http://cukes.info/
+你可以从 Cucumber 网站 http://cukes.info/ 上找到更多关于 `cucumber-nagios` 的信息。

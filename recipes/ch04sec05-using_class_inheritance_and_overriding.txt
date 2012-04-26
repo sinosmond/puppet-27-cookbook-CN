@@ -1,22 +1,20 @@
-﻿[[ch04sec05]]
-=== Using class inheritance and overriding
+[[ch04sec05]]
+=== {Recipe405}
 
-Just as nodes can inherit from other nodes, to save you duplicating lots of stuff for nodes that
-are very similar, the same idea works for classes.
+正如节点可以从其他节点继承一样，这可以为相似的节点复制很多代码，
+同样的想法也可以用于类。
 
-For example, imagine you have a class +apache+ which manages the Apache web server, and
-you want to set up a new Apache machine but with a slightly different config file - perhaps
-listening on a different port.
+例如，假设你有一个管理 Apache Web 服务器的 +apache+ 类，
+你想要使用略有不同的配置文件设置一台新的 Apache 机器 -- 也许是监听的端口不同。
 
-You could duplicate the whole of the +apache+ class, except for the config file. Alternatively, you
-could take the config file out of the +apache+ class and create two new classes, each of which
-includes the base apache class and adds a different version of the config file.
+你可以复制整个 +apache+ 类，除了配置文件。另外，你可以从 +apache+
+类中提取配置文件并创建两个新类，每个新类都包含 +apache+ 基类并添加一个新版本的配置文件。
 
-A cleaner way is to inherit from the +apache+ class, but override just the config file.
+一个更简洁的做法是从 +apache+ 类继承，而后仅覆盖其配置文件。
 
-==== Getting ready…
+==== {Gettingready}
 
-1. Create the directory structure for a new +apache+ module:
+1. 为新的 +apache+ 模块创建目录结构：
 +
 ....
 # mkdir /etc/puppet/modules/apache
@@ -24,8 +22,7 @@ A cleaner way is to inherit from the +apache+ class, but override just the confi
 # mkdir /etc/puppet/modules/apache/files
 ....
 
-2. Create the file +/etc/puppet/modules/apache/manifests/init.pp+ with the
-   following contents:
+2. 使用如下代码创建 +/etc/puppet/modules/apache/manifests/init.pp+ 文件：
 +
 ----
 class apache {
@@ -44,8 +41,7 @@ class apache {
 }
 ----
 
-3. Install the Apache package, if it's not already present, and copy the included +ports.
-   conf+ file into Puppet:
+3. 若 Apache 软件包还未安装，安装它，复制被包含的文件 +ports.conf+ 到 Puppet：
 +
 ....
 # apt-get install apache2-mpm-worker
@@ -54,7 +50,7 @@ class apache {
 /etc/puppet/modules/apache/files/port80.conf.apache
 ....
 
-4. Add the apache class to a node as follows:
+4. 添加 +apache+ 类到一个节点，例如：
 +
 ----
 node cookbook {
@@ -62,20 +58,18 @@ node cookbook {
 }
 ----
 
-5. Run Puppet to verify that the manifest works.
+5. 运行 Puppet 验证配置清单是否正常工作。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a new version of +port80.conf.apache+ named +port8000.conf.apache+
-   with the following changes:
+1. 创建 +port80.conf.apache+ 文件的一个新版本 ++port8000.conf.apache++，并做如下改动：
 +
 ----
 NameVirtualHost *:8000
 Listen 8000
 ----
 
-2. Now add a new file +/etc/puppet/modules/apache/manifests/port8000.pp+
-   with the following contents:
+2. 使用如下内容创建一个新文件 ++/etc/puppet/modules/apache/manifests/port8000.pp++：
 +
 ----
 class apache::port8000 inherits apache {
@@ -85,7 +79,7 @@ class apache::port8000 inherits apache {
 }
 ----
 
-3. Change your node to include the +apache::port8000+ class instead of apache:
+3. 改变你的节点配置，使其包含 +apache::port8000+ 类而不是 +apache+ 类：
 +
 ----
 node cookbook {
@@ -93,7 +87,7 @@ node cookbook {
 }
 ----
 
-4. Run Puppet to check that it makes the required changes:
+4. 运行 Puppet 检查它是否会按照要求的那样发生改变：
 +
 ....
 # puppet agent --test
@@ -130,9 +124,9 @@ from 1 events
 notice: Finished catalog run in 4.85 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-Let's take another look at the new class:
+让我们再看看这个新类：
 
 ----
 class apache::port8000 inherits apache {
@@ -142,28 +136,26 @@ class apache::port8000 inherits apache {
 }
 ----
 
-You can see that after the class name we have +inherits+ apache. This will make the class
-an exact copy of +apache+, except for the changes that follow.
+你可以从类名后看出，此类继承（++inherits++）自 +apache+ 类。这将创建一个与 +apache+
+类完全相同的副本，除了跟随其后的变化。
 
-The following code snippet:
+如下的代码片段：
 
 ----
 File["/etc/apache2/ports.conf"] {
 ----
 
-specifies that we want to make changes to the +file+ resource named +/etc/apache2/ports.conf+
-in the parent class (note that +File+ is capitalized, meaning that we're referring
-to an existing resource rather than defining a new one).
+指定了我们想要改变父类中名为 +/etc/apache2/ports.conf+ 的 +file+ 资源 
+（注意 +File+ 是首字母大写的，这意味着，我们指的是现有的资源，而不是定义一个新资源）。
 
-The following code snippet:
+如下的代码片段：
 
 ----
 source => "puppet:///modules/apache/port8000.conf.apache",
 ----
 
-means that we are going to override the +source+ parameter of the parent class's resource
-with a new value. The result will be exactly the same as if we had copied the whole class
-definition from +apache+ but changed the value of +source+:
+意味着我们将使用一个新的值覆盖父类中 +source+ 资源的参数值。
+如果我们复制整个 +apache+ 类的定义并改变资源 +source+ 的值，那么结果将是完全一样的：
 
 ----
 class apache {
@@ -182,18 +174,17 @@ class apache {
 }
 ----
 
-==== There's more…
+==== {Theresmore}
 
-Overriding inherited classes may seem complicated at first. Once you get the idea, though,
-it's actually quite simple. It's a great way to make your manifests more readable because it
-removes lots of duplication, and focuses only on the parts that differ. Here are some more
-ways to use overriding.
+首先覆盖被继承的类看上去有些复杂。然而一旦掌握你了这种思想，就会发现这实际上很简单。
+这是一种使你的配置清单更具可读性的强大方式，因为这样消除了大量的重复代码，
+使你仅专注于编写不同的代码部分。下面给出几种使用覆盖的方法。
 
-===== Undefining parameters
+===== 取消参数的定义
 
-Sometimes you don't want to change the value of a parameter, you just want to remove its
-value altogether. To do this, use the value +undef+. The result will be as though the parameter
-had never been defined in the first place.
+有时候你不想改变一个参数的值，只是想完全移除它的值。
+为了实现这一点，可以使用 +undef+ 值覆盖原有值。 
+其结果就像是此参数从未在先前定义过一样。
 
 ----
 class apache::norestart inherits apache {
@@ -203,10 +194,10 @@ class apache::norestart inherits apache {
 }
 ----
 
-===== Adding extra values using the +> operator
+===== 使用 +> 操作符添加额外的值
 
-Similarly, instead of replacing a value, you may want to add more values to those defined in
-the parent class. The *plusignment* operator ++>+ will do this:
+与替换一个值类似，你可能想要在父类定义的基础上添加更多的值。
+使用 *plusignment* 操作符 ++>+ 可以实现这一功能：
 
 ----
 class apache::ssl inherits apache {
@@ -220,8 +211,8 @@ class apache::ssl inherits apache {
 }
 ----
 
-The ++>+ operator adds a value (or an array of values surrounded by square brackets) to the
-value defined in the parent class. In this case, what we end up with is the equivalent of this:
+操作符 ++>+ 在父类定义的值的基础上添加一个值（或使用方括号括起来的一个数组）。
+对于上面的例子，我们最终得到的代码相当于：
 
 ----
 service { "apache2":
@@ -232,10 +223,9 @@ service { "apache2":
 }
 ----
 
-===== Disabling resources
+===== 禁用资源
 
-One of the most common uses for inheritance and overrides is to disable services or other
-resources:
+继承和覆盖最常见的用途之一就是禁用服务或其他资源：
 
 ----
 class apache::disabled inherits apache {
@@ -246,8 +236,8 @@ class apache::disabled inherits apache {
 }
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch04sec04,Using node inheritance>> in this chapter
-- <<ch04sec06,Passing parameters to classes>> in this chapter
-- <<ch03sec03,Using standard naming conventions>> in Chapter 3
+- 第 4 章的 <<ch04sec04,{Recipe404}>> 一节
+- 第 4 章的 <<ch04sec06,{Recipe406}>> 一节
+- 第 3 章的 <<ch03sec03,{Recipe303}>> 一节

@@ -1,39 +1,40 @@
-﻿[[ch01sec09]]
-=== Scaling Puppet using Passenger
+[[ch01sec09]]
+=== {Recipe109}
 
-If your Puppet infrastructure's starting to creak at the seams, the culprit could be the
-Puppetmaster's web server. Puppet ships with a simple web server called *Webrick* to handle
-client connections to the Puppetmaster. Webrick is not really considered suitable for using
-Puppet in production; with more than a few servers as it can bring the Puppetmaster to
-its knees.
+如果你的 Puppet 基础设施开始出现依依呀呀的裂缝，罪魁祸首很可能出现在
+Puppetmaster 上的 Web 服务器。
+Puppet 携带了一个名为 *Webrick* 的简单 Web 服务器来处理客户端与
+Puppetmaster 的连接。Webrick 确实不适合在生产环境下运行 Puppet；
+超过几个客户请求处理之后就会使 Puppetmaster 一蹶不振，严重影响其性能。
 
-*Mongrel* is sometimes suggested as an alternative as it is a little better than Webrick, but not
-much. In order to scale Puppet to hundreds of servers, the preferred approach is to switch to
-a high-performance web server such as Apache using the *Passenger* (mod_rails) extension.
+有时会建议使用 *Mongrel* 替换 Webrick，因为 *Mongrel* 比 Webrick
+有少许的性能提升，但不太明显。为了扩展 Puppetmaster 能服务于数百台服务器，
+首选的方法是切换到高性能的 Web 服务器，如使用包含 **Passenger**（mod_rails）
+扩展模块的 Apache。
 
-Puppet comes with the necessary configuration to run under Passenger, so all you need to do
-is install Apache and Passenger, and add a suitable virtual host. The following example uses
-Ubuntu 10.04. You can find instructions on the Puppet Labs website for how to do the same in
-Red Hat Linux, CentOS, and other distributions at 
-http://projects.puppetlabs.com/projects/1/wiki/Using_Passenger.
+Puppet 在 Passenger 下运行需要些必要的配置，你需要安装 Apache 和
+Passenger，并添加一个合适的虚拟主机。下面的示例是基于 Ubuntu 10.4 的。
+你可以在 Puppet Labs 的站点 http://projects.puppetlabs.com/projects/1/wiki/Using_Passenger
+上找到 Red Hat Linux、CentOS以及其它发行版本的对应操作指示。
 
-==== Getting ready
 
-It will be helpful if you have available the source *tarball* for the version of Puppet you're
-running, because it provides several template files and configuration snippets which you
-can use to set up Passenger. For example, if you're running Puppet 2.7.1, download this file:
+==== {Gettingready}
+
+为了方便配置，需要有你要运行的 Puppet 的源代码包（**tarball**），
+因为它提供了用于配置  Passenger 的一些模板文件和配置片段。
+例如，假如你要运行 Puppet 2.7.1，就要下载这个文件：
 http://puppetlabs.com/downloads/puppet/puppet-2.7.1.tar.gz.
 
-If you are using a different version, you will find a suitable download link at
-http://puppetlabs.com. Unpack the source tarball with:
+若你使用不同的版本，请到 http://puppetlabs.com 下载合适的版本。
+下载之后使用如下命令解开源码包：
 
 ......
 tar xzf puppet-2.7.1.tar.gz
 ......
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Install Apache and Passenger, plus associated dependencies:
+1. 安装 Apache 和 Passenger, 及其所依赖的软件包：
 +
 .......
 # apt-get install apache2 libapache2-mod-passenger rails
@@ -41,17 +42,24 @@ librack-ruby libmysql-ruby
 # gem install rack
 .......
 
-2. Create the necessary directories for Passenger to find the Puppet configuration:
+2. 为 Passenger 查找 Puppet 的配置创建必要的目录：
 +
-----
-/etc/puppet/rack
-/etc/puppet/rack/public
-----
-+
-These directories should be owned by +root+ and set mode 0755.
+--
+....
+# mkdir -p /etc/puppet/rack
+# mkdir -p /etc/puppet/rack/public
+....
 
-3. Create the +config.ru+ file which will tell Passenger how to start the Puppet
-   application. You can use the example file provided with the Puppet distribution:
+这两个目录的属主为 +root+ 且权限为 0755。
+
+....
+# chown -R root:root /etc/puppet/rack
+# chmod -R 0755 /etc/puppet/rack
+....
+--
+
+3. 创建文件 +config.ru+ ，此文件告知 Passenger 如何启动 Puppet 应用程序。
+   你可以使用 Puppet 发布中提供的示例文件：
 +
 --
 .........
@@ -59,7 +67,7 @@ These directories should be owned by +root+ and set mode 0755.
 # chown puppet /etc/puppet/rack/config.ru
 .........
 
-For Puppet 2.7.1, it has the following contents:
+对于 Puppet 2.7.1, 应该包含如下内容：
 
 ----
 # a config.ru, for use with every rack-compatible webserver.
@@ -81,9 +89,8 @@ run Puppet::Application[:master].run
 ----
 --
 
-4. You now need to create a virtual host for Apache to listen on the correct port and
-   send requests to the Puppet application. Again, you can use the example provided
-   with the Puppet distribution:
+4. 你现在需要在 Apache 上创建一个虚拟主机，使其监听正确的端口并向 Puppet 应用程序
+   发送请求。同样地，你可以使用 Puppet 发布中提供的示例文件：
 +
 --
 ......
@@ -92,7 +99,7 @@ run Puppet::Application[:master].run
 # a2ensite puppetmasterd
 ......
 
-The file contents will look something like this:
+文件的内容如下所示：
 
 [source,apache]
 ----
@@ -139,30 +146,29 @@ Listen 8140
 ----
 --
 
-5. Edit this file to set the values of the +SSLCertificateFile+ and
-   +SSLCertificateKeyFile+ to your own certificates (it's easiest to create these
-   certificates if you've already run Puppet at least once).
-6. You will also need to enable Passenger and mod_ssl in Apache:
+5. 编辑这个文件，将 +SSLCertificateFile+ 和 +SSLCertificateKeyFile+
+   的值修改为你自己的证书（最简单地生成证书的方法是你已经运行 Puppet 至少一次）。
+6. 你还要在 Apache 中启用 Passenger 和 mod_ssl 模块：
 +
 .........
 # a2enmod passenger ssl
 .........
 
-7. Add the following lines to your +/etc/puppet/puppet.conf+:
+7. 添加如下的行到你的 +/etc/puppet/puppet.conf+ 文件：
 +
 --------
 ssl_client_header = SSL_CLIENT_S_DN
 ssl_client_verify_header = SSL_CLIENT_VERIFY
 --------
 
-8. Stop your existing Puppetmaster if it is running.
-9. Start Apache as follows:
+8. 停止正在运行的 Puppetmaster。
+9. 启动 Apache：
 +
 .........
 # /etc/init.d/apache2 restart
 .........
 
-10. If everything has worked, you will be able to run Puppet as usual:
+10. 如果一切工作正常，你可以像往常一样运行 Puppet：
 +
 ...........
 # puppet agent --test
@@ -172,19 +178,18 @@ notice: Finished catalog run in 0.25 seconds
 ...........
 
 
-==== How it works…
+==== {Howitworks}
 
-Instead of using Puppet's built-in web server, which is rather slow and can only handle one
-connection at a time, you'll now be using the high-performance multi-threaded Apache web
-server. Puppet is embedded as an application using the Rack framework, which is much more
-efficient. You should find that you can handle many more clients and more frequent Puppet
-runs using the "Apache + Passenger" configuration, and that the impact on server memory
-and performance is less than using the standard Puppetmaster daemon.
+Puppet 内置的 web 服务器处理速度相当慢，每次只能处理一个请求，使用 Apache
+替换它之后，现在你就可以使用这个高性能多线程的 web 服务器了。
+在这种情况下，Puppet 是一个使用 Rack架构（Rack framework） 的嵌入式应用程序，
+这大大提高了运行效率。你应该会发现，使用 "Apache + Passenger" 
+的配置能处理更多的客户端和更频繁的 Puppet 请求，并且改善了服务器内存的占用，
+使用的内存比标准的 Puppetmaster 守护进程占用的内存更少。
 
-==== There's more…
+==== {Theresmore}
 
-Here is an example Puppet manifest that will implement the preceding steps for you
-(on an Ubuntu system):
+下面是一个 Puppet 配置清单的示例，用于为你实现上面的处理步骤（基于 Ubuntu 系统）：
 
 ----
 class puppet::passenger {
@@ -232,22 +237,18 @@ class puppet::passenger {
 }
 ----
 
-Once you're up and running with Passenger, you can use the following command to restart the
-Puppetmaster application:
-
+一旦你以 Passenger 方式运行，就可以使用如下命令重新启动 Puppetmaster 应用程序：
 ........
 # service apache2 restart
 ........
 
-To monitor that Passenger is running, check for the process named
-+ApplicationPoolServerExecutable+.
+为了监视 Passenger 正在运行，可以检查名为 +ApplicationPoolServerExecutable+ 的进程。
 
-You can also load-balance Passenger instances in the same way that you would for a regular
-web application.
+你也可以用配置常规 web 应用的方法为 Passenger 实例配置负载均衡。
 
-For more details, or if you run into problems, consult the *Puppet-on-Passenger* documentation
-at: http://projects.puppetlabs.com/projects/1/wiki/Using_Passenger
+更多详细信息，或者如果你遇到问题，可以参考 *Puppet-on-Passenger* 文档：
+http://projects.puppetlabs.com/projects/1/wiki/Using_Passenger 。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec10,Creating decentralized Puppet architecture>> in this chapter
+- 本章的 <<ch01sec10,{Recipe110}>> 一节

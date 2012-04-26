@@ -1,13 +1,12 @@
-﻿[[ch07sec04]]
-=== Creating MySQL databases and users
+[[ch07sec04]]
+=== {Recipe704}
 
-MySQL is a very widely used database server, and it's fairly certain you'll need to install and
-configure a MySQL server at some point. This recipe will show you how to do that, as well as
-how to automatically create databases and users for applications.
+MySQL 是一个使用广泛的数据库服务器，你肯定会在某些节点上安装配置 MySQL 服务器。
+本节将向你展示如何安装配置 MySQL 服务器，以及如何为应用程序自动创建数据库和用户。
 
-==== Getting ready…
+==== {Gettingready}
 
-1. If you don't already have a MySQL module, let's create one:
+1. 如果你还没有 MySQL 模块，先创建一个：
 +
 ....
 # mkdir /etc/puppet/modules/mysql
@@ -15,8 +14,7 @@ how to automatically create databases and users for applications.
 # mkdir /etc/puppet/modules/files
 ....
 
-2. Create the file +/etc/puppet/modules/mysql/manifests/server.pp+ with the
-   following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/mysql/manifests/server.pp+ 文件：
 +
 ----
 class mysql::server {
@@ -45,8 +43,7 @@ class mysql::server {
 }
 ----
 
-3. Create the file +/etc/puppet/modules/mysql/files/my.cnf+ with the following
-   contents:
+3. 使用如下内容创建 +/etc/puppet/modules/mysql/files/my.cnf+ 文件：
 +
 ----
 [client]
@@ -66,13 +63,13 @@ datadir = /var/lib/mysql
 !includedir /etc/mysql/conf.d/
 ----
 
-4. Add this to +/etc/puppet/manifests/site.pp+:
+4. 添加如下代码到 +/etc/puppet/manifests/site.pp+ 文件：
 +
 ----
 $mysql_password = "secret"
 ----
 
-5. Run Puppet:
+5. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -104,9 +101,9 @@ notice: /Stage[main]/Mysql::Server/Service[mysql]: Triggered
 notice: Finished catalog run in 61.78 seconds
 ....
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to +/etc/puppet/modules/mysql/manifests/server.pp+:
+1. 添加如下代码到 +/etc/puppet/modules/mysql/manifests/server.pp+ 文件：
 +
 ----
 define db( $user, $password ) {
@@ -123,7 +120,7 @@ define db( $user, $password ) {
 }
 ----
 
-2. Add this to a node as follows:
+2. 添加如下代码到一个节点：
 +
 ----
 mysql::server::db { "johnstest":
@@ -132,7 +129,7 @@ mysql::server::db { "johnstest":
 }
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -146,7 +143,7 @@ Exec[create-johnstest-db]/returns: executed successfully
 notice: Finished catalog run in 1.61 seconds
 ....
 
-4. Check that the database has been created with the correct user and permissions:
+4. 检查数据库是否已经创建，以及用户和权限的正确性：
 +
 ....
 # mysql -ujohn -pjohnstest johnstest
@@ -164,17 +161,17 @@ input statement.
 mysql>
 ....
 
-==== How it works…
+==== {Howitworks}
 
-The +mysql::server+ class installs and configures MySQL with a root password that you can
-set in your +site.pp+ file. The +define+ function, +mysql::server::db+ allows us to create a
-database with a given name, and an associated MySQL user that can access the database.
-For example, a typical web application might have a database named after the application,
-and a special username the application will use to log in to the database.
++mysql::server+ 类安装 MySQL，并使用你在 +site.pp+ 文件中设置的 root 用户口令配置 MySQL。
+名为 +mysql::server::db+ 的 +define+ 允许我们使用一个指定的名字创建数据库，
+以及一个能访问此数据库的相关的 MySQL 用户。
+例如，一个典型的 web 应用程序可能需要一个以应用程序命名的数据库，
+以及一个可以登录数据库的特定用户名。
 
-==== There's more…
+==== {Theresmore}
 
-To create more databases, just add more +mysql::server::db+ instances:
+要创建多个数据库，只需添加多个 +mysql::server::db+ 实例：
 
 ----
 mysql::server::db { [ "test1", "test2", "test3" ]:

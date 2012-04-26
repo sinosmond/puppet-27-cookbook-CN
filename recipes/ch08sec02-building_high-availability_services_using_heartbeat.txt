@@ -1,27 +1,25 @@
-﻿[[ch08sec02]]
-=== Building high-availability services using Heartbeat
+[[ch08sec02]]
+=== {Recipe802}
 
 [quote, 'Spaceballs',]
 Even in the future, nothing works!
 
-Sooner or later, everything breaks. High-availability services are those that can survive the
-failure of an individual machine or network connection. The primary technique for high
-availability is redundancy, otherwise known as throwing hardware at the problem. Although
-the eventual failure of an individual server is certain, the simultaneous failure of two servers
-is unlikely enough that this provides a good level of redundancy for most applications.
+一切迟早都会发生故障。高可用服务就是指当一个主机或网络线路失效时仍旧能够提供服务。
+高可用性的主要技术就是冗余，另外，这个问题的解决就是以投放更多硬件设备而著称的。
 
-One of the simplest ways to build a redundant pair of servers is to have them share an
-IP address using Heartbeat. *Heartbeat* is a daemon which runs on both machines and
-exchanges regular messages -- heartbeats -- between the two. One server is the primary, and
-normally has the resource: in this case, an IP address. If the secondary server fails to detect a
-heartbeat from the primary, it can take over the address, ensuring continuity of service.
+虽然最终肯定会有单独的一台服务器失效，但是两台服务器同时失效的概率是不太高的，
+这对大多数的应用程序提供了一个良好的冗余水平。
 
-In this recipe we'll set up two machines in this configuration using Puppet, and I'll explain how
-to use it to provide a high-availability service.
+最简单的方法之一是建立一对冗余服务器，它们共享一个 IP 地址，并使用心跳检测。
+**心跳**（**Heartbeat**）是一个守护进程，它同时运行在两台机器上并且定期彼此交换信息（heartbeats）。
+其中的一台是主服务器，通常它拥有资源：在本例中是一个 IP 地址。
+如果辅助服务器无法从主服务器检测到心跳信号，它就接管地址以确保服务的连续性。
 
-==== How to do it…
+在下面的处方中，我们将使用 Puppet 的配置设置两台机器，并解释如何使用它提供一个高可用服务。 
 
-1. Create a +heartbeat+ module as follows:
+==== {Howtodoit}
+
+1. 创建如下的 +heartbeat+ 模块：
 +
 ....
 # mkdir /etc/puppet/modules/heartbeat
@@ -29,8 +27,7 @@ to use it to provide a high-availability service.
 # mkdir /etc/puppet/modules/heartbeat/files
 ....
 
-2. Create the file +/etc/puppet/modules/heartbeat/manifests/init.pp+ with
-   the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/heartbeat/manifests/init.pp+ 文件：
 +
 ----
 class heartbeat {
@@ -69,30 +66,26 @@ class heartbeat {
 }
 ----
 
-3. Create the file +/etc/puppet/modules/heartbeat/files/haresources+ with
-   the following contents. Substitute for +cookbook+ the name of your primary server.
-   This should be whatever is returned by `uname -n` on the server. For +10.0.2.100+
-   substitute the IP address you want to share between the two machines. This should
-   be an address that is currently unused on your network. Heartbeat will assign it to the
-   interface listed at the end (+eth0:1+ in this case).
+3. 使用如下内容创建 +/etc/puppet/modules/heartbeat/files/haresources+ 文件。
+   将 +cookbook+ 替换成你的主服务器的主机名。这可以通过在主服务器上运行 `uname -n` 命令获得。
+   将 +10.0.2.100+ 替换成你要在两台主机上共享的 IP 地址（这应该是当前网络上还未使用的地址）。
+   最后列出的接口是分配给心跳检测的（本例中是 ++eth0:1++）。
 +
 ----
 cookbook IPaddr::10.0.2.100/24/eth0:1
 ----
 
-4. Create the file +/etc/puppet/modules/heartbeat/files/authkeys+ with the
-   following contents (replace +topsecretpassword+ with a password of your own
-   choosing):
+4. 使用如下内容创建 +/etc/puppet/modules/heartbeat/files/authkeys+ 文件
+   （使用你自己选择的口令替换 ++topsecretpassword++）：
 +
 ----
 auth 1
 1 sha1 topsecretpassword
 ----
 
-5. Create the file +/etc/puppet/modules/heartbeat/files/ha.cf+ with the
-   following contents. Replace the two IP addresses with the main addresses of your
-   two machines. Similarly, replace +cookbook+ and +cookbook2+ with the node names
-   of your machines (whatever is returned by `uname -n`).
+5. 使用如下内容创建 +/etc/puppet/modules/heartbeat/files/ha.cf+ 文件
+   替换下面的两个 IP 地址为你自己的两台机器上 eth0 接口对应的 IP 地址。
+   同样需替换 +cookbook+ 和 +cookbook2+ 为你自己的两台机器的主机名（可以通过运行 `uname -n` 命令获得）。
 +
 ----
 autojoin none
@@ -108,7 +101,7 @@ node cookbook2
 use_logd yes
 ----
 
-6. Run Puppet on each of the two servers:
+6. 在两台冗余服务器上都运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -141,63 +134,62 @@ notice: /Stage[main]/Heartbeat/Exec[reload-heartbeat]: Triggered
 notice: Finished catalog run in 27.01 seconds
 ....
 
-7. On the primary node, check that it has the resource:
+7. 在主服务器节点上，检查它的资源：
 +
 ....
 # cl_status rscstatus -m
 This node is holding all resources.
 ....
 
-8. On the secondary, you should see this:
+8. 在辅助服务器节点上，你应该可以看到如下信息：
 +
 ....
 # cl_status rscstatus -m
 This node is holding none resources.
 ....
 
-9. Stop the Heartbeat service on the primary node:
+9. 在主节点上禁用 Heartbeat 服务：
 +
 ....
 # service heartbeat stop
 ....
 
-10. The secondary node should now be holding the resource:
+10. 辅助节点现在应该接管了资源：
 +
 ....
 # cl_status rscstatus -m
 This node is holding all resources.
 ....
 
-==== How it works…
+==== {Howitworks}
 
-The Heartbeat daemon runs on each machine, listening for heartbeats from the other. If the
-primary detects that the secondary has gone down, nothing happens. On the other hand,
-if the secondary detects that the primary has gone down, it fails over (takes over) the IP
-address. When the primary comes back up, the secondary will relinquish the address again
-(if +auto_failback+ is set to on). In some cases, for example if you're sharing the IP address
-between a master and slave database server, you may not want this behavior, in which case
-set +auto_failback+ to off.
+两台服务器上都运行了心跳守护进程，彼此监听心跳信号。
+如果主服务器检测到辅助服务器已宕机，什么也不会发生。
+而相反地，如果辅助服务器检测到主服务器已宕机，它就接管 IP 地址。
+当主服务器恢复运行后，辅助服务器将再次放弃此地址，重新由主服务器接管 IP 地址
+（如果 +auto_failback+ 设置成了 on）。
+在某些情况下，例如：如果你在主数据库服务器和从数据库服务器之间共享 IP 地址，
+你可能不希望这种行为发生，在这种情况下应该将 +auto_failback+ 设置成了 off。
 
-==== There's more…
+==== {Theresmore}
 
-Now that you have a shared IP address (really a misnomer, since the address is not 'shared',
-but swaps between one server and the other) you can use it to provide a high-availability
-service on this address. For example, if the servers are hosting a website, you can set the DNS
-record for the website to point to the shared address. When the primary server goes down, the
-secondary will take over and continue responding to HTTP requests on the address.
+现在你有一个共享的 IP 地址（真是名不副实，因为这个地址不是“共享”的，而是在两个服务器之间切换），
+你可以用这个地址来提供高可用性的服务。例如，如果服务器是被托管的 web 站点，
+你应该为 web 站点设置 DNS 记录指向这个共享的 IP 地址。
+当主服务器宕机时，辅助服务器将接管 IP 地址并继续响应基于此地址的 HTTP 请求。
 
 
 [TIP]
 ================
-If you're using an SSL site, you will need to configure the SSL virtual host
-with the shared IP address, or it won't be able to respond to requests on
-that IP. Also, if the website uses sessions, any sessions on the primary
-server will be lost following a failover, unless the sessions are stored in
-a separate shared database.
+如果你正在使用 SSL 站点，你需要配置基于共享 IP 地址的 SSL 虚拟主机，
+否则将不能响应基于这个 IP 的 HTTPs 请求。 
+
+另外，如果这个 web 站点使用了 sessions，主服务器上的任何 sessions 在故障转移后将会丢失，
+除非 sessions 存储在一个分离的共享数据库中。
 ================
 
-A shared IP address is a great way of pairing redundant load balancers (see the section on
-<<ch08sec04,Using HAProxy to load-balance multiple web servers>>). 
-You can also use it to provide redundant Puppetmaster machines. A suitable
-pattern is presented on the Puppet Labs site: 
-http://projects.puppetlabs.com/projects/1/wiki/High_Availability_Patterns.
+共享 IP 地址也是实现双路冗余负载均衡器的一种好方式
+（参考 <<ch08sec04,{Recipe804}>> 一节）。 
+你也可以使用这种方式为 Puppetmaster 主机提供冗余服务。
+在 Puppet Labs 站点给出了一个合适的模式： 
+http://projects.puppetlabs.com/projects/1/wiki/High_Availability_Patterns 。

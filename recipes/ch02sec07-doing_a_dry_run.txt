@@ -1,23 +1,23 @@
-﻿[[ch02sec07]]
-=== Doing a dry run
+[[ch02sec07]]
+=== {Recipe207}
 
 [quote, Radiohead,]
 No alarms and no surprises.
 
-I hate surprises. Sometimes your Puppet manifest doesn't do exactly what you expected, or
-perhaps someone else has checked in changes you didn't know about. Either way, it's good
-to know exactly what Puppet is going to do before it does it.
+我讨厌惊喜。有时你的 Puppet 配置清单没有像你预期的那样执行，
+或者在你不知情的情况下，或许别人又提交了改变。
+不管哪种情况发生，在 Puppet 执行配置清单之前能精确地获知它将要执行些什么是非常必要的。
 
-For example, if it would update a config file and restart a production service this could result
-in unplanned downtime. Also, sometimes manual configuration changes are made on a server
-which Puppet would overwrite.
+例如，若更新了一个生产服务的配置文件并重新启动该服务，很可能会导致非计划性的停机时间。
+又如，有时人为的手动编辑的配置文件会被 Puppet 同步更新时覆盖。
 
-To avoid these problems, you can use Puppet's *dry run* mode (also called *noop* mode, for
-*no operation*).
+为了避免这些问题，你可以使用 Puppet 的 **模拟运行**（**dry run**）模式，
+也称 **无操作**（**no operation，noop**）模式，来避免真正的执行。
 
-==== How to do it…
 
-Run Puppet with the `--noop` switch:
+==== {Howtodoit}
+
+使用 `--noop` 开关运行 Puppet：
 
 ......
 # puppet agent --test --noop
@@ -42,27 +42,25 @@ notice: /Stage[main]/Admin::Exim/Service[exim4]: Would have triggered
 notice: Finished catalog run in 0.90 seconds
 ......
 
-==== How it works…
+==== {Howitworks}
 
-In +noop+ mode, Puppet does everything it would normally, with the exception of actually
-making any changes to the machine. It tells you what it would have done, and you can
-compare this with what you expected to happen. If there are any differences, double-check
-the manifest or the current state of the machine.
+在 +noop+ 模式下，Puppet 会和常规运行模式一样运行，只是不会对客户端产生实际影响。
+它会告知最终将会执行什么，你可以和你所预期的进行对比。如果有任何不同，重新检查配置清单
+或机器的当前状态。
 
-In the preceding example, note that Puppet warns us it would have restarted the `exim`
-service, due to a config file update. This may or may not be what we want, but it's useful
-to know in advance. I make it a rule, when applying any non-trivial changes on production
-servers, to run Puppet in +noop+ mode first, and verify what's going to happen.
+在前面的例子中，注意 Puppet 警告我们由于配置文件更新，它将会重新启动 `exim` 服务。
+这或许是我们所期待的，也可能不是， 但不管怎样，预先知道这样的警告是有用的。 
+我制定了一个流程规则， 当在生产服务器上应用任何重要更新之前, 先在 +noop+
+模式下运行 Puppet，验证发生的改变是否与我们预期一致。
 
-==== There's more…
+==== {Theresmore}
 
-You can also use dry run mode as a simple auditing tool. It will tell you if any changes have
-been made to the machine since Puppet last applied its manifest. Some organizations require
-all config changes to be made with Puppet, which is one way of implementing a change
-control process. Unauthorized changes can be detected using Puppet in the dry run mode
-where you can then decide whether to merge the changes back into the Puppet manifest, or
-undo them.
+你也可以使用模拟运行模式作为一个简单的审计工具。
+它会告诉你从 Puppet 最近一次应用配置清单之后的任何改变。
+一些组织要求所有的配置变更都通过 Puppet 来实现，这是一种对变更实施控制的过程。
+使用 Puppet 的模拟运行模式可以检测到未授权的更改，之后决定是否合并应用这些改变到
+Puppet 的配置清单，或者撤消改变。
 
-==== See also
+==== {Seealso}
 
-- <<ch06sec12,Auditing resources>> in Chapter 6
+- 第 6 章的 <<ch06sec12,{Recipe612}>> 一节

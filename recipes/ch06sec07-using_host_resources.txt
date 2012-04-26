@@ -1,24 +1,22 @@
-﻿[[ch06sec07]]
-=== Using host resources
+[[ch06sec07]]
+=== {Recipe607}
 
 [quote, Number Six, "The Prisoner",]
 I am not a number.
 
-It's a common practice to move machines around, especially on cloud infrastructure, so the IP
-of a particular machine may change quite often. Because of this, it's obviously a bad idea to
-hard-code IP addresses into your configuration. Where one machine needs to access another,
-for example, an app server accessing a database server: it's better to use a hostname than an
-IP address.
+将机器搬来搬去是很常见的做法，尤其是在云的基础设施中搬动，所以一个特定主机的 IP 经常会改变。
+正因为如此，在你的配置中使用硬编码的 IP 地址显然是个坏主意。
+如果一台机器要访问另一台（例如，一个应用服务器需要访问一台数据库服务器），
+那么使用主机名而不是 IP 地址会更好。
 
-But how to map names to IP addresses? This is often done with DNS, but small organizations
-may not have a DNS server, and large organizations may make it so time-consuming and
-bureaucratic to implement DNS changes that no one bothers. Also, DNS information can
-propagate to machines at different times, so to ensure quick and consistent address updates,
-one approach is to use local +/etc/hosts+ entries, controlled by Puppet.
+然而，如何映射主机名到 IP 地址呢？这通常会使用 DNS，但小型组织里一般没有 DNS 服务器，
+而大型组织要无想困扰地实现 DNS 更新也是相当费时的。 此外，将 DNS
+信息传播到不同机器也需要不同的时间，因此确保快速而一致的 IP 地址更新的一种方法是使用由
+Puppet 管理的本地主机表文件 +/etc/hosts+ 中的条目。 
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 host { "www.bitfieldconsulting.com":
@@ -28,7 +26,7 @@ host { "www.bitfieldconsulting.com":
 }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -45,24 +43,24 @@ info: FileBucket adding /etc/hosts as {md5}977bf5811de978b7f041301
 notice: Finished catalog run in 0.21 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-Puppet will check the target file to see if the host entry already exists, and if not, add it, or if it
-exists with a different address, Puppet will update it.
+Puppet 将检查由 +target+ 指定的文件，若主机条目不存在，Puppet 就会添加此条目；
+若主机条目存在但 IP 地址不同，Puppet 就会更新此条目。
 
-Although there are other possible targets than +/etc/hosts+, this is the default, and the only
-one you're likely to need. I think it's a good practice to specify it explicitly even so, as relying on
-default behavior has a tendency to make the code fragile.
+虽然可以使用有别于 +/etc/hosts+ 的目标文件，但这是默认值，你只需要一个目标文件
+（即不能使用数组同时指定多个文件）。
+我认为明确地指定 +host+ 资源的默认值是个很好的做法，
+因为依托默认的行为会有使代码变得脆弱的倾向。
 
-==== There's more…
+==== {Theresmore}
 
-Organizing your host resources into classes can be helpful. For example, you could put the
-host resources for all your DB servers into one class called +admin::dbhosts+, which is
-included by all web servers.
+将你的 +host+ 资源组织到类中会对你有帮助。例如，你可以将所有数据库服务器的 +host+
+资源放置在一个名为 +admin::dbhosts+ 的类中，然后在所有的 web 服务器中包含这个类。
 
-When machines may need to be defined in multiple classes (for example, a database server
-might also be a repository server), virtual resources can solve this problem. For example, you
-could define all your hosts as virtual in a single class as follows:
+一些主机可能需要在多个类中同时定义（例如，一个数据库服务器也可以是一个仓库服务器），
+使用虚拟资源可以解决这个问题。例如你可以像下面这样，
+在一个单独的类中将所有的主机定义成虚拟资源：
 
 ----
 class admin::allhosts
@@ -71,7 +69,7 @@ class admin::allhosts
 }
 ----
 
-Then +realize+ the hosts that you need in the various classes:
+然后在不同的类中 +realize+ 你需要的主机：
 
 ----
 class admin::dbhosts

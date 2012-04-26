@@ -1,15 +1,14 @@
-﻿[[ch09sec04]]
-=== Generating manifests from a running system
+[[ch09sec04]]
+=== {Recipe904}
 
-While `cft` generates Puppet manifests from a system administrator's console session,
-*puppet resource* generates Puppet manifests from the existing configuration of a system. For
-example, you can have +puppet resource+ generate a manifest that creates all the users
-found on the system. This is very useful for taking a snapshot of a working system and getting
-its configuration quickly into Puppet.
+除了使用 `cft` 从系统管理员的控制台会话生成 Puppet 配置清单以外，
+还可以使用 *puppet resource* 从系统中已存在的配置生成 Puppet 配置清单。
+例如，你可以使用 +puppet resource+ 生成系统中所有用户的配置清单。
+这对于生成工作系统的快照并将这些配置快速转换到 Puppet 是相当有用的。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. To generate the manifest for a particular user, run:
+1. 要生成指定用户的配置清单，请运行：
 +
 ----
 # puppet resource user john
@@ -27,7 +26,7 @@ user { 'john':
 }
 ----
 
-2. For a particular service, run:
+2. 要生成指定服务的配置清单，请运行：
 +
 ----
 # puppet resource service ntp
@@ -37,7 +36,7 @@ service { 'ntp':
 }
 ----
 
-3. For a package, run:
+3. 要生成指定软件包的配置清单，请运行：
 +
 ----
 # puppet resource package exim4
@@ -46,11 +45,11 @@ package { 'exim4':
 }
 ----
 
-==== There's more…
+==== {Theresmore}
 
-You can use +puppet resource+ to examine each of the resource types available in Puppet.
-In the preceding examples, we generated a manifest for a specific instance of the resource
-type, but you can also use +puppet resource+ to dump all instances of the resource:
+你可以使用 +puppet resource+ 检查 Puppet 每种可用的资源类型。
+在上面的例子中，我们针对一个资源类型的具体实例生成了配置清单，
+然而你也可以使用 +puppet resource+ 导出一种资源类型的所有实例：
 
 ----
 # puppet resource user
@@ -79,4 +78,4 @@ user { 'avahi':
 ...
 ----
 
-This will generate a lot of output!
+这会产生许多输出！

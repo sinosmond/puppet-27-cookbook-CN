@@ -1,32 +1,28 @@
-﻿[[ch05sec04]]
-=== Using ERB templates
+[[ch05sec04]]
+=== {Recipe504}
 
-A *template* is a text file with a college degree. It can do calculations, execute Ruby code, or
-reference the values of variables from your Puppet manifests. Anywhere you might deploy a
-text file using Puppet, you can use a template instead. In the simplest case, a template can
-just be a static text file. More usefully, you can insert variables into it using *ERB*
-(*embedded Ruby*) syntax. For example:
+**模板**（**template**）是一种高级别的文本文件。它可以做计算、执行 Ruby 代码或者引用你在
+Puppet 配置清单中定义的变量值。能被 Puppet 部署的任何一个文本文件，你都可以使用模板来代替。 
+最简单的情况，一个模板可以仅是一个静态文本文件。更有用的情况是，你可以使用 *ERB*
+（**嵌入式 Ruby**）语法在模板中插入变量。例如：
 
 ----
     <%= name %>, this is a very large drink.
 ----
 
-If the template is used in a context where the variable +$name+ contains 
-+Zaphod Beeblebrox+, the template will evaluate as follows:
+如果模板使用了变量 ++$name++，其值为 ++Zaphod Beeblebrox++，模板将解析为：
 
 ----
     Zaphod Beeblebrox, this is a very large drink.
 ----
 
-This simple technique is very useful for generating lots of files that only differ in the values
-of one or two variables such as virtual hosts -- and for inserting values into a script such
-as database names and passwords. In this example, we'll use an ERB template to insert a
-password into a backup script.
+这种简单的技术非常有用，一种情形是要生成一批文件且它们仅有一两个变量的值不同
+（例如虚拟主机的配置文件）；另一种情形是要向一个脚本中插入值（例如数据库名或口令）。
+在下面的例子中，我们将使用一个 ERB 模板插入口令到一个备份脚本。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create the file +/etc/puppet/modules/admin/templates/backup-mysql.sh+
-   with the following content:
+1. 使用下面的内容创建 +/etc/puppet/modules/admin/templates/backup-mysql.sh+ 文件：
 +
 [source,bash]
 ----
@@ -35,17 +31,17 @@ password into a backup script.
 | /bin/gzip > /backup/mysql/all-databases.sql.gz
 ----
 
-2. Add the following to your manifest:
+2. 添加如下代码到你的配置清单：
 +
 ----
 $mysql_password = "secret"
-    file { "/usr/local/bin/backup-mysql":
+file { "/usr/local/bin/backup-mysql":
     content => template("admin/backup-mysql.sh"),
     mode    => "755",
 }
 ----
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -58,7 +54,7 @@ ensure: defined content as '{md5}5853b6d4dd72420e341fa7ecb8
 notice: Finished catalog run in 0.96 seconds
 ....
 
-4. Check that Puppet has correctly inserted the password into the template:
+4. 检查 Puppet 是否已经在模板中正确地插入了口令：
 +
 --
 ....
@@ -73,33 +69,33 @@ notice: Finished catalog run in 0.96 seconds
 ----
 --
 
-==== How it works…
+==== {Howitworks}
 
-Wherever a variable is referenced in the template, such as +<%= mysql_password %>+
-Puppet will replace it with the corresponding value: +secret+.
+在模板中，无论在哪里引用了变量（例如 ++<%= mysql_password %>++），
+Puppet 都会使用相应的值（例如 ++secret++）替换它。
 
-==== There's more…
+==== {Theresmore}
 
-In the example, we only used one variable in the template, but you can have as many as you
-like. These can also be facts, such as the following:
+在本例中，我们仅在模板中使用了一个变量，但是只要你需要可以引用许多变量。
+它们也可以是对 facts 的引用，例如：
 
 ----
 ServerName <%= fqdn %>
 ----
 
-or Ruby expressions such as:
+或者使用 Ruby 表达式，例如：
 
 ----
 MAILTO=<%= emails.join(',') %>
 ----
 
-or any Ruby code you want such as:
+或者你要使用的任何 Ruby 代码，例如：
 
 ----
 ServerAdmin <%= sitedomain == 'coldcomfort.com' ? 'seth@coldcomfort.com'
  : 'flora@poste.com' %>
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch05sec05,Using array iteration in templates>> in this chapter
+- 本章的 <<ch05sec05,{Recipe505}>> 一节

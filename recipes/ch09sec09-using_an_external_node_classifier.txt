@@ -1,9 +1,9 @@
-﻿[[ch09sec09]]
-=== Using an external node classifier
+[[ch09sec09]]
+=== {Recipe909}
 
-When Puppet runs on a node, it needs to know which classes should be applied to that node.
-For example, if it is a web server node, it might need to include an +apache+ class. The normal
-way to map nodes to classes is in the Puppet manifest itself, for example in a +nodes.pp+ file:
+当 Puppet 运行在一个节点上，它需要知道这个节点应该应用了哪些类。
+例如，如果这是一个 web 服务器节点，它可能需要包含一个 +apache+ 类。
+将类映射到节点的简单方法是在配置清单里声明，例如下面是一个 +nodes.pp+ 文件的例子：
 
 ----
 node web1 {
@@ -11,14 +11,14 @@ node web1 {
 }
 ----
 
-Alternatively, you can use an *external node classifier* to do this job. An external node classifier
-is any executable program that can accept a node name and return a list of classes for that
-node. It could be a simple shell script, for example, or a wrapper around a more complicated
-program or API that can decide how to map nodes to classes.
+另外，你可以使用 **外部节点分类器**（**external node classifier，ENC**）来实现这个工作。
+一个外部节点分类器是任何可执行程序，它可以接受一个节点的名称，并返回该节点的类列表。 
+例如，这可能是一个简单的 shell 脚本，
+或者是对一个可以决定如何映射类到节点的更复杂的程序或 API 的封装。
 
-==== Getting ready…
+==== {Gettingready}
 
-Set the following variables in your +puppet.conf+:
+在你的 +puppet.conf+ 配置文件中设置如下的参数：
 
 ----
 [master]
@@ -26,9 +26,9 @@ external_nodes = /usr/local/bin/puppet_node_classifier
 node_terminus  = exec
 ----
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create this simple example script as +/usr/local/bin/puppet_node_classifier+:
+1. 创建如下的简单脚本 ++/usr/local/bin/puppet_node_classifier++：
 +
 ----
 #!/bin/bash
@@ -51,13 +51,13 @@ else
 fi
 ----
 
-2. Make the script executable:
+2. 为该脚本添加可执行权限：
 +
 ....
 # chmod 755 /usr/local/bin/puppet_node_classifier
 ....
 
-3. Run Puppet:
+3. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -67,36 +67,33 @@ info: Applying configuration version '1299677816'
 notice: Finished catalog run in 1.19 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-Puppet calls the script you specify as +external_nodes+ in +puppet.conf+ and passes the
-name of the node as the command-line argument. In our example script, we check this
-argument and if it is equal to cookbook.bitfieldconsulting.com, we output a list of
-classes in the required format for Puppet. Otherwise, the script exits with status 1 (indicating
-to Puppet that the node was not found).
+Puppet 调用你在 +puppet.conf+ 中由参数 +external_nodes+ 指定的脚本，
+并传递节点的名称作为命令行参数。在本例的脚本中，我们检查这个参数，
+如果它与 +cookbook.bitfieldconsulting.com+ 相同，将为其输出一个 Puppet 所需的 YAML 格式的类列表。
+否则，此脚本将返回退出状态码 1（向 Puppet 指出该节点没有被发现）。
 
-The script also sets the value of +environment+ (see the section on <<ch02sec15,Using environments>> for
-an explanation of this parameter). The variable +location+ is also set to +Bitfield HQ+ -- this
-means nothing to Puppet, but the variable will be defined in scope in your manifest, so you
-could use it to determine DNS resolver settings, for example. You can set any variables you
-like here.
+该脚本还设置了 +environment+ 的值（参见 <<ch02sec15,{Recipe215}>> 一节中关于这个参数的解释）。
+同时将变量 +location+ 设置成了 +Bitfield HQ+ -- 此变量是个自定义变量，对于 Puppet 并无特殊含义， 
+但是由于在 ENC 中定义的变量是顶级范围的变量，可以在你的配置清单里引用此处定义的变量， 
+所以，例如你可以使用它决定 DNS 解析器的设置。你可以在此设置任何你需要的变量。
 
-Obviously, this script is not terribly useful since it just outputs a predetermined list of classes.
-A more sophisticated script might check a database to find the class list, or look up the node
-in a hash or an external text file. Hopefully, this example is enough to get you started writing
-your own external node classifier.
+显然，这个脚本并不十分有用，因为它只是输出了一个预先确定的类列表。
+一个更复杂的脚本可能会检查数据库，从中查找节点所需的类列表，
+或从一个哈希或外部文本文件中查找节点所需的类列表。
+我希望，这个例子足以让你开始写出自己的更复杂的外部节点分类器。
 
-==== There's more…
+有关外部节点分类器的详细信息，请参考： http://docs.puppetlabs.com/guides/external_nodes.html 。
 
-One of the major uses for external node classification is to connect Puppet with an LDAP
-directory. Many large organizations have an LDAP infrastructure, and you can set this up so
-that Puppet can get information on nodes from the LDAP directory, and other LDAP clients can
-also get information about the nodes managed by Puppet.
+==== {Theresmore}
 
-For more information about how to do this, see the "Puppet and LDAP" page at:
-http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes.
+使用外部分类器的主要用途是使 Puppet 可以连接 LDAP 目录服务。
+许多大型组织都有个 LDAP 基础设施，你可以设置 Puppet，使它可以从 LDAP 目录服务获取信息，
+并且其他 LDAP 客户也可以通过 Puppet 获得由其管理的节点信息。
 
-This feature is also used by Puppet Dashboard and Foreman to manage the relationship
-between nodes and classes via a web interface -- they act as external node classifiers.
+欲了解更多有关如何做到这一点的详细信息，请访问 “Puppet 和 LDAP” 页面：
+http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes 。
 
-
+此功能也可用于 Puppet Dashboard 和 Foreman 通过 Web 界面管理节点和类之间的关系
+-- 他们将以外部检点分类器来处理。

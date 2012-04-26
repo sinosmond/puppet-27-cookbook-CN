@@ -1,39 +1,38 @@
-﻿[[ch09sec03]]
-=== Generating manifests from shell sessions
+[[ch09sec03]]
+=== {Recipe903}
 
 [quote, Bobby Fischer,]
 I object to being called a chess genius, because I consider myself to be an all around
 genius who just happens to play chess, which is rather different.
 
-We're not all geniuses. If you know exactly what needs to be done to install some application
-or service, you can create the Puppet manifest right away. Often, though, you need to
-experiment a little bit first, to find out what packages you need to install, what config files need
-to be edited, and so on. You can record your shell session using the +script+ command and
-then work from the session file to develop the Puppet manifest, and this can be very helpful.
+并非所有人都是天才。如果你确切地知道安装一个应用程序或服务都需要做些什么的话，
+你马上就可以创建 Puppet 的配置清单。尽管如此，你通常还是需要首先做些小小的试验，
+比如找到你要安装的软件包、需要编辑哪些配置文件等等。
+你可以使用 +script+ 命令记录你的 Shell 会话，然后根据会话文件的记录内容开发
+Puppet 的配置清单，这是个不错的方法。
 
-But wouldn't it be wonderful if there was a tool that could read your session file and generate
-the Puppet manifest for you? It so happens that *cft* (pronounced 'sift') does just this. Once
-you activate it, `cft` watches your shell session and remembers any packages you install, any
-services that you configure, any files that you create or edit, and so on. When you're done, it
-generates a complete Puppet manifest that will reproduce all the changes you just made.
+但如果有一个工具能通过读取你的会话文件生成 Puppet 配置清单的话是不是更精彩呢？
+为了实现此功能，**cft** （读音为 'sift'）应运而生。
+一旦你激活它，++cft++ 监视你的 Shell 会话并记住你安装的任何软件包、任何服务的配置、
+任何你创建或编辑的文件，等等。
+当会话记录结束，++cft++ 会生成一个重现你刚刚所做的所有改变的完整的 Puppet 配置清单。
 
-==== Getting ready…
+==== {Gettingready}
 
-1. Currently full +cft+ support is only available for Red Hat / CentOS distributions; a port
-   to Debian / Ubuntu is in progress, though, and should soon be completed. If you're
-   using Red Hat or CentOS, then, installation is easy:
+1. 当前完整的 +cft+ 支持仅能用于 Red Hat/CentOS 发行版；针对 Debian/Ubuntu
+   发行版的完整的支持正在开发中，估计不久之后即可完成。
+   如果你正在使用 Red Hat/CentOS，只要安装 +cft+ 即可：
 +
 ....
 # yum install cft
 ....
 
-2. For Debian / Ubuntu systems, follow the instructions here: http://fmtyewtk.blogspot.com/2011/01/porting-cft-to-debian.html.
+2. 对于 Debian/Ubuntu 系统，请参考如下安装说明，网址为：
+   http://fmtyewtk.blogspot.com/2011/01/porting-cft-to-debian.html 。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-1. In this example we'll use +cft+ to monitor the installation of the NTP package,
-   and then generate a manifest to do the same thing.
+1. 在本例中我们将使用 +cft+ 监视 NTP 安装的软件包并生成实现相同功能的配置清单。
 +
 ....
 # cft begin ntp
@@ -92,22 +91,18 @@ class ntp {
 ....
 
 
+==== {Howitworks}
 
-==== How it works…
+首先告诉 `cft` 开始记录系统的改变，并将其会话存储在 ntp 中 -- `cft begin ntp` 。
 
-The first line tells `cft` to start recording changes to the system, and store them in a session
-named ntp -- `cft begin ntp`.
+然后，当你安装 +ntp+ 软件包时，++cft++ 会记录这个事实。
+软件包安装了服务的启动脚本，配置了在机器启动时启动服务，++cft++ 同时也记录了这些。
+最后，++cft++ 注意到你编辑了 +/etc/ntp.conf+ 文件，并保存了一份修改后的拷贝已被后用。
 
-Then, when you install the +ntp+ package, +cft+ records this fact. The package install scripts
-start the service and configure it to start at boot, so +cft+ records this too. Finally, it notices
-that you edited the file +/etc/ntp.conf+, and saves a copy of this for later.
+当你运行 `cft finish ntp` 命令，这会停止记录变化。
+现在你可以使用 `cft manifest ntp` 命令生成与你的控制台会话等效的 Puppet 配置清单。
 
-When you run the command `cft finish ntp` it stops recording changes. You can now
-generate the manifest, which is the Puppet equivalent of your console session with
-the command `cft manifest ntp`.
-
-As you can see, the generated manifest contains the package declaration (triggered by
-`apt-get install ntp`):
+正如你看到的，生成的配置清单包括了 +package+ 声明（由命令 `apt-get install ntp` 触发）：
 
 ----
 package { 'ntp':
@@ -115,8 +110,7 @@ package { 'ntp':
 }
 ----
 
-It also contains the service declaration that reproduces the effect of the package install
-scripts, starting the service and enabling it on boot:
+同时包括了再现包安装脚本作用的 +service+ 声明，启动服务并设置开机启动：
 
 ----
 service { 'ntp':
@@ -125,17 +119,16 @@ service { 'ntp':
 }
 ----
 
-This declaration would also have been generated if you configured the service manually, with
-the following command:
+这个声明是由于你手动配置了如下命令所生成的：
 
 ....
 # service ntp start
 # update-rc.d ntp defaults
 ....
 
-The final part of the manifest encapsulates the changes to the +ntp.conf+ file. `cft` doesn't
-know what changes you made, but only that the file was changed, so it takes a copy of the
-whole file and makes this available for you to distribute from Puppet:
+配置清单的最后一部分封装了 +ntp.conf+ 文件的改变。
+`cft` 只知道你对这个文件做了改变，但不知道你具体做了哪些改变，
+所以 `cft` 将修改后的整个文件做为一个拷贝，并使其可以通过 Puppet 分发这个文件：
 
 ----
 file { '/etc/ntp.conf':
@@ -146,14 +139,13 @@ file { '/etc/ntp.conf':
 }
 ----
 
-When you add this manifest to Puppet, you will need to also copy the +ntp.conf+ file from the
-path shown (+/tmp/cft/ntp/after/etc/ntp.conf+), place this somewhere appropriate in
-your module tree, and then update the +source+ parameter accordingly.
+当你将此配置清单放入 Puppet，还需要从原始路径（++/tmp/cft/ntp/after/etc/ntp.conf++）
+复制 +ntp.conf+ 文件到你的模块树的适当位置，并根据这个位置修改 +source+ 参数的值。
 
 
-==== There's more…
+==== {Theresmore}
 
-`cft` is a powerful tool for quickly prototyping Puppet manifests. You could take a newly built
-box, work on it all day under `cft` getting everything installed and working, and then generate
-the Puppet manifest that encodes your entire session. This will need some editing, of course,
-but it's much faster than writing the manifests from scratch.
+`cft` 是快速生成 Puppet 配置清单原型的一个强大工具。
+你可以找一台构建配置清单的主机，尽可能使用 `cft` 记录你的安装和配置过程，
+并使用它对整个会话进行编码生成 Puppet 的配置清单。
+虽然这还需要一些额外的编辑工作，但是比你从头开始编写配置清单要快得多。

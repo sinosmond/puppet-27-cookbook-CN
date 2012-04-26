@@ -1,19 +1,17 @@
-﻿[[ch06sec13]]
-=== Temporarily disabling resources
+[[ch06sec13]]
+=== {Recipe613}
 
-Sometimes, you want to disable a resource for the time being, so that it doesn't interfere with
-other work. For example, you might want to tweak a configuration file on the server, until you
-have the exact settings you want, before checking it into Puppet. You don't want Puppet to
-overwrite it with an old version in the meantime, so you can set the +noop+ metaparameter on
-the resource as follows:
+有时候，你希望在不会干扰其他工作的情况下临时禁用一个资源。例如，
+你可能想要调整服务器上的一个配置文件，经过 Puppet 的不断测试，直到获得你想要的确切设置。
+在此期间你不想让 Puppet 覆盖旧版本的配置，为此你可以在资源上设置如下的 +noop+ 元参数：
 
 ----
     noop => true,
 ----
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 添加如下代码到你的配置清单：
 +
 ----
 file { "/tmp/test.cfg":
@@ -22,7 +20,7 @@ file { "/tmp/test.cfg":
 }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -36,7 +34,7 @@ is absent, should be file (noop)
 notice: Finished catalog run in 0.53 seconds
 ....
 
-3. Now, remove the +noop+ parameter:
+3. 测试之后，移除 +noop+ 参数：
 +
 ----
 file { "/tmp/test.cfg":
@@ -44,7 +42,7 @@ file { "/tmp/test.cfg":
 }
 ----
 
-4. Run Puppet again:
+4. 再次运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -59,10 +57,10 @@ defined content as '{md5}746308829575e17c3331bbcb00c0898b'
 notice: Finished catalog run in 0.52 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-The first time we ran Puppet, the +noop+ metaparameter was set to true, so for this particular
-resource, it's as if you had run Puppet with the ++--noop++ flag. Puppet noted that the resource
-would have been applied, but otherwise did nothing.
+首次运行 Puppet 时，由于 +noop+ 元参数被设置为 ++true++， 因此对于这一特定资源，
+与你使用 ++--noop++ 标志运行 Puppet 的效果是一样的。 Puppet 会指出此资源将被应用，
+除此之外什么也没做。
 
-In the second case, with +noop+ removed, the resource is applied as normal.
+再次运行 Puppet 时，由于 +noop+ 元参数被移除，所以此资源会被正常地应用到节点。

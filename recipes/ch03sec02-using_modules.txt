@@ -1,24 +1,23 @@
-﻿[[ch03sec02]]
-=== Using modules
+[[ch03sec02]]
+=== {Recipe302}
 
-Shamed by your Puppet code? Do people blench and look away when they see your
-manifests? One of the most important things you can do to make your Puppet manifests
-clearer and more maintainable is to organize them into *modules*.
+你会对自己编写的 Puppet 代码感到羞愧吗？其他人看你的代码时会有恐惧感吗？
+为了使你的 Puppet 配置清单更清晰且易于维护，一件最重要的事情就是将这些配置清单组织成
+**模块（modules）**。
 
-A module is simply a way of grouping related things; for example, a +webserver+ module might
-include everything necessary to be a webserver such as Apache configuration files, virtual
-host templates, and the Puppet code necessary to deploy these.
+模块是对相关事物进行分组的一种简单方式；例如，一个 +webserver+ 模块可能包含
+作为一个 Web 服务器所需的一切，包括 Apache 配置文件，虚拟主机配置模板以及
+部署这些所需的 Puppet 代码。
 
-Separating things into modules makes it easier to re-use and share code; it's also the most
-logical way to organize your manifests. In this example we'll create a module to manage
-+memcached+, a memory caching system commonly used with web applications.
+将配置清单拆分成模块易于代码的重用和共享；也是一种组织配置清单的最合乎逻辑的方式。
+在本节中，我们将会创建一个管理 +memcached+ 的模块，+memcached+
+是一个 Web 应用程序常用的内存缓存系统。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Find your modulepath; this is set in puppet.conf but the default value is
-   +/etc/puppet/modules+. If you are using version control for your Puppet manifests, as
-   I recommend you do, then use the directory in your working copy which will be
-   deployed to +/etc/puppet/modules+ instead.
+1. 在 puppet.conf 中查找你的模块路径，其默认值是 ++/etc/puppet/modules++。
+   如果你像我前面建议的那样将 Puppet 配置清单纳入了版本控制，
+   那么就是用你的工作副本中的目录，之后再由他部署到 ++/etc/puppet/modules++。
 +
 --
 ....
@@ -26,22 +25,21 @@ logical way to organize your manifests. In this example we'll create a module to
 modulepath = /etc/puppet/modules:/usr/share/puppet/modules
 ....
 
-Create a subdirectory in the module path named memcached:
+在模块路径下创建一个名为 memcached 的子目录：
 
 ....
 # cd /etc/puppet/modules
 # mkdir memcached
 ....
 
-Inside this, create +manifests+ and +files+ directories:
+在此目录中，创建 +manifests+ 和 +files+ 两个子目录：
 
 ....
 # cd memcached
 # mkdir manifests files
 ....
 
-In the +manifests+ directory, create another file +init.pp+ with the
-following contents:
+在 +manifests+ 目录下，以如下内容创建 +init.pp+ 文件：
 
 ----
 class memcached {
@@ -62,8 +60,7 @@ class memcached {
 }
 ----
 
-Changing to the +files+ directory, create the file +memcached.conf+ with the
-following contents:
+切换到 +files+ 目录，以如下内容创建 +memcached.conf+ 文件：
 
 ----
 -m 64
@@ -73,7 +70,7 @@ following contents:
 ----
 --
 
-2. To use your new module, add this to your node definition:
+2. 为了使用你的新模块，添加如下的代码到你的节点定义部分：
 +
 ----
 node cookbook {
@@ -81,7 +78,7 @@ node cookbook {
 }
 ----
 
-3. Run Puppet to test the new configuration:
+3. 运行 Puppet 检测新配置：
 +
 ....
 # puppet agent --test
@@ -100,7 +97,7 @@ f5c0bb01a24a5b3b86926c7b067ea6ba'
 notice: Finished catalog run in 20.68 seconds
 ....
 
-4. Check that the new service is running:
+4. 检查新配置的服务是否正在运行：
 +
 ....
 # service memcached status
@@ -108,10 +105,9 @@ notice: Finished catalog run in 20.68 seconds
 ....
 
 
-==== How it works…
+==== {Howitworks}
 
-Modules have a specific directory structure. Not all of these directories need to be present,
-but if they are, this is how they should be organized:
+模块有特定的目录结构。并非所有子目录都要存在，但如果存在就该以如下的布局方式组织：
 
 ----
 MODULEPATH/
@@ -123,14 +119,14 @@ MODULEPATH/
          `-- README
 ----
 
-The +memcached+ class is defined in the file +memcached.pp+, which will be imported by Puppet
-automatically. Now we can include it on nodes:
+在 +memcached.pp+ 文件中定义了 +memcached+ 类， 它可以被 Puppet
+自动导入。现在将其包含到节点中：
 
 ----
 include memcached
 ----
 
-Inside the +memcached+ class, we refer to the +memcached.conf+ file:
+在 +memcached+ 类中，引用了 +memcached.conf+ 文件：
 
 ----
 file { "/etc/memcached.conf":
@@ -138,8 +134,8 @@ file { "/etc/memcached.conf":
 }
 ----
 
-As we saw in the section on Puppet's file server and custom mount points, the +source+
-parameter in the preceding code tells Puppet to look for the file in the following path:
+正如我们在 <<ch01sec04,{Recipe104}>> 一节讲到的，
+上面代码中的 +source+ 参数告诉 Puppet 在如下的路径寻找文件：
 
 ----
 MODULEPATH/
@@ -148,17 +144,16 @@ MODULEPATH/
             memcached.conf
 ----
 
-==== There's more…
+==== {Theresmore}
 
-Learn to love modules, because they'll make your Puppet life a lot easier. They're not
-complicated. However, practice and experience will help you judge when things should
-be grouped into modules, and how best to arrange your module structure. Some tips
-which may help you on the way, have been explained in the following text.
+学习喜欢模块的组织方式，使用模块将使你的 Puppet 管理生活便得更轻松。模块并不复杂。
+然而，实践和经验会帮助你判断何时应该将事物划分并组织成模块，以及如何更好的安排你的模块结构。
+如下所述的一些技巧会对你有所帮助。
 
-===== Templates
+===== 模板
 
-If you need to use a template as part of the module, place it in the 
-+MODULE_NAME/templates+ directory and refer to it as follows:
+模板作为模块的一部分，如果你需要使用它，那么其放在 +MODULE_NAME/templates+
+目录，参考如下的用法：
 
 ----
 file { "/etc/memcached.conf":
@@ -166,7 +161,7 @@ file { "/etc/memcached.conf":
 }
 ----
 
-Puppet will look for the file in:
+Puppet 会在如下目录搜索模板文件：
 
 ----
 MODULEPATH/
@@ -175,32 +170,30 @@ MODULEPATH/
             memcached.conf
 ----
 
-===== Facts, functions, types, and providers
+===== Fact、函数、类型和提供者
 
-Modules can also contain custom facts, custom functions, custom types, and providers. For
-more information about these, see the chapter on
-<<chapter09,External Tools and the Puppet Ecosystem>>.
+模板中也可以包含自定义 facts、自定义 functions、自定义 types 和 providers。
+关于这些内容的详细信息请参阅 <<chapter09,外部工具和 Puppet 的生态系统>> 一章的内容。
 
 ===== puppet-module
 
-You can also use the +puppet-module+ gem to generate the directory layout for new modules,
-rather than doing it by hand. See the section <<ch09sec08,Using public modules>> in Chapter 9 for more details.
+你也可以使用 +puppet-module+ 工具为一个新模块创建目录布局，而不是使用手工方式。
+请参考第 9 章的 <<ch09sec08,{Recipe908}>> 一节获得更详细的信息。
 
-===== Third-party modules
+===== 第三方模块
 
-You can download modules provided by other people and use them in your own manifests
-just like the modules you create. For more on this, see the section <<ch09sec08,Using public modules>>
-in Chapter 9.
+你可以下载由其他人开发的模块，并在你的配置清单中使用这些模块，
+就像这些模块是你自己写的一样。
+请参考第 9 章的 <<ch09sec08,{Recipe908}>> 一节获得更详细的信息。
 
-===== Module organization
+===== 模块的组织方法
 
-For more details on how to organize your modules, go to the Puppet Labs site:
-http://docs.puppetlabs.com/guides/modules.html.
+有关如何组织模块的更多信息，参见 Puppet Labs 站点：http://docs.puppetlabs.com/guides/modules.html 。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec04,Configuring Puppet's file server>> in Chapter 1
-- <<ch09sec01,Creating custom Facter facts>> in Chapter 9
-- <<ch09sec08,Using public modules>> in Chapter 9
-- <<ch09sec10,Creating your own resource types>> in Chapter 9
-- <<ch09sec11,Creating your own providers>> in Chapter 9
+- 第 1 章的 <<ch01sec04,{Recipe104}>> 一节
+- 第 9 章的 <<ch09sec01,{Recipe901}>> 一节
+- 第 9 章的 <<ch09sec08,{Recipe908}>> 一节
+- 第 9 章的 <<ch09sec10,{Recipe910}>> 一节
+- 第 9 章的 <<ch09sec11,{Recipe911}>> 一节

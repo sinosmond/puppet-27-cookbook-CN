@@ -1,17 +1,17 @@
-﻿[[ch06sec05]]
-=== Efficiently distributing cron jobs
+[[ch06sec05]]
+=== {Recipe605}
 
-When you have many servers executing the same cron job, it's usually a good idea not to run
-them all at the same time. If all the jobs access a common server, it may put too much load
-on that server, and even if they don't, all the servers will be busy at the same time, which may
-affect their capacity to provide other services.
+当你有许多服务器需要执行相同的 cron 作业时，不在同一时间运行它们通常是个好主意。
+如果所有作业都要访问一个公共服务器，就会给该服务器带来大量负载，
+即使这些服务器不会同时访问公共服务器，所有服务器也会在同一时间处于繁忙状态，
+这可能会削减它们提供其他服务的能力。
 
-Puppet's +inline_template+ function allows us to use some Ruby logic to set different
-runtimes for the job, depending on the hostname.
+Puppet 的 +inline_template+ 函数允许我们使用 Ruby 的逻辑根据主机名为
+cron 作业设置不同的运行时间。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to a node:
+1. 在一个节点中添加如下代码：
 +
 ----
 define cron_random( $command, $hour )
@@ -35,7 +35,7 @@ cron_random { "hello-world-2":
 }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -49,7 +49,7 @@ Cron[hello-world-2]/ensure: created
 notice: Finished catalog run in 1.07 seconds
 ....
 
-3. Check the `crontab` to see how the jobs have been configured:
+3. 检查 `crontab` 查看是否成功地配置了 cron 作业：
 +
 ....
 # crontab -l
@@ -67,44 +67,40 @@ jobs.
 49 1 * * * /bin/echo 'Hello world'
 ....
 
-==== How it works…
+==== {Howitworks}
 
-We want to choose a 'random' minute for each cron job; that is, not genuinely random (or it
-would change every time Puppet runs), but more or less guaranteed to be different for each
-cron job on each host.
+我们想要为每个 cron 作业选择一个 '随机的' 执行分钟数； 而不是真正的随机
+（或者说，不是每次运行 Puppet 都会改变 cron 作业的运行时间），
+但这也或多或少地保证了每个主机上的每个 cron 作业运行时间的不同。
 
-We can do this by using Ruby's +hash+ method, which computes a numerical value from any
-object, in this case a string. The value will be the same each time, so although the value
-looks random, it will not change when Puppet runs again.
+我们可以使用 Ruby 的 +hash+ 方法实现它，它会对任何对象（本例为一个字符串）计算出一个哈希值。
+尽管看上去这个哈希值是随机的，但它每次运行时都相同，所以当再次运行 Puppet 时其值不会改变。
 
-hash will generate a large integer, and we want values between 0 and 59, so we use the Ruby
-+%+ (modulo) operator to restrict the result to this range. Although there are only 60 possible
-values, the +hash+ function is designed to produce as uniform an output as possible, so there
-should be very few collisions and the +minute+ values should be well-distributed.
+哈希值生成的是一个大整数，而我们想要的是一个 0 到 59 之间的整数，所以我们使用了 Ruby 的
+++%++ （模）运算符将其结果限制在这个范围内。因为只有 60 种可能的值，尽管 +hash+
+函数被设计为尽可能产生统一的输出，还是会有些许的碰撞而且这些碰撞对于 +minute+ 应该是均匀分布的。
 
-We want the value to be different on different machines, so we use the hostname in
-computing the +hash+ value. However, we also want the value to be different for different jobs
-on the same machine, so we combine the hostname with the +name+ variable, which will be the
-name of the cron job (+hello-world+, for example).
+因为我们希望每个哈希值在不同的主机上是不同的，所以使用主机名做 +hash+ 处理。
+然而，我们还希望同一台主机上的不同作业的哈希值也不同，所以联合使用了主机名和作业名
+（例如 ++hello-world++）做 +hash+ 处理。
 
-==== There's more…
+==== {Theresmore}
 
-In this example, we only randomized the +minute+ of the cron job, and supplied the +hour+ as
-part of the definition. If you sometimes need to specify the day of the week as well, you could
-add it as an optional parameter for +cron_random+ with a default value, shown as follows:
+在本例中，我们仅对 cron 作业的 +minute+ 进行了随机化，并将 +hour+ 作为 +define+
+定义的一部分。若你同时希望指定要在周几运行，可以在 +cron_random+ 中添加一个附加参数来指定，
+可以像下面这样为其指定默认值：
 
 ----
 define cron_random( $command, $hour, $weekday = "*" ) {
 ----
 
-If you also wanted to randomize the hour (for example, for jobs that could run at any time
-of the day and need to be distributed across all 24 hours evenly) you could modify
-+cron_random+ as follows:
+若你想要对 cron 作业的 +hour+ 进行随机化（例如：要做的作业可以在一天之内的任何时间执行，
+并且必须将它们均匀分布在所有的 24 个小时上），可以对 +cron_random+ 做如下修改：
 
 ----
 hour => inline_template("<%= (hostname+name).hash.abs % 24 %>"),
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec05,Running Puppet from cron>> in Chapter 1.
+- 第 1 章的 <<ch01sec05,{Recipe105}>> 一节

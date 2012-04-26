@@ -1,29 +1,30 @@
-﻿[[ch08sec04]]
-=== Using HAProxy to load-balance multiple web servers
+[[ch08sec04]]
+=== {Recipe804}
 
 [quote, Richard Feynman,]
 The inside of a computer is as dumb as hell but it goes like mad!
 
-Back in the day, the way to speed up slow web servers was to add more cores. I recall one
-employer buying a monster 24-core Sun box the size of a Hummer. We had to have the data
-center door widened to get it in.
+曾几何时，为缓慢的 Web 服务器加速的方式就是增加更多的 CPU 核心。
+我记得一个老板买了一台 24核的 Sun 工作站，它是个尺寸接近悍马的怪物，
+以至于我们不得不扩修数据中心的大门才能将其放入。
 
-Scaling websites nowadays is still a matter of adding cores, but they either come in their
-own little beige boxes, as commodity hardware, or you rent them as as a wholesale compute
-resource from a cloud provider. In order to group all these cores together to serve a single
-website, we use load balancers.
+时至今日，扩展 Web 站点规模仍旧是添加 CPU 核心的问题，但与从前不同的是：
+要么他们自己拿来若干粉色的 PC 机作为服务器使用；
+要么从云服务提供商那里租用服务器作为计算资源使用。
+为了对所有这些核心进行分组，从而一起服务于单一的 Web 站点，
+我们要使用负载均衡器（load balancer）。
 
-Once, a load balancer was a big box that sat in a rack and cost eighty thousand dollars.
-Although you can still buy those, for most organizations a software load balancer solution
-using commodity Linux servers is a better value proposition.
+曾经，负载均衡器是坐落在机架上的一个耗资八万美元的大盒子。
+尽管你现在仍旧可以购买这种负载均衡器，但对于大多数组织来说，
+使用 Linux 商品服务器的软件负载均衡解决方案可以大大削减成本。
 
-*HAProxy* is the software load balancer of choice for most people: fast, powerful, and highly
-configurable. In this recipe, I'll show you how to build an HAProxy server to load-balance web
-requests across two existing backend servers.
+对大多数管理员来说，*HAProxy* 是软件负载均衡器的一种选择：快速、强大、高度可配置。 
+在下面的处方中，将向你展示如何创建一个 HAProxy 服务器为两个现有的后端服务器实现对其
+web 请求的负载均衡。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a +loadbalancer+ module:
+1. 创建 +loadbalancer+ 模块：
 +
 ....
 # mkdir /etc/puppet/modules/loadbalancer
@@ -31,8 +32,7 @@ requests across two existing backend servers.
 # mkdir /etc/puppet/modules/loadbalancer/files
 ....
 
-2. Create the file +/etc/puppet/modules/loadbalancer/manifests/init.pp+
-   with the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/loadbalancer/manifests/init.pp+ 文件：
 +
 ----
 class loadbalancer {
@@ -57,9 +57,7 @@ class loadbalancer {
 }
 ----
 
-3. Create the file 
-   /etc/puppet/modules/loadbalancer/files/haproxy.defaults+
-   with the following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/loadbalancer/files/haproxy.defaults+ 文件：
 +
 ----
 # Don't edit this file - it's managed by Puppet
@@ -69,10 +67,9 @@ ENABLED=1
 #EXTRAOPTS="-de -m 16"
 ----
 
-4. Create the file +/etc/puppet/modules/loadbalancer/files/haproxy.cfg+
-   with the following contents. In the +myapp+ section, replace the IP address in each
-   +server+ line with the IP address of your backend server, and the +:8000+ port number
-   with the port number where your server is listening.
+4. 使用如下内容创建 +/etc/puppet/modules/loadbalancer/files/haproxy.cfg+ 文件。
+   在 +myapp+ 部分中，用你的后端服务器 IP 地址替换每个 +server+ 行中的 IP 地址，
+   并用你的后端服务器监听端口替换端口 ++:8000++。
 +
 ----
 global
@@ -105,13 +102,13 @@ listen myapp 0.0.0.0:80
        server  myapp2 10.0.2.40:8000    check maxconn 100
 ----
 
-5. Include the following on your HAProxy node:
+5. 在你的 HAProxy 节点中包含如下代码：
 +
 ----
 include loadbalancer
 ----
 
-6. Run Puppet:
+6. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -169,33 +166,29 @@ to '{md5}2217d74d66bd72630268598b1f11f173'
 notice: Finished catalog run in 22.21 seconds
 ....
 
-7. Check the HAProxy *stats* interface in your web browser to make sure everything is
-   OK (note that my *Backend* servers are shown as *DOWN* because those VMs aren't
-   running: when I start them, HAProxy will detect this automatically and mark them up).
+7. 在你的浏览器中检查 HAProxy 的 *stats* 界面确保一切工作正常（注意我的 *Backend* 服务器显示的是
+   *DOWN* ，因为这些虚拟机还没有运行。当我启动它们之后，HAProxy 将会自动检测并重新标记它们的状态）。
 +
 image::image/ch08sec04.png[]
 
-==== How it works…
+==== {Howitworks}
 
-The haproxy daemon listens for incoming requests and distributes them to the pool of
-backend servers (*myapp1* and *myapp2* in our example). If one backend server becomes
-overloaded, HAProxy will avoid sending it more traffic until it recovers. This helps prevent
-the drastic slowdown as a single web server becomes overloaded and queues up more and
-more requests that it can't serve. If a server fails altogether, HAProxy won't send it any more
-requests until it becomes available again.
++haproxy+ 守护进程监听进入的请求并将其分发到一组后端服务器（本例中是 *myapp1* 和 **myapp2**）。
+如果一个后端服务器已超载，HAProxy 将避免向其发送更多的流量直至它恢复。
+这有助于防止单台 Web 服务器因为超载（排队等待的不能被处理的请求越来越多）而造成的响应速度大幅放缓。
+如果一台后端服务器宕机，HAProxy 将不会为其分发任何请求，直至其重新可用。
 
-The *stats* interface will show you how your backend servers are performing, how many
-sessions they are handling, whether HAProxy has marked them up or down, and so on.
+*stats* 界面会显示：你的后端服务器如何执行，有多少会话正在处理， 
+HAProxy 是否将后端服务器标记成了 *UP* 或 **DOWN**，等信息。
 
-==== There's more…
+==== {Theresmore}
 
-If you want to add more backends to handle increased demand, just add more +server+ lines
-to +haproxy.cfg+. If you find that the existing servers are getting swamped, try decreasing the
-per-server +maxconn+ setting a little. HAProxy has a vast range of configuration parameters that
-you can explore: see the HAProxy documentation at http://haproxy.1wt.eu/#docs.
+如果你想添加更多的后端服务器以处理不断增长的需求，只需在 +haproxy.cfg+ 中添加更多的 +server+ 行。
+如果你发现现有的后端服务器响应速度越来越慢，请适当减少每个服务器的 +maxconn+ 值。
+HAProxy 有大量值得探索的配置参数，参考 HAProxy 的文档站点 http://haproxy.1wt.eu/#docs 。
 
-If you need SSL capabilities, you can put Nginx in front of HAProxy to handle this.
+如果你需要提供 SSL 的能力，可以将 Nginx 放在 HAProxy 的前端进行处理。
 
-Although it's most often used as a web server, HAProxy can proxy a lot more than just HTTP.
-It can handle any TCP traffic, so you can use it to load-balance MySQL servers, SMTP, video
-servers, or anything you like.
+尽管 HAProxy 经常用于 Web 服务器，但它可以代理很多服务，不仅仅是 HTTP。 
+它可以处理任何 TCP 流量，所以你可以使用 HAProxy 为 MySQL 服务器、SMTP 服务器、
+视频服务器以及任何你想要的服务器实现负载均衡。

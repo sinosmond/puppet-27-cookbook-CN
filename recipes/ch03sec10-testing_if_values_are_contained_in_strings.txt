@@ -1,20 +1,19 @@
 ﻿[[ch03sec10]]
-=== Testing whether values are contained in strings
+=== {Recipe310}
 
-Want to know what's in and what's out? Puppet's +in+ keyword can help, with expressions
-such as the following:
+想知道什么在什么不在吗？Puppet 的 +in+ 可以帮你， 如下面的表达式：
 
 ----
 if "foo" in $bar
 ----
 
-This will be evaluated as +true+ if the string +foo+ is a substring of +$bar+. If +$bar+ is an array,
-and if +foo+ is an element of the array, the expression is true. If +$bar+ is a hash, the
-expression is +true+ if +foo+ is one of the keys of +$bar+.
+如果 +foo+ 是 +$bar+ 的子串，表达式的值为 ++true++。 
+如果 +$bar+ 是个数组，并且 +foo+ 是这个数组中的一个元素，表达式的值为 ++true++。
+如果 +$bar+ 是一个哈希，++foo++ 是 +$bar+ 的一个键值，表达式的值为 ++true++。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following code to your manifest:
+1. 在你的配置清单中添加如下代码：
 +
 ----
 if $operatingsystem in [ "Ubuntu", "Debian" ] {
@@ -27,18 +26,17 @@ if $operatingsystem in [ "Ubuntu", "Debian" ] {
 }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ......
 # puppet agent --test
 Debian-type operating system detected
 ......
 
+==== {Theresmore}
 
-==== There's more…
-
-+in+ expressions can be used not just for +if+ statements or other conditionals, but anywhere
-an expression can be used. For example, you can assign the result to a variable as follows:
++in+ 表达式既可以使用在 +if+ 语句或其他条件语句中，还可以在任何表达式能出现的地方使用。
+例如，你可以像下面这样为一个变量赋值：
 
 ----
 $debianlike = $operatingsystem in [ "Debian", "Ubuntu" ]

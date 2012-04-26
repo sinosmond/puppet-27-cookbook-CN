@@ -1,38 +1,35 @@
-﻿[[ch05sec07]]
-=== Setting up an APT package repository
+[[ch05sec07]]
+=== {Recipe507}
 
-Running your own package repository has several advantages. You can distribute your own
-packages with it. You can control the versions of upstream or third-party packages that you
-put into it. And you can locate it close to where your servers are, to avoid the problem of slow
-or unreliable mirror sites.
+运行自己的软件仓库有几个优点。你可以在自己的仓库中发布自己的软件包。
+你可以在自己的软件仓库中放置上游软件包或第三方软件包，从而控制你使用的软件版本。
+你可以将自己的软件仓库放置在其他服务器附近，从而避免网速缓慢或镜像站点无法访问的问题。
 
-Even if you don't need to create your own packages, you may want to download the required
-versions of your critical dependency packages and store them in your own repo, thus
-preventing any surprises when things change upstream (for example, your distro version
-could reach end-of-life and the repos could be turned off).
+即使你不需要创建自己的软件包，也可能想要下载特定版本软件包所需的关键依赖包，
+并将这些依赖包存储在自己的仓库中，从而防止因上游发生变故而产生的任何意外
+（例如，你的发行版本已到达生命周期的终结或者上游仓库已经被关闭）。
 
-It also makes it easier to auto-update packages within Puppet. You may occasionally need
-to update a package (for example, when a security update is available), so it's convenient to
-specify +ensure => latest+ in the package definition. But when you don't control the repo,
-this puts you at risk of an unexpected upgrade which breaks something in your system.
+这也使得通过 Puppet 自动更新软件包便得更容易。你可能偶尔需要更新一个软件包
+（例如，当有一个安全更新可用时），只要在 +package+ 资源中指定 +ensure => latest+ 
+就可以方便地实现包更新。但是如果你不能控制仓库，就可能遭遇意想不到的升级风险，
+使你的系统受到某种破坏。
 
-Your own repository gives you the best of both worlds: you can auto-update the package in
-Puppet, but since it comes from your repository, a new version will only be available when
-you put one there. You can test the version from upstream before making it available in your
-production repository.
+使用自己的软件仓库是件两全其美的事情：你可以放心地使用 Puppet
+从自己的软件仓库自动更新软件包，当有新版本的软件可用时，只需要将其纳入自己的软件仓库；
+你可以首先测试上游的软件版本，确保其可用的情况下再纳入用于生产环境的软件仓库。
 
-==== Getting ready…
+==== {Gettingready}
 
-You will need the +apache+ module from the section, _Using ERB templates_, in this chapter.
-So create this if you don't already have it.
+你需要第 9 章 <<ch07sec01,{Recipe701}>> 一节中讲述的 +apache+ 模块，
+如果还没有此模块请先创建它。
 
-In the example, I've called the repository +packages.bitfieldconsulting.com+,
-because that's what mine is called. You'll probably want to use a different name, so
-replace it throughout the example with the name of your repo.
+在本例中，我将我的仓库命名为 ++packages.bitfieldconsulting.com++。
+你可能想要使用一个不同的仓库名，这需要替换本例中的所有的仓库名
++packages.bitfieldconsulting.com+ 为你想要的仓库名。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a new repo module:
+1. 创建一个新的 +repo+ 模块：
 +
 ....
 # mkdir /etc/puppet/modules/repo
@@ -40,8 +37,7 @@ replace it throughout the example with the name of your repo.
 # mkdir /etc/puppet/modules/repo/files
 ....
 
-2. Create the file +/etc/puppet/modules/repo/manifests/bitfield-server.pp+
-   with the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/repo/manifests/bitfield-server.pp+ 文件：
 +
 ----
 class repo::bitfield-server {
@@ -73,8 +69,7 @@ class repo::bitfield-server {
 }
 ----
 
-3. Create the file +/etc/puppet/modules/repo/files/distributions+ with the
-   following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/repo/files/distributions+ 文件：
 +
 ----
 Origin: Bitfield Consulting
@@ -86,21 +81,18 @@ Components: main non-free contrib
 Description: Custom and cached packages for Bitfield Consulting
 ----
 
-4. Create the file +/etc/puppet/modules/repo/files/apt-repo.conf+ with the
-   following contents:
+4. 使用如下内容创建 +/etc/puppet/modules/repo/files/apt-repo.conf+ 文件：
 +
 [source,apache]
 ----
 <VirtualHost *:80>
     DocumentRoot /var/apt
     ServerName packages.bitfieldconsulting.com
-    ErrorLog /var/log/apache2/packages.bitfieldconsulting.com.
-    error.log
+    ErrorLog /var/log/apache2/packages.bitfieldconsulting.com.error.log
 
     LogLevel warn
 
-    CustomLog /var/log/apache2/packages.bitfieldconsulting.com.
-    access.log combined
+    CustomLog /var/log/apache2/packages.bitfieldconsulting.com.access.log combined
 
     ServerSignature On
 
@@ -130,13 +122,13 @@ Description: Custom and cached packages for Bitfield Consulting
 </VirtualHost>
 ----
 
-5. Add the following to the manifest for a node:
+5. 在一个节点的配置清单中添加如下代码：
 +
 ----
 include repo::bitfield-server
 ----
 
-6. Run Puppet:
+6. 运行 Puppet：
 +
 ....
 # puppet agent --test
@@ -173,28 +165,26 @@ from 1 events
 notice: Finished catalog run in 16.32 seconds
 ....
 
-==== How it works…
+==== {Howitworks}
 
-Actually, you don't need very much to create an APT repository. It works over HTTP, so you just
-need an Apache virtual host. You can put the actual package files anywhere you like, as long
-as there is a +conf/distributions+ file which will give APT information about the repository.
+其实，你无需创建一个 APT 仓库。因为可以通过 HTTP 下载软件包，所以你只需要一个 Apache 虚拟主机。
+你可以将实际的软件包随意放置在任何地方，只要有一个 +conf/distributions+ 文件并在其中给出 APT
+仓库的相关信息。
 
-1. The first part of the +bitfield-server+ class ensures we have Apache set up:
+1. +bitfield-server+ 类的第一部分确保 Apache 已经被设置：
 +
 ----
 class repo::bitfield-server {
     include apache
 ----
 
-2. The +reprepro+ tool is useful for managing the repository itself (for example, adding
-   new packages):
+2. +reprepro+ 是用于管理仓库本身的非常有用的工具（例如，添加一个新的软件包）：
 +
 ----
     package { "reprepro": ensure => installed }
 ----
 
-3. We create the root directory of the repository in +/var/apt+, along with the
-   +conf/distributions+ file:
+3. 我们创建一个仓库的根目录 ++/var/apt++，以及该目录下的 +conf/distributions+ 文件：
 +
 ----
     file { [ "/var/apt",
@@ -208,8 +198,8 @@ class repo::bitfield-server {
     }
 ----
 
-4. The remainder of the class deploys the Apache virtual host file to enable it to serve
-   requests on +packages.bitfieldconsulting.com+ as follows:
+4. 这个类的其余部分部署了一个 Apache 虚拟主机的配置文件，用于响应
+   +packages.bitfieldconsulting.com+ 的请求：
 +
 ----
 file { "/etc/apache2/sites-available/apt-repo":
@@ -225,15 +215,14 @@ file { "/etc/apache2/sites-enabled/apt-repo":
 }
 ----
 
-==== There's more…
+==== {Theresmore}
 
-Of course, a repository isn't much good without any packages in it. In this section we'll
-see how to add packages, and also how to configure machines to download packages
-from your repository.
+当然，一个可用的仓库里不能没有软件包。下面将介绍如何添加软件包，
+以及如何配置主机并从你的仓库下载软件包。
 
-===== Adding packages
+===== 向仓库添加软件包
 
-To add a package to your repository, download it and then use +reprepro+ to add it:
+要添加一个软件包到你的仓库，首先下载它然后使用 +reprepro+ 将其添加到仓库：
 
 ....
 # cd /tmp
@@ -244,10 +233,10 @@ To add a package to your repository, download it and then use +reprepro+ to add 
 Exporting indices...
 ....
 
-===== Configuring nodes to use the repository
+===== 配置节点使用仓库
 
-1. Create the file +/etc/puppet/modules/repo/manifests/bitfield.pp+ with the
-   following contents (replacing the IP address with that of your repository server):
+1. 使用如下内容创建 +/etc/puppet/modules/repo/manifests/bitfield.pp+ 文件
+   （请根据你自己的仓库服务器的 IP 地址替换如下的 IP 地址）：
 +
 --
 ----
@@ -274,10 +263,10 @@ class repo::bitfield {
 }
 ----
 
-If you have a DNS server or control of your DNS zone, you can skip the host entry.
+如果你有 DNS 服务器或者你可以控制你的 DNS 区域，可以省略 +host+ 资源的设置。
 --
 
-2. Apply this class to a node as follows:
+2. 应用这个类到一个节点：
 +
 ----
 node cookbook {
@@ -285,7 +274,7 @@ node cookbook {
 }
 ----
 
-3. Test whether the +ntp+ package shows up as available from your repository:
+3. 测试你仓库中的 +ntp+ 软件包是否可用：
 +
 ....
 # apt-cache madison ntp
@@ -301,8 +290,7 @@ com/ubuntu/ lucid/main Sources
 com/ubuntu/ lucid-updates/main Sources
 ....
 
-===== Signing your packages
+===== 对软件包签名
 
-For production use, you should sign your packages and repository with a GPG key; for
-information about how to set this up, see Sander Marechal's useful article on setting up and
-managing APT repositories at http://www.jejik.com/articles/2006/09/setting_up_and_managing_an_apt_repository_with_reprepro/.
+对于生产环境，你应该对软件仓库设置 GPG 密钥并且对软件包进行签名，关于如何设置密钥和签名的信息， 
+请参考 Sander Marechal 撰写的关于 “设置和管理 APT 仓库” 的文章： http://www.jejik.com/articles/2006/09/setting_up_and_managing_an_apt_repository_with_reprepro/ 。

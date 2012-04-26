@@ -1,23 +1,22 @@
-﻿[[ch03sec01]]
-=== Using community Puppet style
+[[ch03sec01]]
+=== {Recipe301}
 
 [quote, H. L. Mencken,]
 A society made up of individuals who were all capable of original thought would
 probably be unendurable.
 
-Sometimes going along with the crowd is a good idea. If other people need to read or maintain
-your manifests, or if you want to share code with the community, it's a good idea to follow the
-existing style conventions as closely as possible.
+“随大溜” 有时会是个好主意。如果其他人需要阅读或管理你的配置清单，
+或者如果你想要分享代码到社区， 那么尽可能遵循现有的样式约定会是个好主意。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Always quote your resource names; for example, use +package { "exim4":+ and
-   not +package { exim4:+
+1. 将你的资源名用双引号括起来；例如使用 ++package { "exim4":++ 而不是
+   ++package { exim4:++
 +
-Some characters like hyphens and spaces can confuse Puppet's parser, and to be
-on the safe side it's wise to put all names consistently in double quotes.
+当使用一些像连字符和空格这样的字符时很容易引起 Puppet 解析器的混乱，
+明智而又安全的做法是始终使用双引号将所有的资源名括起来。
 
-2. Always quote parameter values that are not reserved words in Puppet; for example:
+2. 总是将非 Puppet 保留字的参数值用双引号括起来，例如：
 +
 --
 ----
@@ -26,7 +25,7 @@ mode  => "0700",
 owner => "deploy",
 ----
 
-but
+但保留字不用使用引号：
 
 ----
 ensure => installed,
@@ -34,18 +33,16 @@ enable => true,
 ensure => running,
 ----
 
-Always include curly braces ({}) around variable names when referring to them in
-strings. For example:
+当在字符串中引用变量的值时，始终使用大括号将变量名括起来。例如：
 
 ----
 source => "puppet:///modules/webserver/${brand}.conf",
 ----
 
-Otherwise Puppet's parser has to guess which characters should be part of the variable
-name and which belong to the surrounding string. Curly braces make it explicit.
+否则 Puppet 的解析器不得不猜测哪些字符是变量名的一部分。使用大括号将使其变得清晰。
 --
 
-3. Always end lines that declare parameters with a comma, even if it is the last parameter:
+3. 总是以逗号结束参数声明的行，即使它是最后一个参数：
 +
 --
 ----
@@ -55,29 +52,28 @@ service { "memcached":
 }
 ----
 
-Very often, when you edit the file, you'll want to append an extra parameter to it
-and forget to add the necessary comma!
+很多时候，当你编辑文件时会追加一个额外的参数，
+而忘记在原来最后一行的末尾添加必要的逗号！
 --
 
-4. When declaring a resource with a single parameter, make the declaration on one
-   line and with no trailing comma as follows:
+4. 当声明仅有一个参数的资源时，将声明放在一行上且无需使用结尾的逗号：
 +
 ----
 package { "puppet": ensure => installed }
 ----
 
-5. Where there is more than one parameter, give each parameter its own line:
+5. 当声明有多个参数的资源时，每个参数占一行：
 +
 --
 ----
 package { "rake":
-    ensure => installed,
+    ensure   => installed,
     provider => gem,
-    require => Package["rubygems"],
+    require  => Package["rubygems"],
 }
 ----
 
-When declaring *symlinks*, use +ensure => link+ as follows:
+当声明 **符号链接**（**symlinks**）时，使用 ++ensure => link++：
 
 ----
 file { "/etc/php5/cli/php.ini":
@@ -87,8 +83,7 @@ file { "/etc/php5/cli/php.ini":
 ----
 --
 
-6. To make the code easier to read, line up the parameter arrows in line with the
-   longest parameter, as shown in the following code:
+6. 为了使代码便于阅读，所有的箭头以最长一个参数对齐，例如：
 +
 --
 ----
@@ -100,15 +95,14 @@ file { "/var/www/${app}/shared/config/rvmrc":
 }
 ----
 
-The arrows should be aligned for each resource, but not across the whole file; otherwise
-it can make it difficult for you to cut and paste code from one file to another.
+每个资源中的箭头（++=>++）都要对齐，而不是每个文件中的箭头都对齐；
+否则会在不同文件之间复制代码时带来麻烦。
 --
 
-==== There's more…
+==== {Theresmore}
 
-The Puppet community maintains a style guide document on the Puppet Labs site:
-http://projects.puppetlabs.com/projects/puppet/wiki/Style_Guide
+Puppet Labs 网站上维护着 Puppet 社区规范指南文档：
+http://docs.puppetlabs.com/guides/style_guide.html 。
 
-Tim Sharpe has written a `puppet-lint` tool that you can use to check your manifests
-for style guide compliance. Run `gem install puppet-lint` to use it, or have a look
-at https://github.com/rodjek/puppet-lint for more details.
+Tim Sharpe 写了一个 `puppet-lint` 工具， 你可以用它检查你的配置清单是否符合规范。
+运行 `gem install puppet-lint` 安装它，详细的信息请参考 https://github.com/rodjek/puppet-lint 。

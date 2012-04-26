@@ -1,38 +1,38 @@
-﻿[[ch02sec03]]
-=== Creating graphical reports
+[[ch02sec03]]
+=== {Recipe203}
 
-Let's face it, bosses like pretty pictures. Puppet can produce report data in a form suitable
-for processing by the *RRD* (*Round-Robin Database*) graph library, to produce a graphical
-representation of metrics such as the runtime on each client.
+让我们面对现实，老板们喜欢漂亮的照片。 Puppet 使用 **RRD**（**Round-Robin Database**）
+图形库生成适应生产的报告数据，生成图形化的技术指标，如客户端的运行时间。
 
-==== Getting ready
+==== {Gettingready}
 
-You will need to install the RRD tools and libraries for Ruby on your system. For Ubuntu, run
-the following command:
+你需要在系统上安装 RRD 工具以及 Ruby 所需的相关链接库。
+对于 Ubuntu 系统需要执行如下命令：
 
 ......
 # apt-get install rrdtool librrd-ruby
 ......
 
-==== How to do it…
+==== {Howtodoit}
 
-Add the +rrdgraph+ report type to your +puppet.conf+ as follows:
+添加 +rrdgraph+ 报告类型到你的 +puppet.conf+ 文件：
 
 ----
 reports = store,rrdgraph
 ----
 
-==== How it works…
+==== {Howitworks}
 
-For each run, Puppet will record data in the client's RRD directory (the default is +/var/lib/
-puppet/rrd/<clientname>+). It will create graphs in a PNG format for events, resources,
-and retrieval time, while the raw data is available to you in the +.rrd+ files if you want to
-process it further using third-party RRD tools.
+每次运行，Puppet 会将数据记录到客户端的 RRD 目录
+（默认为 ++/var/lib/puppet/rrd/<clientname>++）。
+它会为事件（events）、资源（resources）以及获取时间（retrieval time）
+创建 PNG 格式的图片，当然若你希望使用第三方的 RRD 工具处理，可以使用以
++.rrd+ 结尾的原始数据文件。
 
-==== There's more…
+==== {Theresmore}
 
-For more detailed reporting and graphing, you can use Puppet Dashboard.
+要获得关于图形化报告的更详细的信息，你可以使用 Puppet Dashboard。
 
-==== See also
+==== {Seealso}
 
-- <<ch09sec05,Using Puppet dashboard>> in Chapter 9
+- 第 9 章的 <<ch09sec05,{Recipe905}>> 一节

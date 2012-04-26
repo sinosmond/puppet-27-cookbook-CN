@@ -1,15 +1,14 @@
-﻿[[ch04sec09]]
-=== Importing dynamic information
+[[ch04sec09]]
+=== {Recipe409}
 
-Even though some system administrators like to wall themselves off from the rest of the office
-using piles of old printers, we all need to exchange information with other departments from
-time to time. For example, you may need to insert data into your Puppet manifests which is
-derived from some outside source. The +generate+ function is very useful for this.
+尽管有些系统管理员喜欢将他们自己与其它使用成堆的老旧打印机的办公室相隔绝，
+但是我们还是需要随时与其他部门交换信息。
+例如，你可能需要插入数据到你的 Puppet 配置清单，这些数据是从外部数据源派生出来的。
++generate+ 函数在这方面相当有用。
 
-==== Getting ready…
+==== {Gettingready}
 
-Create the script +/usr/local/bin/latest-puppet.rb+ on the Puppetmaster with the
-following contents:
+在 Puppetmaster 上使用如下代码创建脚本 ++/usr/local/bin/latest-puppet.rb++：
 
 [source,ruby]
 ----
@@ -19,9 +18,9 @@ page = open("http://www.puppetlabs.com/misc/download-options/").read
 print page.match(/stable version is ([\d\.]*)/)[1]
 ----
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Add the following to your manifest:
+1. 在你的配置清单中添加如下的内容：
 +
 ----
 $latestversion = generate("/usr/local/bin/latest-puppet.rb")
@@ -29,48 +28,45 @@ notify { "The latest stable Puppet version is ${latestversion}.
 You're using ${puppetversion}.": }
 ----
 
-2. Run Puppet:
+2. 运行 Puppet：
 +
 ....
 # puppet agent --test
 notice: The latest stable Puppet version is 2.6.5. You're using 2.6.3.
 ....
 
-==== How it works…
+==== {Howitworks}
 
-The +generate+ function runs the specified script or program on the Puppetmaster (not
-the client) and returns the result - in this case, the version number of the latest stable
-Puppet release.
++generate+ 函数在 Puppetmaster 上（不是客户端）运行指定的脚本或程序并返回结果，
+在本例中，返回的结果是 Puppet 最近发布的稳定版的版本号。
 
-I don't recommend you run this script in production, as Puppet Labs have a habit of
-rearranging their web site, but you get the idea. Anything a script can do, print, fetch, or
-calculate - for example the results of a database query - can be brought into your manifest
-using +generate+.
+我不建议你在生产环境中运行此脚本，因为 Puppet Labs 会随时重新组织其 Web 站点，
+这会导致脚本中抓取的 URL 失效，但是你可以从中获得些启发和想法。
+一个脚本可以做的一切，比如打印、提取或者计算（例如数据库的查询结果）
+都可以使用 +generate+ 将其带入你的配置清单。
 
-It's worth remembering that, just as with embedded Ruby calls in templates, the +generate+
-function is run on the Puppetmaster and not on the node that is running Puppet. I once made
-this mistake by calling `/bin/hostname` in a template and finding to my surprise that all my
-nodes were apparently named puppet.
+值得记住的是：正如在模板中嵌入 Ruby 调用一样，+generate+ 函数运行在 Puppetmaster
+上，而不是运行在 Puppet 的客户端节点上。 
+我曾经犯过一个在模板中调用 `/bin/hostname` 的错误，
+结果让我大吃一惊的是，所有的节点名称都变成了 ++puppet++。
 
-When you need to get information specifically about the node, this is best done with a
-custom fact.
+当你需要获得有关节点的特别信息时，最好使用一个自定义的 +fact+ 来实现。
 
-==== There's more…
+==== {Theresmore}
 
-If you need to pass arguments to the executable called by +generate+, add them as extra
-arguments to the function call as follows:
+如果你在调用 +generate+ 时需要为其传递参数去执行，
+可以将这些参数作为函数调用的额外参数，例如：
 
 ----
 $latestpuppet = generate("/usr/local/bin/latest-version.rb", "puppet")
-$latestmc = generate("/usr/local/bin/latest-version.rb",
-"mcollective")
+$latestmc = generate("/usr/local/bin/latest-version.rb", "mcollective")
 ----
 
-Puppet will try to protect you from malicious shell calls by restricting the characters you can
-use in a call to +generate+, so shell pipelines aren't allowed, for example. The simplest and
-safest thing to do is to put all your logic into a script and then call that script.
+你还可以使用 +generate+ 调用 Shell 命令，Puppet 的 +generate+
+使用限制特殊字符的方式来避免恶意的 Shell 调用，例如不能使用 Shell 的管道符（|）。
+最简单而安全的办法就是将你所有的逻辑写到一个脚本中，然后使用 +generate+ 调用此脚本。
 
-==== See also
+==== {Seealso}
 
-- <<ch09sec01,Creating custom Facter facts>> in Chapter 9
-- <<ch04sec10,Importing data from CSV files>> in this chapter
+- 第 9 章的 <<ch09sec01,{Recipe901}>> 一节
+- 本章的 <<ch04sec10,{Recipe410}>> 一节

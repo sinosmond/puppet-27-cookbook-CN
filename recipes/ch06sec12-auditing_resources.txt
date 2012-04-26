@@ -1,25 +1,21 @@
-﻿[[ch06sec12]]
-=== Auditing resources
+[[ch06sec12]]
+=== {Recipe612}
 
-Not every problem has a technical answer. I once had to diagnose a server that was failing to
-respond to +`ping`+, SSH, or console connections. I wasn't sure whether it was a hardware or
-a network failure.
+不是每个问题都有技术性的答案。我曾经诊断过一台服务器，它对 ++ping++、SSH 或控制台连接均无响应。
+我不能确定这到底是硬件故障还是软件故障。
 
-The mystery was solved when I called the site where the machine was located. They informed
-me that two unidentified men had arrived earlier, gone straight to the server room, unplugged
-the machine, and simply walked out of the building with it. We later found that there had been
-a spate of computer thefts in the area with the same M.O.
+当我电话询问主机所在位置的站点客服时，奥秘最终被揭开了。他们告诉我：
+先期抵达的两名不明身份的男子，进入大厦直奔服务器机房，拔下了机器，并轻易地将机器带出了大厦。
+后来我们发现，在机房所在的地区（Missouri，M.O.）曾发生过一连串的电脑失窃案。
 
-The message here is that it's good to know who's doing what to your servers.
+从这个案例获得的重要信息是：最终知道了谁对你的服务器做了些什么，这还是不错的。
 
-Dry-run mode, using the +--noop+ switch, is a simple way to audit any changes to a machine
-under Puppet's control. However, Puppet also has a dedicated audit feature, which can report
-changes to resources or specific attributes.
+模拟运行模式（使用 ++--noop++ 开关）审计由 Puppet 控制的任何机器的变化是一种简单的方法。
+然而，Puppet 还有一个专门的审计功能，它可以报告资源或特定属性的变化。
 
+==== {Howtodoit}
 
-==== How to do it…
-
-Define a resource with the audit metaparameter as follows:
+使用 +audit+ 元参数定义一个资源：
 
 ----
 file { "/etc/passwd":
@@ -27,36 +23,38 @@ file { "/etc/passwd":
 }
 ----
 
-==== How it works…
+==== {Howitworks}
 
-The +audit+ metaparameter (a *metaparameter* is a parameter which can be applied to any
-resource, not just to specific types) tells Puppet that you want to record and monitor certain
-things about the resource. The value can be a list of the parameters you want to audit.
+**元参数**（**metaparameter**）是一种可以应用到任何资源的参数，不仅用于指定类型。
++audit+ 元参数告诉 Puppet，你想要记录和监视关于这个资源的某些事件。
+其值可以是你要审计的一个参数列表。
 
-In this case, when Puppet runs, it will now record the owner and mode of the +/etc/passwd+
-file. If either of these change, for example, if you run:
+在本例中，一旦 Puppet 运行，它就开始记录 +/etc/passwd+ 文件的属主和权限模式。
+无论是属主改变还是权限改变，例如：如果你运行了如下命令：
 
 ....
 # chmod 666 /etc/passwd
 ....
 
-Puppet will pick up this change and log it on the next run:
+当下一次运行 Puppet 时，它将会察觉到这个变化并将其记入日志：
 
 ....
 notice: /Stage[main]//Node[cookbook]/File[/etc/passwd]/mode: audit
 change: previously recorded value 644 has been changed to 666
 ....
 
-==== There's more…
+==== {Theresmore}
 
-This feature is very useful for auditing large networks for any changes to the machines, either
-malicious or accidental. You can use the +tagmail+ reports feature to automatically send
-audit change notices by e-mail. It's also very handy for keeping an eye on things that aren't
-managed by Puppet, for example application code on production servers. You can read more
-about Puppet's auditing capability here: 
-http://www.puppetlabs.com/blog/allabout-auditing-with-puppet/.
+对于需要审记大型网络中的机器所做的任何改变（无论是恶意的还是意外的）的情况，
+使用 +audit+ 特性是非常有用的。
+你还可以使用 +tagmail+ 报告特性通过 e-mail 自动发送审计通知信息。
 
-If you just want to audit everything about a resource, use the following:
+对于要时刻关注不被 Puppet 管理的任何事物（例如生产服务器上的应用程序代码）的情况，
+使用 +audit+ 特性也是非常方便的。
+你可以从 http://www.puppetlabs.com/blog/allabout-auditing-with-puppet/
+获取更多关于 Puppet 审计能力的信息。
+
+如果你希望审计一个资源的一切，可以使用如下的代码：
 
 ----
 file { "/etc/passwd":
@@ -64,7 +62,7 @@ file { "/etc/passwd":
 }
 ----
 
-==== See also
+==== {Seealso}
 
-- <<ch02sec06,Testing your Puppet manifests>> in Chapter 2
-- <<ch02sec02,E-mailing log messages containing specific tags>> in Chapter 2
+- 第 2 章的 <<ch02sec06,{Recipe206}>> 一节
+- 第 2 章的 <<ch02sec02,{Recipe202}>> 一节

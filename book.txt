@@ -1,22 +1,16 @@
-ï»¿Puppet 2.7 Cookbook
-===================
+Puppet 2.7 Cookbook ÖÐÎÄ°æ
+==========================
 :Author:      John Arundel
 :Email:       hello@bitfieldconsulting.com
 :description: Build reliable, scalable, secure, +
-              high-performance systems to fully utilize the power of cloud computing
+              high-performance systems to fully utilize the power of cloud computing.
 :doctype:     book
-:lang:        en
+:lang:        zh-CN
 :encoding:    utf-8
 :revdate:     October, 2011
 :revnumber:   1.0
 
-
-/////////////////////////////
-// include::00-entries.txt[]
-// include::01-author.txt[]
-// include::02-reviewers.txt[]
-// include::03-preface.txt[]
-/////////////////////////////
+include::entries.txt[tabsize=0]
 
 
 include::ch01-Puppet_Infrastructure.txt[]

@@ -1,66 +1,62 @@
-﻿[[ch02sec09]]
-=== Understanding Puppet errors
+[[ch02sec09]]
+=== {Recipe209}
 
-Stop! Error time. Puppet's error messages can be confusing, and sometimes don't contain
-much helpful information about how to actually resolve the problem.
+停一停！下面是解决错误的时间。Puppet 的错误消息会令人困惑，
+有时不会包含关于如何解决问题的实质信息。
 
-==== How to do it…
+==== {Howtodoit}
 
-Often the first step is simply to search the web for the error message text and see what
-explanations you can find for the error, along with any helpful advice about fixing it. Here
-are some of the most common puzzling errors, with possible explanations:
+往往第一步是根据错误消息的文本搜索网页，看看你能找到的关于此错误的解释，
+并根据这些有益的建议来修复错误。
+下面是一些常见的令人费解的错误以及尽可能明确的解释：
 
 - +Could not evaluate: Could not retrieve information from source(s)+
 +
-This means you specified a +source+ parameter for a file and Puppet couldn't find it.
-Check that the file is present and has been checked in, and also that the source path
-is correct.
+这意味着你为 +source+ 参数指定的一个文件没有被 Puppet 发现。
+请检查该文件是否存在，同时检查资源路径是否正确。
 
-- +change from absent to file failed: Could not set 'file on ensure: 
+- +change from absent to file failed: Could not set file on ensure: 
   No such file or directory+
 +
-This is often caused by Puppet trying to write a file to a directory that doesn't exist.
-Check that the directory either exists already or is defined in Puppet, and that the file
-resource require the directory (so that the directory is always created first).
+经常导致这一错误的原因是，Puppet 试图在某目录中写文件，而此目录不存在。
+检查该目录是否存在或者已经在 Puppet 中被定义，
+以及该目录是否为文件资源所要求的目录（这样的目录总是要首先创建的）。
 
 - +undefined method `closed?' for nil:NilClass+
 +
 --
-This unhelpful error message is roughly translated as "something went wrong". It
-tends to be a catch-all error caused by many different problems, but you may be able
-to determine what is wrong from the name of the resource, the class, or the module.
-One trick is to add the `--debug` switch, to get more useful information:
+这种无用的错误消息相当于“出错了”。 这种错误往往可以由许多不同的原因引起，
+但你可以进一步检查哪个资源、哪个类或哪个模块所引起的。
+一个诀窍是添加 `--debug` 开关运行 puppet 从而获得更多有用的信息：
 
 ......
 # puppet agent --test --debug
 ......
 
-If you check your Git history to see what was touched in the most recent change, this
-may be another way to identify what's upsetting Puppet.
+你也可以检查 Git 的历史日志看看最近配置清单是否有改动，
+这可能是另一种方式来确定是什么扰乱了 Puppet 的正常工作。
 --
 
 - +Could not parse for environment --- "--- production": Syntax
   error at end of file at line 1+
 +
-This can be caused by mistyping command line options: for example, if you type
-`puppet -verbose` instead of `puppet --verbose`. That kind of error can be
-hard to see.
+这可能是由于命令行选项输入错误引起的：例如，你输入了
+`puppet -verbose` 而不是 `puppet --verbose` 。这种错误一般是很难被发现的。
 
 - +Could not request certificate: Retrieved certificate does not
   match private key; please remove certificate from server and
   regenerate it with the current key+
 +
-Either the node's SSL host key has changed, or Puppet's SSL directory has been
-deleted, or you are trying to request a certificate for a machine with the same name
-as an existing node. Generally, the simplest way to fix this is to remove Puppet's
-SSL directory from the client machine (usually this is +/etc/puppet/ssl+) and run
-`puppet cert --clean <nodename>` on the Puppetmaster. Then run Puppet
-again, and it should generate a certificate request correctly.
+可能是节点的 SSL 主机密钥已经改变，或 Puppet 的 SSL 目录已被删除，
+又或者你试图用与已存在的节点主机名请求新证书。
+一般而言，最简单的解决方法是先从客户端删除 Puppet 的 SSL 目录（通常是 ++/etc/puppet/ssl++）
+之后在 Puppetmaster 上运行 `puppet cert --clean <nodename>` 。 
+然后再次运行 Puppet，生成正确的证书请求。
 
 - +Could not retrieve catalog from remote server: wrong header line format+
 +
-This usually indicates an error in compiling a template. You'll see this kind of error if
-you have a typo in your ERB syntax, such as in the following code snippet:
+通常这种错误是在编译模板时出现的。如果在你的 ERB 上有语法错误，就会看到类似的信息，
+如下面的代码片段：
 +
 ----
 rails_env <%!= app_env %>
@@ -70,15 +66,12 @@ rails_env <%!= app_env %>
   cannot redefine at [file] line Y+
 +
 --
-This one has caused me some confusion in the past. Puppet's complaining about
-a duplicate definition, and normally if you have two resources with the same
-name, Puppet will helpfully tell you where they are both defined. But in this case,
-it's indicating the same file and line number for both. How can one resource be a
-duplicate of itself?
+这曾经引起我的困惑。Puppet 抱怨有重复的资源定义，通常如果你有两个同名的资源，
+Puppet 将会帮忙告诉你两者都定义了。 但在这种情况下，它指出了相同的文件和行号。
+一个资源怎么可能是其自身的副本呢？
 
-The answer is: if it's a define. If you create two instances of a define, you'll also
-have two instances of all the resources contained within the define, and they need
-to have distinct names. For example:
+答案是：若它是 define。如果你使用一个 define 定义了两个实例，
+你还有所有资源都包含在这个 define 中的两个实例，他们需要有不同的名字。例如：
 
 ----
 define check_process() {
@@ -104,15 +97,14 @@ warning: Not using cache on failed catalog
 err: Could not retrieve catalog; skipping run
 ......
 
-Because the +exec+ resource is named +is-process-running+? and this stays
-the same no matter what you pass to the +define+, Puppet will refuse to create two
-instances of it. The solution is to include the name of the instance in the title of each
-resource, as follows:
+因为 +exec+ 资源被命名为 ++is-process-running++。
+不管你传递什么参数到 ++define++，都会保持这个相同的名字, Puppet 会拒绝创建它的两个实例。
+解决方法是在每个资源的标题部分包含实例的名字，如下所示：
 
 ......
 exec { "is-process-${name}-running?":
-    command => "/bin/ps ax |/bin/grep ${name} >/tmp/
-     pslist.${name}.txt",
+    command => "/bin/ps ax |/bin/grep ${name} >
+	 /tmp/pslist.${name}.txt",
 }
 ......
 --

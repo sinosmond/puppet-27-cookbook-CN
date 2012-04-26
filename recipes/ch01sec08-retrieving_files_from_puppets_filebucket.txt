@@ -1,12 +1,13 @@
-﻿[[ch01sec08]]
-=== Retrieving files from Puppet's filebucket
+[[ch01sec08]]
+=== {Recipe108}
 
 [quote, Anon,]
 A Freudian slip is when you say one thing, but mean your mother.
 
-We all make mistakes; that's why pencils have erasers. Whenever Puppet changes a file on
-the client, it keeps a backup copy of the previous version. We can see this process in action if
-we make a change, however small, to an existing file:
+我们每个人都会犯错误，这就是为什么通常铅笔上会配有橡皮擦。
+每当 Puppet 客户端在改变一个文件时，就会将改变前的版本做个备份。
+如果在 Puppet 客户端上对一个已经存在的文件做修改，不管多小的改变，
+我们都可以看到这一过程：
 
 ........
 # puppet agent --test
@@ -33,42 +34,41 @@ changed '{md5}c07d0aa2d43d58ea7b5c5307f532a0b1' to '{md5}0d218c16bd31206e
 notice: Finished catalog run in 0.45 seconds
 ........
 
-The part we're interested in is this line:
+我们感兴趣的是下面这行：
 
 ........
 info: /Stage[main]/Admin::Sudoers/File[/etc/sudoers]: Filebucketed /etc/
 sudoers to puppet with sum c07d0aa2d43d58ea7b5c5307f532a0b1
 ........
 
-Puppet creates an MD5 hash of the file's contents and uses this to create a *filebucket*
-path, based on the first few characters of the hash. The filebucket is where Puppet keeps
-backup copies of any files that it replaces, and it's located by default in
-+/var/lib/puppet/clientbucket+.
-
+Puppet 会根据文件内容创建一个 MD5 哈希，并使用它来创建一个 *filebucket* 路径，
+*filebucket* 的值是基于哈希的前几个字符的。
+filebucket 用来保存 Puppet 替换下来的任何文件副本，它存放的默认位置是
+++/var/lib/puppet/clientbucket++：
 ........
 # ls /var/lib/puppet/clientbucket/c/0/7/d/0/a/a/2/
 c07d0aa2d43d58ea7b5c5307f532a0b1
 contents  paths
 ........
 
-As you just saw, the `ls` command listed the filenames. You will see two files in the bucket
-location: +contents+ and paths. The +contents+ file contains, as you might expect, the original
-contents of the file. The +paths+ file contains its original path.
+正如你看到的，`ls` 命令列出了文件名。
+你在 bucket 的存放位置会看到两个文件： +contents+ 和 +paths+ 。
++contens+ 文件的内容即为原始文件，+paths+ 文件的内容即为原始文件的路径。
 
-It's easy to find the file if you know its content hash (as we did in this case). If you don't, it's
-helpful to create a table of contents of the whole filebucket by building an index file.
+如果你知道文件内容的哈希值（像你看到的上面的例子），可以很容易地找到该文件；
+如果你不知道，那么通过对整个 filebucket 创建一个索引文件的表将会非常有用。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create the index file using the following command:
+1. 使用如下命令创建索引文件：
 +
 .........
-# find /var/lib/puppet/clientbucket -name paths -execdir cat {}
-  \; -execdir pwd \; -execdir date -r {} +"%F %T" \; -exec echo \; >
-  bucket.txt
+# find /var/lib/puppet/clientbucket -name paths -execdir cat {}\; \
+   -execdir pwd \; -execdir date -r {} +"%F %T" \; -exec echo \; \
+   > bucket.txt
 .........
 
-2. Search the index file to find the file you're looking for:
+2. 在索引文件中查找你要寻找的文件：
 +
 ....................
 # cat bucket.txt
@@ -83,25 +83,24 @@ c78894f49eb
 2010-12-27 07:12:20
 ....................
 
-3. To retrieve the file once you know its bucket path, just copy the contents file to the
-   original filename:
+3. 一旦你要恢复一个已知 bucket 路径的文件，只要复制该文件到原始文件名即可：
 +
 ............
 # cp /var/lib/puppet/clientbucket/1/0/9/0/e/2/8/a/1090e28a70ebaae8
 72c2ec78894f49eb/contents /etc/sudoers
 ............
 
-==== How it works…
+==== {Howitworks}
 
-The script will create a complete list of files in the filebucket, showing the original name of
-the file, the bucket path, and the modification date (in case you need to retrieve one of several
-previous versions of the file). Once you know the bucket path, then you can copy the file back
-into place.
+上面的 find 命令会创建一份完整的 filebucket 文件列表清单，
+显示原始文件的名称，bucket 的路径，以及修改日期
+（在上例中你学习到了如何恢复文件到以前版本），
+一旦你知道 bucket 的路径，那么就可以复制文件到正确的位置。
 
-==== There's more…
+==== {Theresmore}
 
-You can have Puppet create backup copies of the file in its original location, rather than in
-the filebucket. To do this, use the +backup+ parameter in your manifest:
+你可以让 Puppet 在原始目录下创建备份文件，而不是在 filebucket。
+为了做到这一点，只需要在配置清单中指定 +backup+ 参数的值：
 
 ----
 file { "/etc/sudoers":
@@ -111,8 +110,8 @@ file { "/etc/sudoers":
 }
 ----
 
-Now, if Puppet replaces the file, it will create a backup version in the same location with the
-extension .bak. To make this the default policy for all files, use:
+现在，如果 Puppet 替换了旧文件，就会在原始路径下面创建一个扩展名为 +.bak+ 的备份文件。
+若希望 Puppet 对所有的文件执行这样的默认备份策略，可以在配置清单中使用如下代码：
 
 ----
 File {
@@ -120,7 +119,7 @@ File {
 }
 ----
 
-To disable backups altogether, use the following code:
+要完全禁用备份，使用下面的代码：
 
 ----
     backup => false,

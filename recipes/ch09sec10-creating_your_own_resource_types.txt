@@ -1,46 +1,43 @@
-﻿[[ch09sec10]]
-=== Creating your own resource types
+[[ch09sec10]]
+=== {Recipe910}
 
-It's time to get creative. You'll know about various different resource types in Puppet:
-packages, files, users, and so on. Usually, you can do everything you need to do by using
-either combinations of these built-in resources, or a custom +define+ that you can use
-more or less in the same way as a resource (see Chapter 4, <<chapter04,Writing Better Manifests>>
-for information on +define+).
+该到你发挥创意的时间了。你已经知道了各种不同的 Puppet 资源类型：
+包（++package++）, 文件（++file++）、用户（++user++），等等。
+通常情况下，你既可以组合使用这些内置资源类型做你需要做的一切，
+又可以通过一个自定义 +define+ 作为一种资源（以内置资源同样的方式）来使用
+（参见第 4 章 <<chapter04,书写更优质的配置清单>> 中有关 +define+ 的内容）。
 
-However, if you need to create your own resource type, Puppet makes it quite easy. The
-native types are written in Ruby, and you will need a basic familiarity with Ruby in order to
-create your own.
+但是，如果你需要创建自己的资源类型，Puppet 也可以很容易地实现。
+原生的资源类型都是使用 Ruby 书写的，为了创建自己的资源类型，你需要对 Ruby 有一个基本的了解。
 
-Let's refresh our memory on the distinction between *types* and *providers*. A type describes
-a resource and the parameters it can have (for example, the +package+ type). A provider tells
-Puppet how to implement a resource for a particular platform or situation (for example, the
-+apt+/+dpkg+ providers implement +package+ for Debian-like systems).
+让我们重新回顾一下 **资源类型**（**type**）和 **提供者**（**provider**）之间的区别。
+资源类型描述了一个资源和它可拥有的参数（例如，++package++ 类型）。
+提供者则告诉 Puppet 如何针对特定的平台或情况去实现一个资源
+（例如，++apt++/++dpkg++ 提供者为 Debian/Ubuntu 系统实现 +package+ 资源）。
 
-A single type (+package+) can have many providers (+apt+, +yum+, +fink+, and so on). If you don't
-specify a provider when declaring a resource, Puppet will choose the most appropriate one
-given the environment.
+一种类型（如：++package++）可以有多个提供者（如：++apt++、++yum++、++fink++ 等等）。
+如果你声明一个资源时没有指定提供者，Puppet 会根据环境选择一个最合适的提供者。
 
-In this section we'll see how to create a custom type to manage Git repositories, and in the
-next section, we'll write a provider to implement this type.
+在本节中，我们将看到如何创建一个管理 Git 仓库的自定义资源类型；
+在下一节，我们将编写一个实现这种资源类型的提供者。
 
-==== Getting ready…
+==== {Gettingready}
 
-1. Enable +pluginsync+ in your +puppet.conf+, if you haven't already:
+1. 在你的 +puppet.conf+ 文件中启用 ++pluginsync++（若还未启用）：
 +
 ----
 [main]
 pluginsync = true
 ----
 
-2. Create a custom module for your plugins and types in your Puppet repository, 
-   if you haven't already:
+2. 在你的 Puppet 仓库中，为你的插件和类型创建一个自定义模块（若还不存在）：  
 +
 ....
 # cd /etc/puppet/modules
 # mkdir custom
 ....
 
-3. Within the module, create a +lib/puppet/type+ directory:
+3. 在这个模块中，创建 +lib/puppet/type+ 目录：
 +
 ....
 # cd custom
@@ -48,9 +45,9 @@ pluginsync = true
 ....
 
 
-==== How to do it…
+==== {Howtodoit}
 
-Create a file in the +type+ directory named +gitrepo.rb+ with the following contents:
+在 +type+ 目录中创建一个名为 +gitrepo.rb+ 的文件，其内容如下：
 
 [source,ruby]
 ----
@@ -65,24 +62,23 @@ Puppet::Type.newtype(:gitrepo) do
 end
 ----
 
-==== How it works…
+==== {Howitworks}
 
-The first line registers a new type named +gitrepo+:
+第一行注册一个名为 +gitrepo+ 的新类型：
 
 ----
 Puppet::Type.newtype(:gitrepo) do
 ----
 
-The +ensurable+ line automatically gives the type a property ensure, like Puppet's built-in
-resources.
++ensurable+ 行确保自动给出该类型的属性（与 Puppet 内置的资源类似）：
 
 ----
     ensurable
 ----
 
-We'll now give the type some parameters. For the moment, all we need is a +source+
-parameter for the Git source URL, and a +path+ parameter to tell Puppet where the repository
-should be created in the filesystem.
+现在，我们将给出此类型的一些参数。就目前而言，我们所需要的参数分别是：
++source+ 参数用于指定 Git 仓库源的 URL；++path++ 参数用于告诉 Puppet 
+要在文件系统中的什么位置创建仓库。
 
 ----
     newparam(:source) do
@@ -90,9 +86,8 @@ should be created in the filesystem.
     end
 ----
 
-The +isnamevar+ declaration tells Puppet that the +source+ parameter is the type's +namevar+.
-So when you declare an instance of this resource, whatever name you give it will be the value
-of +source+. For example:
++isnamevar+ 声明告诉 Puppet 参数 +source+ 是此类型的 ++namevar++。
+因此当你声明这个资源的实例时，你给出的任何名字将被视为 +source+ 的值。例如：
 
 ----
 gitrepo { "git://github.com/puppetlabs/puppet.git":
@@ -100,24 +95,22 @@ gitrepo { "git://github.com/puppetlabs/puppet.git":
 }
 ----
 
-Finally, we add the path parameter:
+最后，我们添加 +path+ 参数：
 
 ----
     newparam(:path)
 ----
 
-==== There's more…
+==== {Theresmore}
 
-Once you're familiar with creating your own resources, you can use them to replace
-complicated +exec+ resources and make your manifests more readable. However, it's a good
-idea to make your resources robust and reusable by adding some documentation, and
-validating your parameters.
+一旦你熟悉了创建自己的资源类型的方法，你就可以使用自定义的资源类型替换复杂的 +exec+ 资源，
+这会使你的配置清单更具可读性。
+然而，通过对自定义资源类型的代码添加一些文档和参数校验使其更强壮更具可重用性是一个好主意。
 
-===== Documentation
+===== 文档
 
-Our example is deliberately simple, but when you move on to developing real custom types for
-your production environment, you should add documentation strings to describe what the type
-and its parameters do. For example:
+我在上面故意举了一个简单的例子，但是当你要为生产环境开发真正的自定义类型时，
+你应该加入文档字符串描述类型及其参数的用途。例如：
 
 ----
 Puppet::Type.newtype(:gitrepo) do
@@ -136,11 +129,10 @@ Puppet::Type.newtype(:gitrepo) do
 end
 ----
 
-===== Validation
+===== 校验
 
-You can use parameter validation to generate useful error messages when someone tries to
-pass bad values to the resource. For example, you could validate that the directory where the
-repository is to be created actually exists:
+当某人试图向资源传递错误的值时，你可以使用参数校验（validate）生成有用的错误信息。
+例如，你可以校验要创建仓库的目录是否已真实存在：
 
 ----
   newparam(:path) do
@@ -153,7 +145,7 @@ repository is to be created actually exists:
   end
 ----
 
-You can also specify the list of allowed values that the parameter can take as follows:
+你也可以为参数指定一个允许的取值列表，例如：
 
 ----
 newparam(:breakfast) do

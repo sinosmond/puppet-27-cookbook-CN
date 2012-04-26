@@ -1,31 +1,30 @@
-﻿[[ch08sec07]]
-=== Managing virtual machines with Vagrant
+[[ch08sec07]]
+=== {Recipe807}
 
 [quote, Ted Nelson,]
 In 1974 computers were oppressive devices in far-off air-conditioned places. Now
 you can be oppressed in your own living room.
 
-While it's great to be able to deploy virtual machines in the cloud, running them on your own
-desktop is sometimes even more convenient, especially for testing. If every developer can
-have a clone of the production system in a VM on her own machine, she's less likely to run
-into problems when deploying for real. Similarly, if every sysadmin can test his configuration
-management changes on a private VM, it's a great way to catch issues before they affect
-customers.
+虽然能够在云中部署虚拟机是一个创举，但若能将虚拟机运行在你自己的桌面系统中有时甚至是更方便的，
+尤其对于测试来说更是如此。如果每个开发者都有一个克隆自生产系统的运行在自己机器上的虚拟机，
+那么实际部署时就不太可能遇到问题。
+同样地，每个系统管理员也可以在私人的虚拟机上测试配置管理的变化，
+这是一种使错误配置实际影响客户之前捕捉错误的良好方式。
 
-For some years tools like VirtualBox and VMware have been available to do this. However,
-desktop cloud has really taken off with the arrival of *Vagrant*, a tool for managing and
-provisioning VM environments automatically. Vagrant drives VirtualBox to automate the
-process of creating a VM, provisioning it with Chef or Puppet, setting up networking, port
-forwarding, and packaging running VMs into images for others to use.
+几年前出现的工具（如 VirtualBox 或 VMware）就已经能在桌面系统上创建虚拟机。 
+然而，**Vagrant** 的到来使桌面云技术真正实现了起飞，它是一个管理和供应虚拟化环境的自动化工具。
+Vagrant 是 VirtualBox 的前端工具，它驱动 VirtualBox 实现自动创建虚拟机的过程，
+并使用自动化管理配置工具（Chef 或 Puppet）为虚拟机调配所需的资源，
+设置网络，端口转发，以及对运行着的虚拟机打包生成映像文件以便其他人使用。
 
-You can use Vagrant to manage your development VMs on your own desktop, or on a shared
-machine such as a continuous integration server. For example, you might use a CI tool such
-as Jenkins to boot a VM with Vagrant, deploy your app, and then run your tests against it as
-though it were in production.
+你可以使用 Vagrant 管理你用于开发目的虚拟机，这些虚拟机既可以运行在你自己的桌面上，
+也可以运行在一台共享的机器上，比如一台持续集成服务器（Continuous Integration Server）。
+例如，你可以使用像 *Jenkins* 那样的 CI 工具启动一个由 Vagrant 管理的虚拟机，
+部署你的应用程序，然后在虚拟机里运行测试实验，就好像是在生产环境中一样。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Create a +vagrant+ module:
+1. 创建一个 +vagrant+ 模块：
 +
 ....
 # mkdir /etc/puppet/modules/vagrant
@@ -33,8 +32,7 @@ though it were in production.
 # mkdir /etc/puppet/modules/vagrant/files
 ....
 
-2. Create the file +/etc/puppet/modules/vagrant/manifests/init.pp+ with
-   the following contents:
+2. 使用如下内容创建 +/etc/puppet/modules/vagrant/manifests/init.pp+ 文件：
 +
 ----
 class vagrant {
@@ -110,8 +108,7 @@ class vagrant {
 }
 ----
 
-3. Create the file +/etc/puppet/modules/vagrant/files/devbox.Vagrantfile+
-   with the following contents:
+3. 使用如下内容创建 +/etc/puppet/modules/vagrant/files/devbox.Vagrantfile+ 文件：
 +
 ----
 Vagrant::Config.run do |config|
@@ -132,8 +129,7 @@ Vagrant::Config.run do |config|
 end
 ----
 
-4. Include the following on the node where you want to run the VM (replace +john+ with
-   your own username).
+4. 在一个你想要运行虚拟机的节点上包含如下代码（将 +john+ 替换为你自己的用户名）：
 +
 ----
 vagrant::devbox { "devbox":
@@ -141,7 +137,7 @@ vagrant::devbox { "devbox":
 }
 ----
 
-5. Add a node definition for devbox:
+5. 添加一个名为 +devbox+ 的节点：
 +
 ----
 node devbox {
@@ -152,15 +148,16 @@ node devbox {
 }
 ----
 
-6. Run Puppet:
+6. 运行 Puppet：
 +
 ....
 # puppet agent --test
 ....
 
-7. You should find a directory +devbox+ created in your home directory. In this directory,
-   either check out your Puppet repository to a directory named puppet, or make a
-   *symlink* to an existing Puppet checkout:
+7. 你应该在要运行虚拟机的宿主机上找到用户 +john+ 自家目录下已创建的 +devbox+ 目录。
+   在此目录中需要拥有一套 Puppet 配置清单的子目录（名为 puppet），
+   既可以从你的 Puppet 仓库检出到名为 puppet 的目录，也可以创建一个名为 puppet
+   的 **符号链接**（**symlink**）指向宿主机上已存在的 Puppet 配置清单目录：
 +
 --
 ....
@@ -168,14 +165,14 @@ node devbox {
 # git clone git@github.com:Example/Puppet.git puppet
 ....
 
-or
+或者
 
 ....
 # ln -s /etc/puppet ~/devbox/puppet
 ....
 --
 
-8. In the +devbox+ directory, run the following command line:
+8. 在 +devbox+ 目录中，运行如下命令行：
 +
 --
 ....
@@ -214,7 +211,7 @@ ensure: defined content as '{md5}0bdeca690dbb409d48391f3772d389b7'
 [default]
 ....
 
-Log into the +devbox+ VM to test it:
+登录到 +devbox+ 虚拟主机进行测试：
 
 ....
 # vagrant ssh
@@ -225,11 +222,11 @@ Connection to 127.0.0.1 closed.
 ....
 --
 
-==== How it works…
+==== {Howitworks}
 
-The +vagrant+ class installs Vagrant and VirtualBox and all their dependencies. It also makes
-the +devbox+ define available. You can then use it to create multiple +devbox+ instances for
-multiple users on a machine. An instance of +devbox+ such as:
++vagrant+ 类安装 Vagrant 和 VirtualBox 以及所有的依赖。它同时还定义了名为
++devbox+ 的 ++define++，你可以使用它为一台宿主机的多个用户创建 +devbox+ 的多个实例。
++devbox+ 的一个实例如下：
 
 ----
 vagrant::devbox { "app-foo-devbox":
@@ -237,46 +234,43 @@ vagrant::devbox { "app-foo-devbox":
 }
 ----
 
-will create a Vagrant project directory named +app-foo-devbox+ (a directory containing a
-+Vagrantfile+ that specifies a virtual machine definition) in the user's (in this case +john+)
-home directory.
+此实例在用户（本例为 ++john++）的家目录下创建一个名为 +app-foo-devbox+ 的 Vagrant 项目目录
+（此目录包含一个配置文件 ++Vagrantfile++，它指定了一个虚拟机的配置定义）。
 
-When Vagrant boots the VM for the first time, it's configured to look in a subdirectory of the
-project directory named +puppet+ for the Puppet manifest to provision the machine. This
-can be a symlink to your Puppet working copy, or a standalone Puppet manifest just for the
-+devbox+ — whatever you like, so long as Vagrant can find it.
+当 Vagrant 首次启动虚拟机，它会在项目目录的名为 +puppet+ 
+的子目录中查找提供给本虚拟机的 Puppet 配置清单。
+这可以是你当前 Puppet 工作副本的一个符号链接，
+也可以是仅为 +devbox+ 编制的独立的 Puppet 配置清单
+（无论你使用哪一种方式，只要 Vagrant 能找到即可）。
 
-Once the VM has been provisioned, it's ready for use. Just run `vagrant up` to start the
-machine, `vagrant ssh` to log into it, and `vagrant halt` to stop it.
+一旦虚拟主机已经配置好，它就可以投入使用了。运行 `vagrant up` 命令即可启动虚拟机；
+`vagrant ssh` 命令用于登录虚拟机；`vagrant halt` 命令用于停止虚拟机的运行。
 
-By the way, the +puppet+ group resource in the node definition is there to work around a bug
-in Vagrant's Puppet provisioning that may be fixed by the time you read this. Vagrant is under
-active development so one or two things may not work exactly as they do here: if in doubt,
-check the documentation link at the end of this recipe.
+顺便指出，节点定义中的 +puppet+ 组资源在 Vagrant 的 Puppet 供应时会引发一个错误，
+当你看到本书时可能已经被修复。Vagrant 正处于开发活跃期，所以可能会有一两处无法正常工作：
+如有疑问，请查看本节最后的文档链接。
 
-You may find that the VM does not boot fully sometimes, and Vagrant just times out waiting
-for it. This seems to be due to a bug that may be fixed by the time you read this. If not, you can
-work around the problem by adding the following code snippet to the Vagrantfile:
+你可能会发现有时虚拟机无法完全启动，Vagrant 只是处于超时等待状态。
+这似乎也是由于 Vagrant 的一个错误引起的，当你看到本书时可能已经被修复。如果还没有修复，
+你可以在 Vagrantfile 中通过添加如下的代码片段来解决这个问题：
 
 ----
 config.vm.boot_mode = :gui
 ----
 
-and restarting the VM. It will now boot in GUI mode, with a console window. Log in via this
-window as user +vagrant+, with password +vagrant+, and run the following command:
+修改之后重新启动虚拟机。现在虚拟机在 GUI 模式下启动，同时运行了一个控制台窗口。
+在此窗口中，以用户名 ++vagrant++（口令为 ++vagrant++）登录，然后运行如下命令：
 
 ....
 # sudo /etc/init.d/networking restart
 ....
 
-You should find that Vagrant now completes the provisioning phase and that `vagrant ssh`
-will work.
+现在你发现 Vagrant 会完成配置阶段并且 `vagrant ssh` 命令也会工作正常。
 
-==== There's more…
+==== {Theresmore}
 
-In this example we just configured +devbox+ with a simple manifest that adds a message to the
-+/etc/motd+ file. To make this more useful, have +devbox+ pick up the same manifest as the
-real server you'll be deploying to. For example:
+在本例中，我们仅对 +devbox+ 配置了一个极其简单的配置清单，它在 +/etc/motd+ 文件中添加了消息。
+为了使其更实用，可以让 +devbox+ 提取与你要部署的实际服务器相同的配置清单。例如：
 
 ----
 node production, devbox {
@@ -284,29 +278,27 @@ node production, devbox {
 }
 ----
 
-Thus, any changes you make to the production server config will be reflected in the machine
-you run your tests on, so that you can pick up problems before deploying. Similarly, if you
-need to make a config change to support a new feature, you can test it on the VM first to see
-if anything doesn't work.
+因此，应用到生产服务器配置的任何改变将同时反映在你用于测试的机器上，
+这样就可以在实际部署之前先解决出现的问题，如果你需要进行配置的变化以支持新的功能，
+可以首先在虚拟机上测试它，看看是否有什么不正常。
 
-If you want to suspend or shut down your VM while you're not using it, run:
+如果你不再使用虚拟机，想要挂起或关闭它，只要运行：
 
 ....
 # vagrant suspend
 ....
 
-or
+或
 
 ....
 # vagrant halt
 ....
 
-To wipe the VM completely, so that you can test re-provisioning it, for example, run:
+想要完全删除虚拟机，例如你要重新测试供应，运行：
 
 ....
 # vagrant destroy
 ....
 
-The Vagrant maintainers have done a great job of making it very straightforward to
-use, but you can read more about Vagrant if you need to at the documentation site:
-http://vagrantup.com/docs/index.html.
+Vagrant 的维护者为了使其使用简单做了相当多的工作，如果你需要阅读更多关于
+Vagrant 的内容请访问其文档站点： http://vagrantup.com/docs/index.html 。

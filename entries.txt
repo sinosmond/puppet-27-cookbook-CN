@@ -1,0 +1,101 @@
+:Recipe101: 使用版本控制
+:Recipe102: 使用提交钩子
+:Recipe103: 使用 Rake 部署变更
+:Recipe104: 配置 Puppet 的文件服务器
+:Recipe105: 从 cron 运行 Puppet
+:Recipe106: 使用自动签名
+:Recipe107: 预签名证书
+:Recipe108: 从 Puppet 的 filebucket 检索文件
+:Recipe109: 使用 Passenger 扩展 Puppet 的部署规模 
+:Recipe110: 创建去中心化的分布式 Puppet 架构
+:Recipe201: 生成报告
+:Recipe202: 通过 Email 发送包含特定标签的日志信息
+:Recipe203: 创建图形化报告
+:Recipe204: 自动生成 HTML 文档
+:Recipe205: 绘制依赖关系图
+:Recipe206: 测试你的 Puppet 配置清单
+:Recipe207: 执行模拟运行
+:Recipe208: 检测编译错误
+:Recipe209: 理解 Puppet 的错误信息
+:Recipe210: 将命令的输出记入日志
+:Recipe211: 将调试信息记入日志
+:Recipe212: 检查配置设置
+:Recipe213: 使用标签
+:Recipe214: 使用运行阶段
+:Recipe215: 使用不同的环境
+:Recipe301: 使用 Puppet 社区规范
+:Recipe302: 使用模块
+:Recipe303: 使用标准的命名规范
+:Recipe304: 使用嵌入式 Ruby 代码
+:Recipe305: 使用纯 Ruby 代码书写配置清单
+:Recipe306: 遍历多个项目
+:Recipe307: 书写强大的条件语句
+:Recipe308: 在 if 语句中使用正则表达式
+:Recipe309: 使用选择器和 case 语句
+:Recipe310: 检测字符串中是否包含指定的值
+:Recipe311: 使用正则表达式替换
+:Recipe401: 使用资源的数组
+:Recipe402: 使用 define 资源
+:Recipe403: 指定资源的依赖关系
+:Recipe404: 使用节点继承
+:Recipe405: 使用类的继承和重载
+:Recipe406: 给类传递参数
+:Recipe407: 书写可重用的跨平台配置清单
+:Recipe408: 获得系统的环境信息
+:Recipe409: 导入动态信息
+:Recipe410: 从 CSV 文件导入数据
+:Recipe411: 给 Shell 命令传递参数
+:Recipe501: 为配置文件添加配置行
+:Recipe502: 使用 Augeas 自动修改配置文件
+:Recipe503: 使用配置片段构建配置文件
+:Recipe504: 使用 ERB 模板
+:Recipe505: 在模板中遍历数组
+:Recipe506: 从第三方仓库安装软件包
+:Recipe507: 配置 APT 软件仓库
+:Recipe508: 配置 GEM 仓库
+:Recipe509: 从源码包自动构建软件
+:Recipe510: 比较软件包的版本
+:Recipe601: 使用虚拟资源
+:Recipe602: 使用虚拟资源管理用户
+:Recipe603: 管理用户基于密钥的 SSH 访问
+:Recipe604: 管理用户的自定义文件
+:Recipe605: 有效地分发 cron 任务
+:Recipe606: 当文件更新时运行命令
+:Recipe607: 使用主机资源
+:Recipe608: 为文件资源指定多个源
+:Recipe609: 使用文件资源递归地分发整个目录树
+:Recipe610: 清理过期的旧文件
+:Recipe611: 使用日程表资源
+:Recipe612: 资源的审计
+:Recipe613: 临时禁用资源
+:Recipe614: 管理时区
+:Recipe701: 管理 Apache 服务
+:Recipe702: 创建 Apache 虚拟主机
+:Recipe703: 创建 Nginx 虚拟主机
+:Recipe704: 创建 MySQL 数据库及用户
+:Recipe705: 管理 Drupal 站点
+:Recipe706: 管理 Rails 应用程序
+:Recipe801: 部署 Nagios 监控服务器
+:Recipe802: 使用 Heartbeat 构建高可用服务
+:Recipe803: 管理 NFS 服务和文件共享
+:Recipe804: 使用 HAProxy 为多个 web 服务器实现负载均衡
+:Recipe805: 使用 iptables 管理防火墙
+:Recipe806: 管理 Amazon 的 EC2 实例
+:Recipe807: 使用 Vagrant 管理虚拟机
+:Recipe901: 创建 Facter 的自定义 fact
+:Recipe902: 在运行 Puppet 之前和之后执行命令
+:Recipe903: 从 Shell 会话生成 Puppet 配置清单
+:Recipe904: 从运行的系统上生成 Puppet 配置清单
+:Recipe905: 使用 Puppet Dashboard
+:Recipe906: 使用 Foreman
+:Recipe907: 使用 MCollective
+:Recipe908: 使用公共模块
+:Recipe909: 使用外部节点分类器
+:Recipe910: 创建自己的资源类型
+:Recipe911: 创建自己的提供者
+:Gettingready: 准备工作
+:Howtodoit: 实现方法
+:Howitworks: 工作原理
+:Theresmore: 更多用法
+:Seealso: 参见本书
+

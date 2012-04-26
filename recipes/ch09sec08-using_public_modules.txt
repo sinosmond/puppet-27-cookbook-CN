@@ -1,32 +1,31 @@
-﻿[[ch09sec08]]
-=== Using public modules
+[[ch09sec08]]
+=== {Recipe908}
 
 [quote, Tom Lehrer, 'Lobachevsky']
 Plagiarize, plagiarize, plagiarize / Only be sure always to call it, please 'research'.
 
-If in doubt, steal. In many cases when you write a Puppet module to manage some software or
-service, you don't have to start from scratch. Community-contributed modules are available at
-the *Puppet Forge* site for many popular applications. Sometimes, a community module will be
-exactly what you need and you can download and start using it right away. In other cases, you
-will need to make some modifications to suit your particular needs and environment.
+如果你对自己编制的代码有疑问，使用他人的吧。在许多情况下，
+当你要写一个 Puppet 模块来管理一些软件或服务时，不必从头开始编写。
+对许多流行的应用程序，在 *Puppet Forge* 站点上都提供了社区贡献的模块。
+有时，一个社区模块正是你所需要的，你可以下载并马上开始使用它。
+在其他情况下，你需要对其进行一些修改，以适应你的特定需求和环境。
 
-If you are new to Puppet, it can be a great help to have some existing code to start with.
-On the other hand, community modules are often written to be as general and portable as
-possible, and the extra code required can make them harder to understand.
+如果你是个 Puppet 的新手，能从一些现有的代码开始对你将是一个很大的帮助。但另一方面，
+社区模块往往编写得尽可能通用和便携，为了实现此目的所需的额外代码可能使其更难理解。
 
-In general I would not recommend treating Puppet Forge as a source of 'drop-in' modules
-that you can deploy without reading or understanding the code. This introduces an external
-dependency to your Puppet infrastructure, and doesn't help advance your understanding and
-experience of Puppet. Rather, I would use it as a source of inspiration, help, and examples. A
-module taken from Puppet Forge should be a jumping-off point for you to develop and improve
-your own modules.
+一般地，在你未阅读和理解 Puppet Forge 提供的模块代码之前，
+我建议你不要将其作为 ‘活动的（drop-in）’ 模块源来部署。
+Puppet Forge 提供的模块为你的 Puppet 基础设施引入了一个外部的依赖，
+但它并不能帮你提升对 Puppet 的理解也不利于提升你使用 Puppet 的经验。
+相反，我会用它作为一个获取灵感的源泉，从这方面讲它还是很有帮助的。
+从 Puppet Forge 获取的模块应该是一个起点，你可以用它作为基础，制定和完善自己的模块。
 
-Be aware that a given module may not work on your Linux distribution. Check the +README+ file
-that comes with the module to see if your operating system is supported.
+要知道，一个给定的模块可能无法在你的 Linux 发行上工作。请检查模块自带的 +README+ 
+文件，查看这个模块是否支持你的操作系统。
 
-==== Getting ready...
+==== {Gettingready}
 
-1. The easiest way to use Puppet Forge modules is to install the +puppet-module+ tool:
+1. 使用 Puppet Forge 模块的最简单方法是安装 +puppet-module+ 工具：
 +
 ....
 # gem install puppet-module
@@ -48,7 +47,7 @@ Installing ri documentation for puppet-module-0.3.2...
 Installing RDoc documentation for puppet-module-0.3.2...
 ....
 
-2. Run +puppet-module+ to see the available commands:
+2. 运行 `puppet-module` 查看其可用的任务：
 +
 ....
 # puppet-module
@@ -81,12 +80,11 @@ Options:
                         # Default: /etc/puppet/puppet.conf
 ....
 
-==== How to do it…
+==== {Howtodoit}
 
-In this example, we'll use +puppet-module+ to find and install a module to manage the Tomcat
-application server.
+在本例中，我们将使用 +puppet-module+ 查找并安装一个管理 Tomcat 应用程序服务器的模块。
 
-1. Search for a suitable module as follows:
+1. 查找合适的模块：
 +
 ....
 # puppet-module search tomcat
@@ -99,7 +97,7 @@ camptocamp/tomcat (0.0.1)
 jeffmccune/tomcat (1.0.1)
 ....
 
-2. In this example we'll install the Jeff McCune version:
+2. 在本例中，我们将安装 Jeff McCune 版本的 tomcat 模块：
 +
 ....
 # cd /etc/puppet/modules
@@ -108,22 +106,19 @@ Installed "jeffmccune-tomcat-1.0.1" into directory:
 jeffmccune-tomcat
 ....
 
-3. The module is now ready to use in your manifests: looking at the source code will
-   show you how to do this.
+3. 现在就可以在你的配置清单中使用这个模块了：查看其源代码将向你展示这是如何实现的。
 
-==== How it works…
+==== {Howitworks}
 
-The +puppet-module+ tool simply automates the process of searching and downloading
-modules from the Puppet Forge site. You can browse the site to see what's available at:
-http://forge.puppetlabs.com/.
++puppet-module+ 工具使用简单地自动化过程从 Puppet Forge 站点搜索和下载模块。
+你也可以浏览该网站查询可用的模块： http://forge.puppetlabs.com/ 。
 
-==== There's more…
+==== {Theresmore}
 
-Not all publically available modules are on Puppet Forge. Some other great places to look are
-on GitHub:
+并非所有公开可用的模块都保存在 Puppet Forge 上。其他的存放位置是在 GitHub 上：
 
   - https://github.com/camptocamp
   - https://github.com/example42
 
-Dean Wilson maintains an excellent repository of Puppet patterns, tips, and recipes, at the
-Puppet Cookbook website: http://puppetcookbook.com/.
+Dean Wilson 在他的 Puppet Cookbook 站点： http://puppetcookbook.com/
+维护了一个优秀的 Puppet 的仓库，还包括一些技巧和处方。

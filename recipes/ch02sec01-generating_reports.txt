@@ -1,53 +1,50 @@
-﻿[[ch02sec01]]
-=== Generating reports
+[[ch02sec01]]
+=== {Recipe201}
 
 [quote, Pearl Bailey,]
 What the world really needs is more love and less paperwork.
 
-Truth is often the first casualty of large infrastructures. If you're managing a lot of machines,
-Puppet's reporting facility can give you some valuable information on what's actually
-happening out there.
+大型的基础设施架构往往是真正的第一受害者。如果你正管理着许多机器，
+那么使用 Puppet 的报告设施，可以为你提供一些关于正在发生什么的有价值的信息。
 
-==== How to do it…
+==== {Howtodoit}
 
-To enable reports, just add the following to a client's +puppet.conf+:
+要启用报告，只要将如下的行加入客户端的 +puppet.conf+ 文件：
 
 ----
 report = true
 ----
 
-==== How it works…
+==== {Howitworks}
 
-With reporting enabled, Puppet will generate a report file on the Puppetmaster, containing
-data such as the following:
+启用报告之后，Puppet 将在 Puppetmaster 上生成报告文件，包含如下的数据：
 
-- Time required to fetch configuration from the Puppetmaster
-- Total time of the run
-- Log messages output during the run
-- List of all resources in the client's manifest
-- Whether Puppet changed each resource
-- Whether a resource was out of sync with the manifest
+- 从 Puppetmaster 获取配置所需要的时间
+- Puppet 的总体运行时间
+- 运行期间的日志消息输出
+- 客户端配置清单中的所有资源列表
+- Puppet 是否改变了每个资源
+- 一个资源是否与配置清单不同步
 
-By default, these reports are stored in +/var/lib/puppet/reports+, but you can specify a
-different destination using the +reportdir+ option. You can either create your own scripts to
-process these reports (which are in the standard *YAML* format), or use a tool such as *Puppet
-Dashboard* to get a graphical overview of your network.
+默认情况下，这些报告存储在 +/var/lib/puppet/reports+ 目录下，你也可以使用
++reportdir+ 参数指定到不同的位置。你可以创建自己的脚本处理这些报告
+（这些报告都是标准的 *YAML* 格式），或者使用工具，例如 *Puppet Dashboard*
+来获得您的网络图形概览。
 
-==== There's more…
+==== {Theresmore}
 
-A few tips for getting the best from Puppet's reports are explained in the following text.
+在下文中将解释从 Puppet 报告中收集信息的几个实用技巧。
 
-===== Enabling reports on the command line
+===== 从命令行启用报告
 
-If you just want one report, or you don't want to enable reporting for all clients, you can add
-the `--report` switch to the command line when you run Puppet manually:
+如果你只是想要一个报告，或者你不想让所有客户端都发送报告，
+你可以切换到命令行，手动执行带有 `--report` 参数的命令：
 
 ......
 # puppet agent --test --report
 ......
 
-You can also see some statistics about a Puppet run by supplying the `--summarize` switch
-as follows:
+你还可以使用如下带有 `--summarize` 参数的命令看到关于 Puppet 的运行统计概要信息：
 
 ......
 # puppet agent --test --summarize
@@ -65,22 +62,23 @@ Time:
           Schedule: 0.00
 ......
 
-===== Logging Puppet messages to syslog
+===== 将 Puppet 的信息记入系统日志
 
-Puppet can also send its log messages to the Puppetmaster's *syslog*, so that you can analyze
-them with standard syslog tools. To enable this, set the following option in the Puppetmaster's
-+puppet.conf+:
+Puppet 也可以将日志信息发送到 Puppetmaster 的 **系统日志（syslog）**，
+因此你可以使用标准的 syslog 工具分析这些日志消息。
+为了实现这一点，你可以在 Puppetmaster 的配置文件 +puppet.conf+ 
+中添加如下所示的选项：
 
 ----
 [master]
 reports = store,log
 ----
 
-The default report type is +store+ (it writes the reports to +/var/lib/puppet/reports+), and
-+log+ tells Puppet to also send messages to the syslog.
+默认的报告类型是 +store+ （将报告输出到 ++/var/lib/puppet/reports++）， 
++log+ 选项是告诉 Puppet 同时将消息发送到 syslog。
 
-==== See also
+==== {Seealso}
 
-- <<ch02sec03,Creating graphical reports>> in this chapter
-- <<ch02sec11,Logging debug messages>> in this chapter
-- <<ch09sec05,Using Puppet Dashboard>> in Chapter 9
+- 本章的 <<ch02sec03,{Recipe203}>> 一节
+- 本章的 <<ch02sec11,{Recipe211}>> 一节
+- 第 9 章的 <<ch09sec05,{Recipe905}>> 一节

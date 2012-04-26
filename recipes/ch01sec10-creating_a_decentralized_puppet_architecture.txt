@@ -1,60 +1,59 @@
-﻿[[ch01sec10]]
-=== Creating a decentralized Puppet architecture
+[[ch01sec10]]
+=== {Recipe110}
 
 [quote, Steven Wright,]
 I have the world's largest collection of seashells. I keep it scattered around the
 beaches of the world... perhaps you've seen it.
 
-Some systems—notably the Mafia—run best when they're decentralized. The most common
-way to use Puppet is to run a Puppetmaster server, which Puppet clients can then connect to
-and receive their manifests from. However, you can run `puppet apply` directly on a manifest
-file to have it executed as shown in the following command line. (You'll normally want to use
-the `-v` switch to enable verbose mode, so you can see what's happening):
+某些系统（尤其像 Mafia）在去中心化的分布式架构环境下运行良好。
+使用 Puppet 的一个最常见的方法是运行一个 Puppetmaster 服务器，
+Puppet 客户端连接这个服务器并从它获取配置清单。
+无论如何，你仍旧可以使用下面的方法直接针对配置清单运行
+`puppet apply` 命令。 （通常会使用 ++-v++ 参数开启冗余输出模式，
+这样就可以看到详细的执行过程）：
 
 .......
 # puppet apply -v manifest.pp
 info: Applying configuration version '1294313350'
 .......
 
-You can even supply a manifest directly on the command line:
+你甚至可以直接在命令行上运行配置清单的代码片断：
 
 .......
 # puppet apply -e "file { '/tmp/test': ensure => present }"
 notice: /Stage[main]//File[/tmp/test]/ensure: created
 .......
 
-In other words, if you can arrange to distribute a suitable manifest file to a client machine,
-you can have Puppet execute it directly without the need for a central Puppetmaster. This
-removes the performance bottleneck of a single master server, and also eliminates a single
-point of failure. It also avoids having to sign and exchange SSL certificates when provisioning
-a new client machine.
+换言之，如果能安排合适的配置清单并分发到客户端，你就可以在 Puppet
+客户端上直接执行它，而不必使用中心化的 Puppetmaster 服务器。
+这将消除单台 Puppetmaster 服务器的性能瓶颈，也消除了单点故障。
+与此同时，也避免了新增客户端时 SSL 证书签署以及证书交换的步骤。
 
-There are many ways you could deliver the manifest file to the client, but Git (or another
-version control system such as Mercurial, or Subversion) does most of the work for you.
-You can edit your manifests in a local working copy, commit them to Git and push them to a
-central repo, and from there they can be automatically distributed to the client machines.
+将配置清单文件推送到客户端有多种实现方法，
+显然 Git （或者其它版本控制系统，如 Mercurial 或 Subversion）能为你做绝大部分的工作。
+你可以在本地编辑 Puppet 配置清单的本地副本，提交到 Git 并将更新推送到中心仓库，
+然后从 Git 中心仓库自动将配置清单分发到客户机。
 
-==== Getting ready
+==== {Gettingready}
 
-If your Puppet manifests aren't already in Git, follow the steps in Using version control for
-your Puppet manifests in this chapter.
+如果你的 Puppet 配置清单还没有纳入 Git，请参考本章 <<ch01sec01,{Recipe101}>>
+一节的操作步骤。
 
-==== How to do it…
+==== {Howtodoit}
 
-1. Make a bare clone of your Puppet repo on the client as follows:
+1. 在客户端使用如下命令对 Puppet 仓库克隆一个裸仓库（裸仓库没有工作区，只包含 +.git+ 目录中的所有内容）：
 +
 .......
 # git clone --bare ssh://git@repo.example.com/var/git/puppet
 .......
 
-2. Copy the contents of this repo into your +/etc/puppet/+ directory using the
-   following command:
+2. 使用如下命令检出裸仓库内容到 +/etc/puppet/+ 目录：
 +
 .......
 # git archive --format=tar HEAD | (cd /etc/puppet && tar xf -)
 .......
 
-3. Run Puppet on your +site.pp+ file:
+3. 使用 Puppet 命令执行 +site.pp+ 文件
 +
 --
 .......
@@ -62,14 +61,14 @@ your Puppet manifests in this chapter.
 info: Applying configuration version '1294313353'
 .......
 
-Once this is working, the next step is to have the configuration repo automatically
-push out changes to the clients. With Git, you can do this using remotes, like so:
+一旦完成上面的工作，下一步就是配置仓库的自动推送将变动推送到客户端。
+使用 Git 的远程仓库命令可以实现此功能，例如：
 
 .......
 # git remote add web ssh://git@web1.example.com/etc/puppet
 .......
 
-If you have multiple client machines, you can add more URLs to the same remote:
+如果你有多个客户端， 可以为同一个运程添加多个 URL：
 
 .......
 # git remote set-url --add webs ssh://git@web2.example.com/etc/puppet
@@ -77,28 +76,27 @@ If you have multiple client machines, you can add more URLs to the same remote:
 ...
 .......
 
-or simply edit the Git configuration file (+.git/config+) like this:
+或者像这样，简单编辑 Git 配置文件 (+.git/config+) ：
 
 ----
 [remote "web"]
-    url = ssh:// git@web1.example.com/etc/puppet
+    url = ssh://git@web1.example.com/etc/puppet
     url = ssh://git@web2.example.com/etc/puppet
     url = ssh://git@web3.example.com/etc/puppet
     ...
 ----
 --
 
-4. Now you can push to any client machine, or group of machines, from the repo server
-   with the following command:
+4. 现在你可以使用如下命令从 Git 中心仓库推送更新到任意一台（或一组）客户端：
 +
 ........
 # git push web
 ........
 
-5. The final step is to have the client machine update its +/etc/puppet+ directory
-   whenever it receives a push from the repo server. You can do this using a Git postreceive
-   hook. In your bare repo, create the file +hooks/post-receive+ and make it
-   executable (mode 0755):
+5. 最后一步，每当客户端接收到从 Git 中心仓库的推送就应该更新它自己的
+   +/etc/puppet+ 目录。你可以使用 Git 的 +postreceive+ 钩子来实现此功能。
+   在你的仓库中，创建一个名为 +hooks/post-receive+ 的文件并为其设置可执行权限（0755），
+   文件内容为：
 +
 [source,bash]
 ----
@@ -107,37 +105,38 @@ git archive --format=tar HEAD | (cd /etc/puppet && tar xf -)
 ----
 
 
-==== How it works…
+==== {Howitworks}
 
-Instead of contacting the Puppetmaster to receive their compiled manifest, each client
-compiles its own from a local copy of the manifest source. This is updated every time you
-push updates from the Git server (or from your working checkout). This is more efficient with
-respect to network bandwidth, as clients don't have to contact the Puppetmaster on every
-run. It also eliminates a single point of failure, as clients can be updated from anywhere.
+与连接 Puppetmaster 获取已经编译好的客户端配置清单不同，
+使用这种方式每个客户端都要从本地副本编译自己的配置清单。 
+每当 Git 中心服务器推送一次更新（或者从 Git 仓库 checkout 检出）就会重新编译一次。
+这大大高了网络带宽的利用率，因为客户端不必每次运行时都连接 Puppetmaster。 
+同时也消除了单点故障，因为客户端可以从任何分布式的 Git 仓库
+（这些仓库的内容是由 Git 中心仓库自动推送的）获得更新。
 
-Using a decentralized Puppet architecture based on Git as outlined here gives you a great
-deal of flexibility. You can configure access controls and permissions using SSH keys, and
-allow each client machine or group only as much access as it needs. Manifests for a database
-server group, for example, can be made available only to those machines that need it.
+使用基于 Git 的去中心化的分布式 Puppet 架构为你提供了一个非常灵活的处理方式。
+你可以使用 SSH 密钥来配置访问控制，按需要允许每一个客户端或一组客户端的访问。
+例如：用于数据库服务器的配置清单仅允许数据库组的机器访问获取。
 
-While it requires some extra work to set up, and is not necessary for most small organizations,
-this way of deploying Puppet gives you extra flexibility and control for the most demanding
-environments.
+当然还需要一些额外的配置工作，但对于大多数小型组织是没有必要的，
+这种去中心化的 Puppet 部署方式提供了额外的灵活性，同时也适用于更为苛刻的权限控制环境。 
 
-==== There's more…
+==== {Theresmore}
 
-If you want to have Puppet apply the changes every time they are pushed, you can edit the
-`post-receive` script to do this, or take any other action you want. Alternatively, you could run
-Puppet manually, or from +cron+ as described earlier in this chapter— just run `puppet apply`.
+如果你希望每次中心仓库推送更新之后 Puppet 立即执行并应用更新，
+可以编辑 `post-receive` 脚本来完成，或者执行你需要的其它的动作。
+另外，你也可以手动运行 Puppet，还可以用 <<ch01sec05,{Recipe105}>>
+一节描述的方法使用 +cron+ 调度运行，但要记得是运行 `puppet apply` ，
+而不是运行 `puppet agent` 。
 
-There are a few disadvantages to using a Git-based architecture: you can't use advanced
-Puppet features such as external node classifiers or stored configurations. However, when
-you need to scale to a large number of nodes, this is the simplest way to do it.
+使用基于 Git 的架构也存在一些缺点：不能使用 Puppet 提供的高级特性，
+例如外部节点分类器（external node classifier）以及存储配置（stored configuration）等。
+不管怎样，当你需要将 Puppet 的部署扩展到大量节点时，这是一种最简单的实现方式。
 
-You can find a more detailed discussion of this architecture in Stephen Nelson-Smith's article
-at http://bitfieldconsulting.com/scaling-puppet-with-distributedversion-control.
+你可以在 Stephen Nelson-Smith 的这篇文章里找到更多更详细的关于这种架构的讨论，文章地址是：
+http://bitfieldconsulting.com/scaling-puppet-with-distributedversion-control 。
 
-==== See also
+==== {Seealso}
 
-- <<ch01sec09,Scaling Puppet using Passenger>> in this chapter
-- <<ch01sec01,Using version control>> in this chapter
+- 本章的 <<ch01sec09,{Recipe109}>> 一节
+- 本章的 <<ch01sec01,{Recipe101}>> 一节
