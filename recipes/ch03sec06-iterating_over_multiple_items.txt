@@ -5,6 +5,7 @@
 不论何时，你要对列表中的元素执行相同的操作，数组就会帮你的忙。 
 你可以创建一个数组，将所有的数组元素放在一对方括号中并以逗号间隔，例如：
 
+[source,puppet]
 ----
 $lunch = [ "franks", "beans", "mustard" ]
 ----
@@ -13,6 +14,7 @@ $lunch = [ "franks", "beans", "mustard" ]
 
 在你的配置清单中添加如下代码：
 
+[source,puppet]
 ----
 $packages = [ "ruby1.8-dev",
               "ruby1.8",
@@ -43,6 +45,7 @@ package { $packages: ensure => installed }
 
 **哈希**（**hash**）与数组类似，但它的每个元素都可以通过名字存储和查找。例如：
 
+[source,puppet]
 ----
 $interface = { name    => 'eth0',
                address => '192.168.0.1' }
@@ -62,6 +65,7 @@ Interface eth0 has address 192.168.0.1
 
 你可以使用方括号来声明文字数组，例如：
 
+[source,puppet]
 ----
 define lunchprint() {
     notify { "Lunch included $name": }
@@ -69,23 +73,32 @@ define lunchprint() {
 
 $lunch = [ "egg", "beans", "chips" ]
 lunchprint { $lunch: }
+----
 
+执行结果为：
+
+....
 Lunch included egg
 Lunch included beans
 Lunch included chips
-----
+....
 
 但是 Puppet 还可以使用 +split+ 函数从一个字符串创建数组，例如：
 
+[source,puppet]
 ----
 $menu = "egg beans chips"
 $items = split($menu, ' ')
 lunchprint { $items: }
+----
 
+执行结果为：
+
+....
 Lunch included egg
 Lunch included beans
 Lunch included chips
-----
+....
 
 注意 +split+ 函数携带两个参数：第一个参数是要被拆分的字符串；第二个参数是拆分间隔符，
 在本例中是一个空格。当 Puppet 遍历字符串时，一遇到空格就将其视为一个元素的结束和下一个元素的开始。
@@ -93,6 +106,7 @@ Lunch included chips
 
 拆分间隔符可以是任意字符或字符串：
 
+[source,puppet]
 ----
 $menu = "egg and beans and chips"
 $items = split($menu, ' and ')
@@ -101,6 +115,7 @@ $items = split($menu, ' and ')
 拆分间隔符也可以是正则表达式（regular expression），例如：一个多选一集合可以使用 +|+
 (pipe) 符号来做间隔：
 
+[source,puppet]
 ----
 $lunch = "egg:beans,chips"
 $items = split($lunch, ':|,')

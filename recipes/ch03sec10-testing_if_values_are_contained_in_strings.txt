@@ -3,6 +3,7 @@
 
 想知道什么在什么不在吗？Puppet 的 +in+ 可以帮你， 如下面的表达式：
 
+[source,puppet]
 ----
 if "foo" in $bar
 ----
@@ -15,6 +16,7 @@ if "foo" in $bar
 
 1. 在你的配置清单中添加如下代码：
 +
+[source,puppet]
 ----
 if $operatingsystem in [ "Ubuntu", "Debian" ] {
     notify { "Debian-type operating system detected": }
@@ -38,6 +40,7 @@ Debian-type operating system detected
 +in+ 表达式既可以使用在 +if+ 语句或其他条件语句中，还可以在任何表达式能出现的地方使用。
 例如，你可以像下面这样为一个变量赋值：
 
+[source,puppet]
 ----
 $debianlike = $operatingsystem in [ "Debian", "Ubuntu" ]
 

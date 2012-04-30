@@ -15,6 +15,7 @@ Puppet 的 +regsubst+ 函数提供了一种处理文本的简单方法，
 
 1. 在配置清单中添加如下的代码：
 +
+[source,puppet]
 ----
 $class_c = regsubst($ipaddress, "(.*)\..*", "\1.0")
 notify { $ipaddress: }

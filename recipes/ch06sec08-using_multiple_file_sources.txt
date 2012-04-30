@@ -10,6 +10,7 @@ Puppet 会按顺序查找每一个。如果第一个不存在，就继续查找�
 
 1. 添加如下的类到你的配置清单：
 +
+[source,puppet]
 ----
 class mysql::app-config( $app )
 {
@@ -34,6 +35,7 @@ class mysql::app-config( $app )
 
 4. 在一个节点中添加如下代码：
 +
+[source,puppet]
 ----
 class { "mysql::app-config": app => "minutespace" }
 ----
@@ -61,6 +63,7 @@ notice: Finished catalog run in 0.35 seconds
 
 7. 现在更改节点的定义为：
 +
+[source,puppet]
 ----
 class { "mysql::app-config": app => "shreddit" }
 ----
@@ -98,6 +101,7 @@ notice: Finished catalog run in 0.93 seconds
 
 我们定义了 +/etc/my.cnf+ 文件有如下的两个源：
 
+[source,puppet]
 ----
 file { "/etc/my.cnf":
     source => [ "puppet:///modules/admin/${app}.my.cnf",
@@ -107,6 +111,7 @@ file { "/etc/my.cnf":
 
 +$app+ 的值由任何一个使用它的类传递。在第一个例子中，我们为 +app+ 传递了 ++minutespace++：
 
+[source,puppet]
 ----
 class { "mysql::app-config": app => "minutespace" }
 ----
@@ -125,6 +130,7 @@ Puppet 将首先查找 +modules/admin/files/minutespace.my.cnf+ 文件。
 你可以在任何一个 +file+ 资源中使用这种手段来处理。例如，
 一些节点可能需要针对特定主机的配置，而另一些节点则不需要，你可以使用类似于如下的代码实现：
 
+[source,puppet]
 ----
 file { "/etc/stuff.cfg":
     source => [ "puppet:///modules/stuff/${hostname}.cfg",

@@ -21,6 +21,7 @@ MySQL 数据库和 Apache 虚拟主机的 Puppet 处方相结合,
 
 2. 使用如下内容创建 +/etc/puppet/modules/drupal/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class drupal {
     $drupalversion = "7.2"
@@ -76,6 +77,7 @@ class drupal {
 
 1. 在 +init.pp+ 文件的 +drupal+ 类中添加如下内容：
 +
+[source,puppet]
 ----
 define site( $password, $sitedomain = "" ) {
     include drupal
@@ -111,6 +113,7 @@ define site( $password, $sitedomain = "" ) {
 
 2. 添加如下内容到一个节点：
 +
+[source,puppet]
 ----
 drupal::site { "crispinfo.com":
     password => "crunch",

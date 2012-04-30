@@ -1,13 +1,13 @@
 [[ch04sec07]]
 === {Recipe407}
 
-每个系统管理员都梦想着使用统一的、同质的基础设施，相同的机器都运行相同的操作系统的版本相同。
+每个系统管理员都梦想着使用统一的、同质的基础设施，相同的机器都运行相同的操作系统且其版本相同。
 正如生活中的其他领域一样，现实往往是凌乱的、往往与理想情况不符。
 
 你很可能会负责管理一堆使用年限不同、架构不同、运行不同发行版本的不同内核的服务器，
 常常是分散在不同的数据中心和不同的互联网服务供应商（ISP）。
 
-在这种情况下，应该劝说系统管理员心中对在 +for+ 循环中执行 SSH（"SSH in a +for+ loop"）的恐惧，
+在这种情况下，会造成系统管理员心中对在 +for+ 循环中执行 SSH（"SSH in a +for+ loop"）的恐惧，
 因为在每个服务器上即使执行相同的命令，也可能产生不同的、不可预知的、甚至是危险的结果。
 
 当然，我们应该努力将旧服务器进行更新，并将一切尽可能工作在一个单一的参考平台之上，
@@ -19,6 +19,7 @@
 1. 如果你有一些放置在不同数据中心的服务器，这些服务器需要略有不同的网络配置，
    例如，使用节点继承技术来封装差异：
 +
+[source,puppet]
 ----
 node wreckspace_server inherits server {
         include admin::wreckspace_specific
@@ -30,6 +31,7 @@ node wreckspace_server inherits server {
    捕获这些差异并设置全局变量的值：
 +
 --
+[source,puppet]
 ----
 $ssh_service = $operatingsystem? {
      /Ubuntu|Debian/ => "ssh",
@@ -38,8 +40,9 @@ $ssh_service = $operatingsystem? {
 ----
 
 之后你就不用担心配置清单其他部分的差异了，当你要提及这些时，
-你可以放心的使用变量，它会根据具体环境正确的指向相应的正确值：
+可以放心的使用变量，它会根据具体环境正确的指向相应的正确值：
 
+[source,puppet]
 ----
 service { $ssh_service:
     ensure => running,
@@ -51,6 +54,7 @@ service { $ssh_service:
    同样地，尝试在一个单一的 +architecture+ 类中封装所需要的全局变量的值：
 +
 --
+[source,puppet]
 ----
 $libdir = $architecture ? {
     x86_64 => "/usr/lib64",
@@ -75,6 +79,7 @@ extension_dir = <%= libdir %>/php/modules
 另一种是自下而上的方法，使用这种方法，在全部配置清单中你随处可见
 使用 +selector+ 或 +case+ 语句的设置：
 
+[source,puppet]
 ----
 service { $operatingsystem? {
     /Ubuntu|Debian/ => "ssh",

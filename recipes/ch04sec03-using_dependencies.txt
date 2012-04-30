@@ -5,8 +5,8 @@
 Remove wrapper, open mouth, insert muffin, eat.
 
 为确保事物以正确的顺序发生，你可以在 Puppet 中指定一个资源依赖另一个资源，
-例如：你必须先安装软件包 X 然后再启动它提供的服务，因此应该标记这项服务
-依赖于软件包 X。Puppet 会按要求的顺序排出它遇到的所有依赖。
+例如：你必须先安装软件包 X 然后再启动它提供的服务，因此应该标记这项服务依赖于软件包 X。
+Puppet 会按要求的顺序排出它遇到的所有依赖。
 
 在一些配置管理系统中，资源按照你的书写顺序被应用，换句话说，资源被应用的顺序是隐式的。
 Puppet 则不是这种情况，资源或多或少以一种随机（但一致）顺序被应用，
@@ -26,6 +26,7 @@ Puppet 则不是这种情况，资源或多或少以一种随机（但一致）�
 
 1. 使用如下的内容创建一个新文件 ++/etc/puppet/modules/admin/manifests/ntp.pp++：
 +
+[source,puppet]
 ----
 class admin::ntp {
     package { "ntp":
@@ -53,6 +54,7 @@ class admin::ntp {
 
 3. 在 +nodes.pp+ 中将 +admin::ntp+ 类添加到你的服务器：
 +
+[source,puppet]
 ----
 node cookbook {
     include admin::ntp
@@ -87,6 +89,7 @@ notice: Finished catalog run in 2.36 seconds
 在本例中演示了两种类型的依赖： +require+ 和 ++notify++。在第一种情况中，
 +ntp+ 服务要求 +ntp+ 包资源首先被应用：
 
+[source,puppet]
 ----
 service { "ntp":
     ensure  => running,
@@ -97,6 +100,7 @@ service { "ntp":
 在第二种情况中，NTP 的配置文件设置成了 ++notify++（通知）++ntp++ 服务；换句话说，
 一旦发现配置文件有变化，Puppet 就应该使用新的配置文件重新启动 +ntp+ 服务：
 
+[source,puppet]
 ----
 file { "/etc/ntp.conf":
     source  => "puppet:///modules/admin/ntp.conf",
@@ -108,6 +112,7 @@ file { "/etc/ntp.conf":
 这意味着服务依赖于配置文件以及所安装的软件包，Puppet
 会按照如下的正确顺序来应用这三个资源：
 
+[source,puppet]
 ----
 Package["ntp"] -> File["/etc/ntp.conf"] ~> Service["ntp"]
 ----
@@ -116,18 +121,20 @@ Package["ntp"] -> File["/etc/ntp.conf"] ~> Service["ntp"]
 就会产生和上例中使用 +require+ 和 +notify+ 参数的同样效果
 （++->++ 表示 ++require++，++~>++ 表示 ++notify++）。然而，我更喜欢使用 +require+ 和 ++notify++，
 因为依赖关系被定义成了资源的一部分，因此更容易看清将会发生什么。
-不过，对于复杂的依赖关系链,你可能想使用 +->+ 符号来代替。
+不过，对于复杂的依赖关系链，你可能想使用 +->+ 符号来代替。
 
 ==== {Theresmore}
 
 你也可以指定一个资源依赖于某个类：
 
+[source,puppet]
 ----
 require => Class["my-apt-repo"]
 ----
 
 你不仅可以指定资源和类之间的依赖关系，甚至可以指定 *collections* 之间的依赖关系：
 
+[source,puppet]
 ----
 Yumrepo <| |> -> Package <| provider == yum |>
 ----
@@ -138,7 +145,7 @@ Yumrepo <| |> -> Package <| provider == yum |>
 [NOTE]
 .历史说明:
 ===================
-在 Puppet 2.7 版本之前， 所有资源目录都以非确定性的方式被应用，
+在 Puppet 2.7 版本之前， 所有资源编目都以非确定性的方式被应用，
 这意味着每次 Puppet 运行资源的顺序都会不同。这可能会导致一些有趣的问题，
 比如一个 Puppet 配置清单在一台机器上能运行成功而在另一台机器上却运行失败。
 经过 Puppet Labs 的努力，现在这种情况已经不会发生。现在 Puppet

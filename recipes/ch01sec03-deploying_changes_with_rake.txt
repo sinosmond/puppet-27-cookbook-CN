@@ -2,7 +2,7 @@
 === {Recipe103}
 
 每个人的生活都离不开键盘，但我讨厌不必要的敲打。
-如果你使用 <<ch01sec01,{Recipe101}>> 所描述的工作流程，
+如果你按照 <<ch01sec01,{Recipe101}>> 一节所描述的工作流程工作，
 可以添加一些自动化任务使这个处理过程更加容易。
 有许多工具可以帮助我们在远程机器上执行命令，包括 Capistrano（https://github.com/capistrano/capistrano[]）和
 Fabric（https://github.com/fabric/fabric[]），但在本例中，我们将使用 Rake（http://rake.rubyforge.org/[]）。
@@ -19,9 +19,15 @@ apt-get install rake
 
 ==== {Howtodoit}
 
-1. 在你的 Puppet 配置清单工作副本的顶级目录下创建一个名为 +Rakefile+ 的文件，
-   文件内容看上去像这样：
+1. 在你的 Puppet 配置清单工作副本的顶级目录下创建一个名为 +Rakefile+ 的文件，例如：
 +
+--
+....
+john@laptop:~/puppet-work$ vi Rakefile
+....
+
+文件内容看上去像这样：
+
 ----
 PUPPETMASTER = 'cookbook'
 SSH = 'ssh -t -A'
@@ -31,6 +37,7 @@ task :deploy do
     sh "#{SSH} #{PUPPETMASTER} 'cd /etc/puppet && sudo git pull'"
 end
 ----
+--
 
 2. 当你在本地副本上应用 Puppet 配置清单的改动时，可以简单地运行命令：
 +
@@ -38,7 +45,7 @@ end
 $ rake deploy
 ............
 
-3. Rake 将会更新 Git 仓库并刷新 Puppetmaster 的工作目录副本：
+3. Rake 会更新远程 Git 仓库并刷新 Puppetmaster 的工作目录副本：
 +
 ............
 $ git push
@@ -59,7 +66,7 @@ Fast-forward
  create mode 100644 Rakefile
 ............
 
-4. 你也可以添加一个 Rake 任务用于在客户端上运行 Puppet：
+4. 你还可以添加一个 Rake 任务用于在客户端上运行 Puppet：
 +
 ----
 task :apply => [:deploy] do

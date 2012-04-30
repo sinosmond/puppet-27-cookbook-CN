@@ -5,13 +5,14 @@
 Some people, when confronted with a problem think; 'I know, I'll use regular
 expressions.' Now they have two problems.
 
-你可以在 +if+ 语句中表达式，即 **正则表达式**（**regular expression**）。
+你可以在 +if+ 语句中使用另一种类型的表达式，即 **正则表达式**（**regular expression**）。
 正则表达式是一种使用模式匹配的强大的字符串比较方式。
 
 ==== {Howtodoit}
 
 在你的配置清单中添加如下代码：
 
+[source,puppet]
 ----
 if $lsbdistdescription =~ /LTS/ {
     notice("Looks like you are using a Long Term Support version of 
@@ -24,11 +25,12 @@ if $lsbdistdescription =~ /LTS/ {
 
 ==== {Howitworks}
 
-Puppet 将两个各斜线之间的文本当做正则表达式对待，两个各斜线之间的文本就是要匹配的内容。
+Puppet 将两个斜线之间的文本当做正则表达式对待，两个各斜线之间的文本就是要匹配的内容。
 如果正则表达式匹配成功，++if++ 表达式为真，第一个大括号之间的代码就会被执行。
 
 若要使用匹配的反逻辑，即不匹配，需要使用 +!\~+ 替代 +=~+ ，例如：
 
+[source,puppet]
 ----
 if $lsbdistdescription !~ /LTS/ {
 ----
@@ -42,8 +44,9 @@ if $lsbdistdescription !~ /LTS/ {
 
 ===== 捕捉模式
 
-你不仅可以使用正则表达式匹配文本，还也以捕获匹配的文本并将其存储在变量中：
+你不仅可以使用正则表达式匹配文本，还可以捕获匹配的文本并将其存储在变量中：
 
+[source,puppet]
 ----
 $input = "Puppet is better than manual configuration"
 if $input =~ /(.*) is better than (.*)/ {
@@ -51,13 +54,15 @@ if $input =~ /(.*) is better than (.*)/ {
 }
 ----
 
+结果为：
+
 ....
 You said 'Puppet is better than manual configuration'. Looks like you're
 comparing Puppet to manual configuration!
 ....
 
 变量 +$0+ 存储了所有匹配的文本（假设整体匹配成功）。
-如果你将一不笨正则表达式置于一对圆括号中，就会创建一个 **组**（**group**），
+如果你将一部分正则表达式置于一对圆括号中，就会创建一个 **组**（**group**），
 并且所有被匹配的组都会存储在变量中。
 第一个被匹配的组是 ++$1++，第二个是 ++$2++，以此类推，正如上例展示的那样。
 

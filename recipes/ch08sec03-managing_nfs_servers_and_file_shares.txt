@@ -21,6 +21,7 @@ death, and there's being off the network.
 
 2. 使用如下内容创建 +/etc/puppet/modules/nfs/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class nfs {
     package { "nfs-kernel-server": ensure => installed }
@@ -58,6 +59,7 @@ class nfs {
 
 3. 在你需要输出 NFS 共享的节点上添加如下代码（修改 IP 地址范围以适应你的网络）：
 +
+[source,puppet]
 ----
 nfs::share { "data":
     path    => "/data",
@@ -130,6 +132,7 @@ notice: Finished catalog run in 3.13 seconds
 +nfs+ 类用于安装并启动 +nfs-kernel-server+ 服务，此服务监听网络文件共享的连接。
 还定义了一个 +nfs::share+ 资源，你可以在配置清单中的任何位置使用它输出一个 NFS 目录：
 
+[source,puppet]
 ----
 nfs::share { "data":
     path    => "/data",
@@ -154,4 +157,4 @@ NFS 服务器仅允许由指定的主机远程挂装此资源。
 ==== {Theresmore}
 
 NFS 共享只能应用于应用程序的非关键性数据，因为 NFS 服务器会造成单点故障。
-你可以使用集群文件系统解决关键性数据的共享, 应该考虑使用 GlusterFS 替代 NFS。
+你可以使用集群文件系统解决关键性数据的共享，应该考虑使用 GlusterFS 替代 NFS。

@@ -4,6 +4,7 @@
 大多数情况下，你会从发行版本的官方仓库安装软件包，所以使用简单的
 +package+ 资源就可以做到：
 
+[source,puppet]
 ----
 package { "exim4": ensure => installed }
 ----
@@ -18,6 +19,7 @@ package { "exim4": ensure => installed }
 
 1. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 package { "python-software-properties": ensure => installed }
 
@@ -46,12 +48,14 @@ notice: Finished catalog run in 5.97 seconds
 1. +python-software-properties+ 软件包提供了 `add-apt-repository` 命令，
    使用此命令可以简化添加额外的软件仓库源配置的过程：
 +
+[source,puppet]
 ----
 package { "python-software-properties": ensure => installed }
 ----
 
 2. 然后我们使用 +exec+ 资源调用这个命令添加要求的配置：
 +
+[source,puppet]
 ----
 exec { "/usr/bin/add-apt-repository ppa:mathiaz/puppet-backports":
 ----
@@ -60,12 +64,13 @@ exec { "/usr/bin/add-apt-repository ppa:mathiaz/puppet-backports":
    如果此文件已经存在，则 Puppet 就会忽略 +exec+ 资源的执行：
 +
 --
+[source,puppet]
 ----
 creates => "/etc/apt/sources.list.d/mathiaz-puppet-backports-lucid.list",
 ----
 
 你可能想要将这个内容与清除 +/etc/apt/sources.list.d+ 中不需要的仓库定义相结合，
-正如本书中使用递归文件资源部分中所描述的。
+正如本书 <<ch06sec09,{Recipe609}>> 一节中所描述的。
 --
 
 ==== {Theresmore}

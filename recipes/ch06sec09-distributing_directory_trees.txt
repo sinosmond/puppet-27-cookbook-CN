@@ -9,6 +9,7 @@ To understand recursion, you must first understand recursion.
 如果你在一个目录上设置了 +recurse+ 参数，
 Puppet 会复制此目录及其子目录中的所有文件到节点目录，例如：
 
+[source,puppet]
 ----
 file { "/usr/lib/nagios/plugins/custom":
     source  => "puppet:///modules/nagios/plugins",
@@ -31,6 +32,7 @@ file { "/usr/lib/nagios/plugins/custom":
 
 2. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 file { "/tmp/tree":
     source  => "puppet:///modules/admin/tree",
@@ -71,6 +73,7 @@ Puppet 管理的文件。 例如，Ubuntu 的 +/etc/apt/sources.list.d+ 目录�
 
 +purge+ 参数可以为我们实现这个功能。在 Puppet 中定义如下的目录的 +file+ 资源：
 
+[source,puppet]
 ----
 file { "/etc/apt/sources.list.d":
     ensure  => directory,
@@ -83,6 +86,7 @@ file { "/etc/apt/sources.list.d":
 目录及其子目录下的所有不被 Puppet 管理的文件。
 然后你就可以使用独立的 +file+ 资源将自己的文件部署到 +/etc/apt/sources.list.d+ 目录：
 
+[source,puppet]
 ----
 file { "/etc/apt/sources.list.d/bitfield.list":
     content => "deb http://packages.bitfieldconsulting.com/lucid-main\n",
@@ -93,6 +97,7 @@ file { "/etc/apt/sources.list.d/bitfield.list":
 可以将此子目录作为 Puppet 的一个 +file+ 资源单独进行定义，
 这样这个子目录中的内容就会保留：
 
+[source,puppet]
 ----
 file { "/etc/exim4/conf.d/acl":
     ensure => directory,

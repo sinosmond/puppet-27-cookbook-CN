@@ -21,6 +21,7 @@
 
 1. 添加如下代码到 ++/etc/puppet/modules/nginx/manifests/init.pp++：
 +
+[source,puppet]
 ----
 define site( $sitedomain = "" ) {
     include nginx
@@ -66,6 +67,7 @@ Welcome to the BBQ Recipes site!
 
 4. 添加如下代码到一个节点：
 +
+[source,puppet]
 ----
 nginx::site { "bbqrecipes.com": }
 ----
@@ -107,7 +109,7 @@ notice: Finished catalog run in 21.45 seconds
 以 +bbqrecipes.com+ 为资源名对名为 +nginx::site+ 的 +define+ 创建一个实例， 
 Puppet 会使用变量 +vhost_domain+ 的值 +bbqrecipes.com+ 调用 +vhost.erb+
 模板生成相应的配置文件 ++bbqrecipes.com.conf++。
-此文件包含了，Nginx 为了响应对 +domain+ 的请求所需要知道的一切，
+此文件包含了 Nginx 为了响应对 +domain+ 的请求所需要知道的一切，
 并且指明了与 +domain+ 对应的根文档目录所映射的文件系统位置。
 
 ==== {Theresmore}

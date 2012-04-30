@@ -14,6 +14,7 @@ Puppet 的 Augeas 支持允许你创建 +augeas+ 资源，它可以智能地自�
 
 1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/augeas.pp+ 文件：
 +
+[source,puppet]
 ----
 class admin::augeas {
     package { [ "augeas-lenses",
@@ -27,6 +28,7 @@ class admin::augeas {
 
 2. 在一个节点上包含此类：
 +
+[source,puppet]
 ----
 node cookbook {
     include admin::augeas
@@ -50,6 +52,7 @@ notice: Finished catalog run in 21.96 seconds
 
 1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/ipforward.pp+ 文件：
 +
+[source,puppet]
 ----
 class admin::ipforward {
     augeas { "enable-ip-forwarding":
@@ -63,6 +66,7 @@ class admin::ipforward {
 
 2. 在一个节点上包含此类：
 +
+[source,puppet]
 ----
 node cookbook {
     include admin::augeas
@@ -96,12 +100,14 @@ net.ipv4.ip_forward = 1
 
 1. 我们声明了一个名为 +enable-ip-forwarding+ 的 +augeas+ 资源：
 +
+[source,puppet]
 ----
 augeas { "enable-ip-forwarding":
 ----
 
 2. 我们指定要实施改变的文件 ++/etc/sysctl.conf++：
 +
+[source,puppet]
 ----
     context => "/files/etc/sysctl.conf",
 ----
@@ -109,6 +115,7 @@ augeas { "enable-ip-forwarding":
 3. 将我们需要改变的设置作为一个数组（本例中只有一个数组元素）传递给 +changes+ 参数：
 +
 --
+[source,puppet]
 ----
     changes => [
         "set net.ipv4.ip_forward 1",

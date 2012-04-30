@@ -24,7 +24,7 @@ My mechanic told me, 'I couldn't repair your brakes, so I made your horn louder'
 
 因为 +usecacheonfailure+ 仅当 Puppet 以守护进程运行时有效， 
 有时你不会注意到一段时间内配置清单中的错误，因为 Puppet
-会静默的运行旧版本的配置清单而不是显示出错信息。
+会静默地运行旧版本的配置清单而不是显示出错信息。
 
 ==== {Howtodoit}
 

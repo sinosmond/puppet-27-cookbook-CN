@@ -66,6 +66,7 @@ webserver: webteam@example.com
 
 你也可以像下面这样使用 +tag+ 函数直接添加一个标签：
 
+[source,puppet]
 ----
 class exim {
     tag("email")

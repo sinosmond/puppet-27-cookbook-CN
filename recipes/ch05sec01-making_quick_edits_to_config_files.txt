@@ -13,6 +13,7 @@
 
 1. 使用如下内容创建 +/etc/puppet/manifests/utils.pp+ 文件：
 +
+[source,puppet]
 ----
 define append_if_no_such_line($file, $line) {
     exec { "/bin/echo '$line' >> '$file'":
@@ -23,12 +24,14 @@ define append_if_no_such_line($file, $line) {
 
 2. 添加如下行到 +/etc/puppet/manifests/site.pp+ 文件：
 +
+[source,puppet]
 ----
 import "utils.pp"
 ----
 
 3. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 append_if_no_such_line { "enable-ip-conntrack":
     file => "/etc/modules",
@@ -53,6 +56,7 @@ notice: Finished catalog run in 1.22 seconds
 
 +exec+ 资源将追加指定的文本 +$line+ 到文件 ++$file++，除非它已经存在：
 
+[source,puppet]
 ----
 exec { "/bin/echo '$line' >> '$file'":
     unless => "/bin/grep -Fx '$line' '$file'",
@@ -71,6 +75,7 @@ ip_conntrack
 类似的，你可以使用 +define+ 函数对文本文件执行其他细小的操作。例如，
 下面的代码片段可以让你在文本文件中执行查找和替换的操作：
 
+[source,puppet]
 ----
 define replace_matching_line( $match, $replace ) {
     exec { "/usr/bin/ruby -i -p -e 'sub(%r{$match}, \"$replace\")'

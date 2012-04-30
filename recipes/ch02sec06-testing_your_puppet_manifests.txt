@@ -7,7 +7,7 @@ If all else fails, immortality can always be assured by spectacular error.
 你总会遭遇麻烦，就像趴在你的挡风玻璃上的一只虫子。遗憾的是像 *Nagios*
 那样标准的检测监视工具也不能面面俱到地检测你要的一切。
 许多技术指标对于排错是很有帮助的，例如平均负载和磁盘占用，
-我更希望我的系统能提供关于应用和服务的更高系别的信息。
+我更希望我的系统能提供关于应用和服务的更高级别的信息。
 
 例如，如果你运行的是一个 web 应用程序，你不能肯定它正监听 80 端口并能返回
 +HTTP 200 OK+  状态。也许它只是返回 Apache 默认的欢迎页面。
@@ -134,7 +134,7 @@ Feature: www.google.com
 ......
 --
 
-5. 架设一切正常（若不正常，请联系 Google）， 要对 Nagios 的检测使用此特性，
+5. 假设一切正常（若不正常，请联系 Google）， 要对 Nagios 的检测使用此特性，
    你要做的所有工作就是使用 `cucumber-nagios` 代替 `cucumber` ：
 +
 ......

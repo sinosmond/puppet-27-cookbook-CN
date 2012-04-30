@@ -5,9 +5,8 @@
 为了使你的 Puppet 配置清单更清晰且易于维护，一件最重要的事情就是将这些配置清单组织成
 **模块（modules）**。
 
-模块是对相关事物进行分组的一种简单方式；例如，一个 +webserver+ 模块可能包含
-作为一个 Web 服务器所需的一切，包括 Apache 配置文件，虚拟主机配置模板以及
-部署这些所需的 Puppet 代码。
+模块是对相关事物进行分组的一种简单方式；例如，一个 +webserver+ 模块可能包含作为一个
+Web 服务器所需的一切，包括 Apache 配置文件，虚拟主机配置模板以及部署这些所需的 Puppet 代码。
 
 将配置清单拆分成模块易于代码的重用和共享；也是一种组织配置清单的最合乎逻辑的方式。
 在本节中，我们将会创建一个管理 +memcached+ 的模块，+memcached+
@@ -17,7 +16,7 @@
 
 1. 在 puppet.conf 中查找你的模块路径，其默认值是 ++/etc/puppet/modules++。
    如果你像我前面建议的那样将 Puppet 配置清单纳入了版本控制，
-   那么就是用你的工作副本中的目录，之后再由他部署到 ++/etc/puppet/modules++。
+   那么就使用你的工作副本中的 +modules+ 目录，之后再由他部署到 ++/etc/puppet/modules++。
 +
 --
 ....
@@ -41,6 +40,7 @@ modulepath = /etc/puppet/modules:/usr/share/puppet/modules
 
 在 +manifests+ 目录下，以如下内容创建 +init.pp+ 文件：
 
+[source,puppet]
 ----
 class memcached {
     package { "memcached":
@@ -70,8 +70,9 @@ class memcached {
 ----
 --
 
-2. 为了使用你的新模块，添加如下的代码到你的节点定义部分：
+2. 为了使用你的新模块，你的节点定义中添加如下的代码：
 +
+[source,puppet]
 ----
 node cookbook {
     include memcached
@@ -122,12 +123,14 @@ MODULEPATH/
 在 +memcached.pp+ 文件中定义了 +memcached+ 类， 它可以被 Puppet
 自动导入。现在将其包含到节点中：
 
+[source,puppet]
 ----
 include memcached
 ----
 
 在 +memcached+ 类中，引用了 +memcached.conf+ 文件：
 
+[source,puppet]
 ----
 file { "/etc/memcached.conf":
     source => "puppet:///modules/memcached/memcached.conf",
@@ -155,6 +158,7 @@ MODULEPATH/
 模板作为模块的一部分，如果你需要使用它，那么其放在 +MODULE_NAME/templates+
 目录，参考如下的用法：
 
+[source,puppet]
 ----
 file { "/etc/memcached.conf":
     content => template("memcached/memcached.conf"),
@@ -172,7 +176,7 @@ MODULEPATH/
 
 ===== Fact、函数、类型和提供者
 
-模板中也可以包含自定义 facts、自定义 functions、自定义 types 和 providers。
+模板中也可以包含自定义 fact、自定义函数、自定义资源类型和自定义提供者。
 关于这些内容的详细信息请参阅 <<chapter09,外部工具和 Puppet 的生态系统>> 一章的内容。
 
 ===== puppet-module

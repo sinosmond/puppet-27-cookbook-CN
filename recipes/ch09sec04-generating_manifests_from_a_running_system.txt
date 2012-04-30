@@ -10,6 +10,7 @@
 
 1. 要生成指定用户的配置清单，请运行：
 +
+[source,puppet]
 ----
 # puppet resource user john
 user { 'john':
@@ -28,6 +29,7 @@ user { 'john':
 
 2. 要生成指定服务的配置清单，请运行：
 +
+[source,puppet]
 ----
 # puppet resource service ntp
 service { 'ntp':
@@ -38,6 +40,7 @@ service { 'ntp':
 
 3. 要生成指定软件包的配置清单，请运行：
 +
+[source,puppet]
 ----
 # puppet resource package exim4
 package { 'exim4':
@@ -51,6 +54,7 @@ package { 'exim4':
 在上面的例子中，我们针对一个资源类型的具体实例生成了配置清单，
 然而你也可以使用 +puppet resource+ 导出一种资源类型的所有实例：
 
+[source,puppet]
 ----
 # puppet resource user
 user { 'Debian-exim':

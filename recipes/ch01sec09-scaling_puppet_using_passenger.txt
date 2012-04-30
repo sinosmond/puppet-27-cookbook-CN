@@ -2,7 +2,7 @@
 === {Recipe109}
 
 如果你的 Puppet 基础设施开始出现依依呀呀的裂缝，罪魁祸首很可能出现在
-Puppetmaster 上的 Web 服务器。
+Puppetmaster 的 Web 服务器上。
 Puppet 携带了一个名为 *Webrick* 的简单 Web 服务器来处理客户端与
 Puppetmaster 的连接。Webrick 确实不适合在生产环境下运行 Puppet；
 超过几个客户请求处理之后就会使 Puppetmaster 一蹶不振，严重影响其性能。
@@ -23,7 +23,7 @@ Passenger，并添加一个合适的虚拟主机。下面的示例是基于 Ubun
 为了方便配置，需要有你要运行的 Puppet 的源代码包（**tarball**），
 因为它提供了用于配置  Passenger 的一些模板文件和配置片段。
 例如，假如你要运行 Puppet 2.7.1，就要下载这个文件：
-http://puppetlabs.com/downloads/puppet/puppet-2.7.1.tar.gz.
+http://puppetlabs.com/downloads/puppet/puppet-2.7.1.tar.gz 。
 
 若你使用不同的版本，请到 http://puppetlabs.com 下载合适的版本。
 下载之后使用如下命令解开源码包：
@@ -89,8 +89,8 @@ run Puppet::Application[:master].run
 ----
 --
 
-4. 你现在需要在 Apache 上创建一个虚拟主机，使其监听正确的端口并向 Puppet 应用程序
-   发送请求。同样地，你可以使用 Puppet 发布中提供的示例文件：
+4. 你现在需要在 Apache 上创建一个虚拟主机，使其监听正确的端口并向 Puppet
+   应用程序发送请求。同样地，你可以使用 Puppet 发布中提供的示例文件：
 +
 --
 ......
@@ -182,7 +182,7 @@ notice: Finished catalog run in 0.25 seconds
 
 Puppet 内置的 web 服务器处理速度相当慢，每次只能处理一个请求，使用 Apache
 替换它之后，现在你就可以使用这个高性能多线程的 web 服务器了。
-在这种情况下，Puppet 是一个使用 Rack架构（Rack framework） 的嵌入式应用程序，
+在这种情况下，Puppet 是一个使用 Rack 框架（Rack framework） 的嵌入式应用程序，
 这大大提高了运行效率。你应该会发现，使用 "Apache + Passenger" 
 的配置能处理更多的客户端和更频繁的 Puppet 请求，并且改善了服务器内存的占用，
 使用的内存比标准的 Puppetmaster 守护进程占用的内存更少。
@@ -191,6 +191,7 @@ Puppet 内置的 web 服务器处理速度相当慢，每次只能处理一个�
 
 下面是一个 Puppet 配置清单的示例，用于为你实现上面的处理步骤（基于 Ubuntu 系统）：
 
+[source,puppet]
 ----
 class puppet::passenger {
     package { [ "apache2-mpm-worker",
@@ -238,6 +239,7 @@ class puppet::passenger {
 ----
 
 一旦你以 Passenger 方式运行，就可以使用如下命令重新启动 Puppetmaster 应用程序：
+
 ........
 # service apache2 restart
 ........

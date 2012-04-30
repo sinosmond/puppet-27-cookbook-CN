@@ -70,9 +70,10 @@ rails_env <%!= app_env %>
 Puppet 将会帮忙告诉你两者都定义了。 但在这种情况下，它指出了相同的文件和行号。
 一个资源怎么可能是其自身的副本呢？
 
-答案是：若它是 define。如果你使用一个 define 定义了两个实例，
-你还有所有资源都包含在这个 define 中的两个实例，他们需要有不同的名字。例如：
+答案是：若它是 ++define++，就会出现这种情况的错误。如果你对一个 +define+ 创建了两个实例，
+并且两个实例的所有资源都包含在这个 +define+ 中，他们需要有不同的名字。例如：
 
+[source,puppet]
 ----
 define check_process() {
     exec { "is-process-running?":
@@ -101,10 +102,11 @@ err: Could not retrieve catalog; skipping run
 不管你传递什么参数到 ++define++，都会保持这个相同的名字, Puppet 会拒绝创建它的两个实例。
 解决方法是在每个资源的标题部分包含实例的名字，如下所示：
 
-......
+[source,puppet]
+----
 exec { "is-process-${name}-running?":
     command => "/bin/ps ax |/bin/grep ${name} >
 	 /tmp/pslist.${name}.txt",
 }
-......
+----
 --

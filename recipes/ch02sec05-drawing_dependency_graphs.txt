@@ -18,6 +18,7 @@
 
 1. 创建 +/etc/puppet/modules/admin/manifests/ntp.pp+ 文件，添加包含如下循环依赖的代码：
 +
+[source,puppet]
 ----
 class admin::ntp {
     package { "ntp":
@@ -46,6 +47,7 @@ class admin::ntp {
 
 3. 在一个节点上包含这个类：
 +
+[source,puppet]
 ----
 node cookbook {
     include admin::ntp

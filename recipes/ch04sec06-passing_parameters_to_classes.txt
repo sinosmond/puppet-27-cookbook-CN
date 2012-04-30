@@ -9,6 +9,7 @@
 
 1. 声明参数作为如下类定义的一部分：
 +
+[source,puppet]
 ----
 class eventmachine( $version ) {
     package { "eventmachine":
@@ -20,6 +21,7 @@ class eventmachine( $version ) {
 
 2. 然后在一个节点上使用如下语法包含类：
 +
+[source,puppet]
 ----
 class { "eventmachine": version => "0.12.8" }
 ----
@@ -28,6 +30,7 @@ class { "eventmachine": version => "0.12.8" }
 
 类定义：
 
+[source,puppet]
 ----
 class eventmachine( $version ) {
 ----
@@ -35,6 +38,7 @@ class eventmachine( $version ) {
 与普通的类定义一样，不同之处在于它携带了一个参数：++$version++。
 在此类中，我们定义了如下的 +package+ 资源：
 
+[source,puppet]
 ----
 package { "eventmachine":
     provider => gem,
@@ -46,12 +50,14 @@ package { "eventmachine":
 
 当你在一个节点上包含这个类时， 替换通常的语法：
 
+[source,puppet]
 ----
 include eventmachine
 ----
 
 为如下的 +class+ 语句：
 
+[source,puppet]
 ----
 class { "eventmachine": version => "0.12.8" }
 ----
@@ -62,12 +68,14 @@ class { "eventmachine": version => "0.12.8" }
 
 你可以为一个类指定多个参数：
 
+[source,puppet]
 ----
 class mysql( $package, $socket, $port ) {
 ----
 
 使用同样的方法为其传递参数值：
 
+[source,puppet]
 ----
 class { "mysql":
     package => "percona-sql-server-5.0",
@@ -78,12 +86,14 @@ class { "mysql":
 
 你也可以为一些参数指定默认值：
 
+[source,puppet]
 ----
 class mysql( $package, $socket, $port = "3306" ) {
 ----
 
 或者使用如下代码片段为所有参数指定默认值：
 
+[source,puppet]
 ----
 class mysql(
     package = "percona-sql-server-5.0",

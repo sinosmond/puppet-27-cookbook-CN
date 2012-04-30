@@ -14,6 +14,7 @@ I try to take one day at a time, but sometimes several days attack at once.
 
 1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/gmt.pp+ 文件：
 +
+[source,puppet]
 ----
 class admin::gmt
 {
@@ -26,6 +27,7 @@ class admin::gmt
 
 2. 在所有的节点中添加如下代码：
 +
+[source,puppet]
 ----
 include admin::gmt
 ----

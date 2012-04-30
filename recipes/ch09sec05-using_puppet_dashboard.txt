@@ -2,7 +2,7 @@
 === {Recipe905}
 
 *Puppet Dashboard* 是一个管理 Puppet 安装的有用的工具，尤其对于大量的安装，
-并且通过一个网络接口能够看到节点的信息和报告。
+并且能够通过一个 Web 界面看到节点的信息和报告。
 *Puppet Dashboard* 可以为你显示最近运行 Puppet 的节点，它们运行了多长时间，
 是否有任何节点的错误报告，以及是否有一段时间内没有运行 Puppet 的节点等。
 
@@ -49,6 +49,7 @@ Query OK, 0 rows affected (0.00 sec)
 # vi config/database.yml
 ....
 
+[source,yaml]
 ----
 production:
   database: dashboard

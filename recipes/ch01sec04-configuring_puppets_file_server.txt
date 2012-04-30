@@ -4,6 +4,7 @@
 部署配置文件是 Puppet 最常见的用途之一。许多服务都需要一些配置文件，
 你可以让 Puppet 使用 +file+ 资源将这些配置文件推送到客户端，如下面的代码所示：
 
+[source,puppet]
 ----
 file { "/opt/nginx/conf.d/app_production.conf":
     source => "puppet:///modules/app/app_production.conf",
@@ -45,6 +46,7 @@ manifests/modules/app/files/app_production.conf
 2. 在你的配置清单里，使用 +source+ 指定你的挂载点名称，如下所示：
 +
 --
+[source,puppet]
 -----
 source => "puppet:///san/admin/users.htpasswd",
 -----
@@ -60,6 +62,7 @@ Puppet 会将其转换为如下的路径：
 如果有人能够在任何机器上运行 Puppet，并且有合法的证书访问 Puppetmaster，
 那么没有人能阻止他像这样执行下面的配置清单：
 
+[source,puppet]
 ------
 file { "/home/cracker/goodstuff/passwords.txt":
     source => "puppet:///web/passwords.txt",
@@ -86,6 +89,7 @@ file { "/home/cracker/goodstuff/passwords.txt":
 因此 +deny *+ 这行是可选的，但它确实是个好的习惯，因为看上去更清晰。
 之后 web 服务器就可以使用 +file+ 资源了，如下所示：
 
+[source,puppet]
 ----
 file { "/etc/passwords.txt":
     source => "puppet:///secret/passwords.txt",

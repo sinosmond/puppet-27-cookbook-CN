@@ -63,6 +63,7 @@ Hello, world
 
 4. 现在你可以在一个 Puppet 的配置清单中应用这个自定义的 fact：
 +
+[source,puppet]
 ----
 notify { $hello: }
 ----
@@ -82,6 +83,7 @@ Facter 内置的 facts 与我们刚刚创建的自定义 fact 相同的方式定
 Facts 可以包含任何 Ruby 代码，语句块 ++setcode do … end++ 中最后算出的值将作为 fact 的返回值。
 例如，你可以做个更有用的 fact，下面的代码将返回当前登录的用户数：
 
+[source,ruby]
 ----
 Facter.add(:users) do
     setcode do
@@ -100,9 +102,9 @@ notice: 2 users logged in
 
 你可以扩展 facts 使用以创建一个完全 “无节点定义（nodeless）” 的 Puppet 配置： 
 换言之，Puppet 可以仅基于 facts 的结果决定将哪些资源应用到一台机器。
-Jordan Sissel 写了写了篇介绍这种方法的文章：
+Jordan Sissel 写了篇介绍这种方法的文章：
 http://www.semicomplete.com/blog/geekery/puppet-nodeless-configuration.html 。
 
 在网络上有许多可用的自定义 facts 的例子，包括 Cosimo Streppone 撰写的关于
-根据 IP 地址决定数据中心的位置的文章，网址为：
+“根据 IP 地址决定数据中心的位置” 的文章，网址为：
 http://my.opera.com/cstrep/blog/puppet-custom-facts-and-master-less-puppet-deployment 。

@@ -21,6 +21,7 @@
 
 1. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 exec { "build-openssl":
     cwd => "/root",
@@ -113,4 +114,4 @@ creates => "/usr/local/ssl/bin/openssl",
 ==== {Theresmore}
 
 如果你有一批必须从源代码构建的软件，那么将上述的 +exec+ 放入一个 +define+
-函数会使这一构建过程便得更方便，因为你可以使用大致相同的代码构建每个包。
+函数会使这一构建过程变得更方便，因为你可以使用大致相同的代码构建每个包。

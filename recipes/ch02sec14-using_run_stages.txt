@@ -5,7 +5,7 @@
 What do you get when you play country music backwards? You get your girl back,
 your dog back, your pick-up back, and you stop drinking.
 
-重要的是要以正确的顺序做的事情。
+重要的是要以正确的顺序做事情。
 一个普遍的需求是应用一个特定的资源之前必须先应用它所依赖的所有资源
 （例如，安装一个软件包仓库），或者之后运行其他资源
 （例如，一旦其所依赖的包都已安装，就部署应用程序）。
@@ -15,6 +15,7 @@ Puppet 的 *run stages* 用于实现这种功能。
 
 1. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 class install_repos {
     notify { "This will be done first": }
@@ -52,6 +53,7 @@ notice: Finished catalog run in 0.59 seconds
 
 1. 首先把要做的工作根据先后顺序声明为两个类。
 +
+[source,puppet]
 ----
 class install_repos {
     notify { "This will be done first": }
@@ -64,6 +66,7 @@ class deploy_app {
 
 2. 然后创建一个名为 first 的运行阶段：
 +
+[source,puppet]
 ----
 stage { "first": before => Stage["main"] }
 ----
@@ -72,22 +75,26 @@ stage { "first": before => Stage["main"] }
 
 3. 接着创建一个名为 last 的运行阶段：
 +
+[source,puppet]
 ----
 stage { "last": require => Stage["main"] }
 ----
 +
 参数 +require+ 指定了在 +last+ 阶段之前 +main+ 阶段必须完成的一切。
 
-4. 最后，我们包含 +install_repos+ 和 +deploy_app+ 两个类， 指定他们
+4. 最后，我们引用 +install_repos+ 和 +deploy_app+ 两个类， 指定他们
    分别应该是 +first+ 阶段和 +last+ 阶段的一部分：
 +
+--
+[source,puppet]
 ----
 class { "install_repos": stage => "first" }
 class { "deploy_app": stage => "last" }
 ----
-+
+
 注意我们使用的是 +class+ 关键字，而不是 +include+ 关键字， 就像为类传递参数一样。
 你能想象，作为一个参数，+stage+ 可以被传递到任何类。
+--
 
 5. Puppet 会按照如下的顺序应用 ++stage++：
 +

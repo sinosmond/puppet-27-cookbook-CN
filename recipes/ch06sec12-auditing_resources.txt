@@ -17,6 +17,7 @@
 
 使用 +audit+ 元参数定义一个资源：
 
+[source,puppet]
 ----
 file { "/etc/passwd":
     audit => [ owner, mode ],
@@ -56,6 +57,7 @@ change: previously recorded value 644 has been changed to 666
 
 如果你希望审计一个资源的一切，可以使用如下的代码：
 
+[source,puppet]
 ----
 file { "/etc/passwd":
     audit => all,

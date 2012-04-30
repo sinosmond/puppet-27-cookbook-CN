@@ -32,6 +32,7 @@ image::image/ch02sec04_1.png[]
 然而，你可以在你的配置清单文件中使用标准的 RDoc 语法包含更多的有用信息。
 下面是一个在类中添加一些注释文档的例子：
 
+[source,puppet]
 ----
 class puppet {
     # This class sets up the Puppet client.

@@ -12,6 +12,7 @@
 
 1. 对 +user::virtual+ 类做如下修改：
 +
+[source,puppet]
 ----
 class user::virtual
 {
@@ -76,6 +77,7 @@ export PATH=$PATH:/var/lib/gems/1.8/bin
 在本例中，+john+ 用户有两个 ++dotfiles++：++.bashrc++ 和 ++.bash_profile++。
 其声明如下：
 
+[source,puppet]
 ----
 @ssh_user { "john":
     key => ...
@@ -83,9 +85,9 @@ export PATH=$PATH:/var/lib/gems/1.8/bin
 }
 ----
 
-你既可以指定一个 +dotfile+，也可以像本例那样指定一个数组形式的列表。
+你既可以指定一个 ++dotfile++，也可以像本例那样指定一个数组形式的列表。
 
-对于每个 +dotfile+，+user_dotfile+ 将在 +modules/user/files+ 目录下查找相应源的文件。
+对于每个 ++dotfile++，++user_dotfile++ 将在 +modules/user/files+ 目录下查找相应源的文件。
 例如，对名为 +bashrc+ 的 ++dotfile++，Puppet 将查找：
 
 ----

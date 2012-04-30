@@ -31,6 +31,7 @@ railsversion,2
 
 1. 在你的配置清单中添加如下代码：
 +
+[source,puppet]
 ----
 $extlookup_datadir = "/var/www/apps/"
 $extlookup_precedence = [ "%{name}", "common" ]
@@ -94,8 +95,8 @@ $railsversion = extlookup("railsversion")
 ----
 
 现在 +extlookup+ 装置查找一个 CSV 文件并从中读取数据。这个文件保存在
-+$extlookup_datadir+ 目录（在本例中是 ++/var/www/apps++），文件名为
-++%{name}.csv++（在本例中是 ++myapp.csv++）。
++$extlookup_datadir+ 目录（在本例中是 ++/var/www/apps++）,
+文件名为 ++%\{name}.csv++（在本例中是 ++myapp.csv++）。
 所以 +extlookup+ 读取文件的完整路径是 ++/var/www/apps/myapp.csv++，
 此文件包含了 ++railsversion,2++
 
@@ -132,18 +133,20 @@ domain,www.%{name}.com
 你也可以在 +extlookup+ 调用中指定默认值，当在所有的 CSV
 文件中都没有找到匹配的数据时就会使用这个默认值：
 
+[source,puppet]
 ----
 $path = extlookup("path", "/var/www/misc")
 ----
 
 你还可以指定在查找 +$extlookup_precedence+ 所列的文件之前首先要查找的 CSV 文件：
 
+[source,puppet]
 ----
 $path = extlookup("path", "/var/www/misc", "paths")
 ----
 
 这首先在 +paths.csv+ 文件中查找数据，如果没找到，将会依次查找列在
-+$extlookup_precedence+ 中的文件。
++$extlookup_precedence+ 中的其他文件。
 
 CSV 文件中的值也可以引用变量，正如我们曾经看到的：
 
@@ -151,7 +154,7 @@ CSV 文件中的值也可以引用变量，正如我们曾经看到的：
 domain,www.%{name}.com
 ----
 
-你可以使用范围内可用的任何变量，包括 Facter 检测出的 +facts+ 值：
+你可以使用当前范围内可用的任何变量，包括 Facter 检测出的 +facts+ 值：
 
 ----
 domain,%{fqdn}

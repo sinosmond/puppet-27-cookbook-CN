@@ -16,6 +16,7 @@ MySQL 是一个使用广泛的数据库服务器，你肯定会在某些节点�
 
 2. 使用如下内容创建 +/etc/puppet/modules/mysql/manifests/server.pp+ 文件：
 +
+[source,puppet]
 ----
 class mysql::server {
     package { "mysql-server": ensure => installed }
@@ -65,6 +66,7 @@ datadir = /var/lib/mysql
 
 4. 添加如下代码到 +/etc/puppet/manifests/site.pp+ 文件：
 +
+[source,puppet]
 ----
 $mysql_password = "secret"
 ----
@@ -105,6 +107,7 @@ notice: Finished catalog run in 61.78 seconds
 
 1. 添加如下代码到 +/etc/puppet/modules/mysql/manifests/server.pp+ 文件：
 +
+[source,puppet]
 ----
 define db( $user, $password ) {
     include mysql::server
@@ -122,6 +125,7 @@ define db( $user, $password ) {
 
 2. 添加如下代码到一个节点：
 +
+[source,puppet]
 ----
 mysql::server::db { "johnstest":
     user => "john",
@@ -173,6 +177,7 @@ mysql>
 
 要创建多个数据库，只需添加多个 +mysql::server::db+ 实例：
 
+[source,puppet]
 ----
 mysql::server::db { [ "test1", "test2", "test3" ]:
     user => "john",

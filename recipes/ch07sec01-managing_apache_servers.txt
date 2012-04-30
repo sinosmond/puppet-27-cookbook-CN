@@ -16,6 +16,7 @@ Puppet 可以在一定程度上缓解配置者因管理 Apache 服务器所带�
 
 2. 使用如下内容创建 +/etc/puppet/modules/apache/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class apache {
     package { "apache2-mpm-prefork": ensure => installed }
@@ -41,6 +42,7 @@ class apache {
 
 3. 在一个节点中添加如下代码：
 +
+[source,puppet]
 ----
 include apache
 ----
@@ -77,6 +79,7 @@ notice: Finished catalog run in 39.45 seconds
 但是将配置片段放在 +/etc/apache2/conf.d+ 目录中会更加整洁清晰。
 例如，你可以在 +init.pp+ 中添加如下代码：
 
+[source,puppet]
 ----
 define snippet() {
     file { "/etc/apache2/conf.d/${name}":
@@ -88,6 +91,7 @@ define snippet() {
 
 并在节点上包含如下的代码片段：
 
+[source,puppet]
 ----
 apache::snippet { "site-specific.conf": }
 ----

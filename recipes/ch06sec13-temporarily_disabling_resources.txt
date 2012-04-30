@@ -5,6 +5,7 @@
 你可能想要调整服务器上的一个配置文件，经过 Puppet 的不断测试，直到获得你想要的确切设置。
 在此期间你不想让 Puppet 覆盖旧版本的配置，为此你可以在资源上设置如下的 +noop+ 元参数：
 
+[source,puppet]
 ----
     noop => true,
 ----
@@ -13,6 +14,7 @@
 
 1. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 file { "/tmp/test.cfg":
     content => "Hello, world!\n",
@@ -36,6 +38,7 @@ notice: Finished catalog run in 0.53 seconds
 
 3. 测试之后，移除 +noop+ 参数：
 +
+[source,puppet]
 ----
 file { "/tmp/test.cfg":
     content => "Hello, world!\n",

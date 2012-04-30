@@ -20,6 +20,7 @@ iptables -A INPUT -d 10.0.2.15/32 -p tcp -m tcp --dport 80 -j ACCEPT
 Puppet 在这方面可以为我们提供帮助，因为我们可以用它对 `iptables` 的实现细节进行抽象，
 并通过参考管理员所控制的服务角色来定义防火墙规则，例如：
 
+[source,puppet]
 ----
 iptables::role { "web-server": }
 ----
@@ -40,6 +41,7 @@ iptables::role { "web-server": }
 
 2. 使用如下内容创建 +/etc/puppet/modules/iptables/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class iptables {
     file { [ "/root/iptables",
@@ -149,6 +151,7 @@ echo -e "Test remote login and then:\n iptables-save \
 
 4. 使用如下内容创建 +/etc/puppet/modules/iptables/files/names+ 文件：
 +
+[source,bash]
 ----
 # Servers
 export PUPPETMASTER=10.0.2.15
@@ -376,7 +379,7 @@ DROP   all  --  0.0.0.0/0  0.0.0.0/0
 
 首先，我们创建一个 +names+ 文件为常用的端口定义 shell 变量。
 这意味着，当我们定义防火墙规则时，可以引用变量，例如对于 MySQL 服务可以使用变量
-+${MYSQL}+ 取代数值端口号 ++3306++。
++$\{MYSQL}+ 取代数值端口号 ++3306++。
 
 +common.role+ 文件包含了一些对所有机器都有用的规则。编辑这个文件以适应你自己的所有机器
 （例如，你可能仅允许从指定的 IP 范围访问 SSH）。
@@ -389,8 +392,8 @@ DNS 服务器，等等。文件中所有的规则都具有如下的格式：
 iptables -A INPUT -p tcp -d ${MAIN_IP} --dport ${WEB} -j ACCEPT
 ----
 
-通常，你只需要修改 +${WEB}+ 这部分：将其替换为另一个端口名（定义在 +names+ 文件中）
-的变量引用（例如 ++${POSTGRES}++）。如果你需要更多的端口名，在 +names+ 文件中添加相应的定义。
+通常，你只需要修改 +$\{WEB}+ 这部分：将其替换为另一个端口名（定义在 +names+ 文件中）
+的变量引用（例如 ++$\{POSTGRES}++）。如果你需要更多的端口名，在 +names+ 文件中添加相应的定义。
 
 +iptables.sh+ 脚本读取其他的所有文件并执行规则要求的 `iptables` 命令。
 每当相关文件有任何改变，Puppet 就执行这个脚本，因此要想刷新防火墙，
@@ -406,6 +409,7 @@ pre-up iptables-restore < /etc/iptables.rules
 所有这一切意味着，在相关的模块中（例如 +apache+ 模块），
 你只要简单地包含如下一行即可创建相应的防火墙：
 
+[source,puppet]
 ----
 iptables::role { "web-server": }
 ----
@@ -426,8 +430,7 @@ MONITOR=10.0.2.15
 例如，允许来自监控服务器对指定主机 NRPE 端口的访问规则如下：
 
 ----
-iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} -s ${MONITOR}
- --dport ${NRPE} -j ACCEPT
+iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} -s ${MONITOR} --dport ${NRPE} -j ACCEPT
 ----
 
 你也可以用这种方法指定数据库服务器，以及在 +.role+ 文件中需要引用特定的 IP 地址、
@@ -437,6 +440,7 @@ iptables -A INPUT -p tcp -m tcp -d ${MAIN_IP} -s ${MONITOR}
 云中的服务器列表会因为节点的创建和销毁而不断地变化。
 对于需要触发防火墙重建的任何资源，你只要在此资源中添加如下代码即可：
 
+[source,puppet]
 ----
 notify => Exec["run-iptables"],
 ----

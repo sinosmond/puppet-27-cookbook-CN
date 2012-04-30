@@ -62,13 +62,13 @@ info: Applying configuration version '1294313353'
 .......
 
 一旦完成上面的工作，下一步就是配置仓库的自动推送将变动推送到客户端。
-使用 Git 的远程仓库命令可以实现此功能，例如：
+使用 Git 的 remote 命令可以实现此功能，即配置本地仓库的远程仓库别名。例如：
 
 .......
 # git remote add web ssh://git@web1.example.com/etc/puppet
 .......
 
-如果你有多个客户端， 可以为同一个运程添加多个 URL：
+如果你有多个客户端， 可以为同一个远程别名添加多个 URL：
 
 .......
 # git remote set-url --add webs ssh://git@web2.example.com/etc/puppet

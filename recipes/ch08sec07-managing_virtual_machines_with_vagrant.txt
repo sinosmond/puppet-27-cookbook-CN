@@ -34,6 +34,7 @@ Vagrant 是 VirtualBox 的前端工具，它驱动 VirtualBox 实现自动创建
 
 2. 使用如下内容创建 +/etc/puppet/modules/vagrant/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class vagrant {
     $virtualbox_deps = [ "libgl1-mesa-glx",
@@ -131,6 +132,7 @@ end
 
 4. 在一个你想要运行虚拟机的节点上包含如下代码（将 +john+ 替换为你自己的用户名）：
 +
+[source,puppet]
 ----
 vagrant::devbox { "devbox":
     vm_user => "john",
@@ -139,6 +141,7 @@ vagrant::devbox { "devbox":
 
 5. 添加一个名为 +devbox+ 的节点：
 +
+[source,puppet]
 ----
 node devbox {
     group { "puppet": ensure => present }
@@ -228,6 +231,7 @@ Connection to 127.0.0.1 closed.
 +devbox+ 的 ++define++，你可以使用它为一台宿主机的多个用户创建 +devbox+ 的多个实例。
 +devbox+ 的一个实例如下：
 
+[source,puppet]
 ----
 vagrant::devbox { "app-foo-devbox":
     vm_user => "john",
@@ -246,7 +250,7 @@ vagrant::devbox { "app-foo-devbox":
 一旦虚拟主机已经配置好，它就可以投入使用了。运行 `vagrant up` 命令即可启动虚拟机；
 `vagrant ssh` 命令用于登录虚拟机；`vagrant halt` 命令用于停止虚拟机的运行。
 
-顺便指出，节点定义中的 +puppet+ 组资源在 Vagrant 的 Puppet 供应时会引发一个错误，
+顺便指出，节点定义中名为 +puppet+ 的 +group+ 资源在 Vagrant 的 Puppet 供应时会引发一个错误，
 当你看到本书时可能已经被修复。Vagrant 正处于开发活跃期，所以可能会有一两处无法正常工作：
 如有疑问，请查看本节最后的文档链接。
 
@@ -272,6 +276,7 @@ config.vm.boot_mode = :gui
 在本例中，我们仅对 +devbox+ 配置了一个极其简单的配置清单，它在 +/etc/motd+ 文件中添加了消息。
 为了使其更实用，可以让 +devbox+ 提取与你要部署的实际服务器相同的配置清单。例如：
 
+[source,puppet]
 ----
 node production, devbox {
     include myapp::production

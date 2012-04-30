@@ -20,7 +20,6 @@
 安装 +nginx+ 包（实际上，我们只需要配置文件，但这是获得它的最简单方式）:
 
 ....
-
 # apt-get install nginx
 ....
 
@@ -36,6 +35,7 @@
 
 2. 使用如下内容创建 +/etc/puppet/modules/nginx/manifests/nginx.pp+ 文件：
 +
+[source,puppet]
 ----
 class nginx {
     package { "nginx": ensure => installed }
@@ -67,6 +67,7 @@ cp /etc/nginx/nginx.conf /etc/puppet/modules/nginx/files
 
 4. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 include nginx
 ----
@@ -127,6 +128,7 @@ notice: Finished catalog run in 1.69 seconds
 
 将 +exec+ 资源中的 +refreshonly+ 参数设置成 ++true++：
 
+[source,puppet]
 ----
 exec { "reload nginx":
     command     => "/usr/sbin/service nginx reload",
@@ -137,8 +139,9 @@ exec { "reload nginx":
 
 所以，仅当它获得通知才会运行。
 
-如果配置文件发生改变，就提供所需的 ++notify++：
+如果配置文件发生改变，就提供所需的通知（++notify++）：
 
+[source,puppet]
 ----
 file { "/etc/nginx/nginx.conf":
     source => "puppet:///modules/nginx/nginx.conf",
@@ -158,6 +161,7 @@ file { "/etc/nginx/nginx.conf":
 
 实际上，对于本例，更好的方法是为 +nginx+ 服务定义如下的 +restart+ 命令：
 
+[source,puppet]
 ----
 service { "nginx":
     restart => "/etc/init.d/nginx reload",
@@ -189,6 +193,7 @@ service { "nginx":
 你也可以在 +service+ 资源定义中使用 ++subscribe++，
 例如在一个 Redhat 风格的系统中，你可以使用如下的 +service+ 声明：
 
+[source,puppet]
 ----------
     service { "nginx":
         enable    => true,

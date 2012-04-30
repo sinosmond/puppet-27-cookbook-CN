@@ -50,6 +50,7 @@ http://aws-portal.amazon.com/gp/aws/developer/account/index.html?action=access-k
 
 2. 使用如下内容创建 +/etc/puppet/modules/fog/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class fog {
     package { "fog":
@@ -149,6 +150,7 @@ puppet --modulepath=/root/puppet/modules \
 
 6. 添加如下的节点声明，此节点将会应用 EC2 实例：
 +
+[source,puppet]
 ----
 node devbox {
     file { "/etc/motd":
@@ -159,6 +161,7 @@ node devbox {
 
 7. 添加如下代码到一个节点：
 +
+[source,puppet]
 ----
 include fog
 ----
@@ -239,6 +242,7 @@ ubuntu@devbox:~$
 
 对于本例而言，配置清单相当简单：
 
+[source,puppet]
 ----
 file { "/etc/motd":
     content => "Puppet power!\n",
@@ -248,7 +252,7 @@ file { "/etc/motd":
 你可以轻松地修改它，比如，与你的生产应用服务器同名。
 这对于快速部署位于物理负载平衡器之后的大量应用程序服务器来说是一个好方法，
 例如，处理突然飙升的需求。另外，你也可以使用 EC2 实例作为测试服务器或临时服务器
-（这完全拒绝于你自己的需求）。
+（这完全取决于你自己的需求）。
 
 ==== {Theresmore}
 

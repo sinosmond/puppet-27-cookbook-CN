@@ -13,6 +13,7 @@ Smarts is the most exclusive club in town. Everyone welcome.
 
 1. 在你的配置清单中添加如下代码：
 +
+[source,puppet]
 ----
 $systemtype = $operatingsystem ? {
     "Ubuntu" => "debianlike",
@@ -28,6 +29,7 @@ notify { "You have a ${systemtype} system": }
 
 2. 接下来，再添加如下代码：
 +
+[source,puppet]
 ----
 class debianlike {
     notify { "Special manifest for Debian-like systems": }
@@ -88,6 +90,7 @@ Puppet 会与 +$operatingsystem+ 的每一个可能的值（如 Ubuntu、Debian�
 与 +if+ 语句一样，你可以在选择器和 +case+ 语句中使用正则表达式，并且你也可以
 捕获匹配组的值，并使用 ++$1++、++$2++ 等引用它们的值。
 
+[source,puppet]
 ----
 case $lsbdistdescription {
     /Ubuntu (.+)/: {
@@ -103,6 +106,7 @@ case $lsbdistdescription {
 
 选择器和 +case+ 语句都可以让你指定一个 +default+ 值，当没有其他匹配项时就使用这个默认值：
 
+[source,puppet]
 ----
 $lunch = "Sausage and chips"
 $lunchtype = $lunch ? {

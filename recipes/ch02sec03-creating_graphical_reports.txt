@@ -1,8 +1,8 @@
 [[ch02sec03]]
 === {Recipe203}
 
-让我们面对现实，老板们喜欢漂亮的照片。 Puppet 使用 **RRD**（**Round-Robin Database**）
-图形库生成适应生产的报告数据，生成图形化的技术指标，如客户端的运行时间。
+让我们面对现实，老板们总是喜欢看漂亮的图片。 Puppet 使用 **RRD**（**Round-Robin Database**）
+图形库生成适应生产的报告数据，生成图形化的技术指标，如客户端的运行时间等。
 
 ==== {Gettingready}
 

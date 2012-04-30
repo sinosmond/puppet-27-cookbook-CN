@@ -33,6 +33,7 @@ Puppet 配置清单中定义的变量值。能被 Puppet 部署的任何一个�
 
 2. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 $mysql_password = "secret"
 file { "/usr/local/bin/backup-mysql":

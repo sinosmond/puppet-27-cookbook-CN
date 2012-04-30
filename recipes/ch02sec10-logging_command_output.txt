@@ -5,7 +5,7 @@
 Computer says no.
 
 一个问题的详细反馈会对解决问题有帮助。当你使用 +exec+ 资源在节点上执行命令时，
-并不总能轻易地找出其为何命名没有正确执行。如果命令返回一个非零的退出状态，Puppet
+并不总能轻易地找出其为何没有正确执行。如果命令返回一个非零的退出状态，Puppet
 就会返回类似如下的错误消息：
 
 ----
@@ -21,10 +21,11 @@ instead of one of [0] at /etc/puppet/manifests/nodes.pp:10
 
 用 +logoutput+ 参数定义如下的 +exec+ 资源：
 
+[source,puppet]
 ----
 exec { "this-will-fail":
-    command  => "/bin/ls file-that-doesnt-exist",
-   logoutput => on_failure,
+    command   => "/bin/ls file-that-doesnt-exist",
+    logoutput => on_failure,
 }
 ----
 
@@ -42,8 +43,9 @@ instead of one of [0] at /etc/puppet/manifests/nodes.pp:11
 
 ==== {Theresmore}
 
-你可以如下的配置为所有的 +exec+ 资源设置打印错误输出的默认值：
+你可以使用如下的配置为所有的 +exec+ 资源设置打印错误输出的默认值：
 
+[source,puppet]
 ----
 Exec {
     logoutput => on_failure,

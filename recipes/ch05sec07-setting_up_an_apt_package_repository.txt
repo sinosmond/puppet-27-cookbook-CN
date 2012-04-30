@@ -39,6 +39,7 @@
 
 2. 使用如下内容创建 +/etc/puppet/modules/repo/manifests/bitfield-server.pp+ 文件：
 +
+[source,puppet]
 ----
 class repo::bitfield-server {
     include apache
@@ -124,6 +125,7 @@ Description: Custom and cached packages for Bitfield Consulting
 
 5. 在一个节点的配置清单中添加如下代码：
 +
+[source,puppet]
 ----
 include repo::bitfield-server
 ----
@@ -173,6 +175,7 @@ notice: Finished catalog run in 16.32 seconds
 
 1. +bitfield-server+ 类的第一部分确保 Apache 已经被设置：
 +
+[source,puppet]
 ----
 class repo::bitfield-server {
     include apache
@@ -180,12 +183,14 @@ class repo::bitfield-server {
 
 2. +reprepro+ 是用于管理仓库本身的非常有用的工具（例如，添加一个新的软件包）：
 +
+[source,puppet]
 ----
     package { "reprepro": ensure => installed }
 ----
 
 3. 我们创建一个仓库的根目录 ++/var/apt++，以及该目录下的 +conf/distributions+ 文件：
 +
+[source,puppet]
 ----
     file { [ "/var/apt",
              "/var/apt/conf" ]:
@@ -201,6 +206,7 @@ class repo::bitfield-server {
 4. 这个类的其余部分部署了一个 Apache 虚拟主机的配置文件，用于响应
    +packages.bitfieldconsulting.com+ 的请求：
 +
+[source,puppet]
 ----
 file { "/etc/apache2/sites-available/apt-repo":
     source  => "puppet:///modules/repo/apt-repo.conf",
@@ -226,8 +232,8 @@ file { "/etc/apache2/sites-enabled/apt-repo":
 
 ....
 # cd /tmp
-# wget http://archive.ubuntu.com/ubuntu/pool/main/n/ntp/ntp_4.2.4p8+dfsg-
-1ubuntu2.1_i386.deb
+# wget http://archive.ubuntu.com/ubuntu/pool/main/n/ntp/\
+ntp_4.2.4p8+dfsg-1ubuntu2.1_i386.deb
 # cd /var/apt
 # reprepro includedeb lucid /tmp/ntp_4.2.4p8+dfsg-1ubuntu2.1_i386.deb
 Exporting indices...
@@ -239,6 +245,7 @@ Exporting indices...
    （请根据你自己的仓库服务器的 IP 地址替换如下的 IP 地址）：
 +
 --
+[source,puppet]
 ----
 class repo::bitfield {
     host { "packages.bitfieldconsulting.com":
@@ -248,16 +255,14 @@ class repo::bitfield {
     }
 
     file { "/etc/apt/sources.list.d/bitfield.list":
-        content => "deb http://packages.bitfieldconsulting.com/
-        lucid main\n",
+        content => "deb http://packages.bitfieldconsulting.com/lucid main\n",
         require => Host["packages.bitfieldconsulting.com"],
         notify  => Exec["bitfield-update"],
     }
 
     exec { "bitfield-update":
-        command => "/usr/bin/apt-get update",
-        require => File["/etc/apt/sources.list.d/bitfield.
-        list"],
+        command     => "/usr/bin/apt-get update",
+        require     => File["/etc/apt/sources.list.d/bitfield.list"],
         refreshonly => true,
     }
 }
@@ -268,6 +273,7 @@ class repo::bitfield {
 
 2. 应用这个类到一个节点：
 +
+[source,puppet]
 ----
 node cookbook {
     include repo::bitfield

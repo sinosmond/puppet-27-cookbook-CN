@@ -20,6 +20,7 @@
 
 2. 使用如下内容创建 +/etc/puppet/modules/rails/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class rails {
     include rails::passenger
@@ -68,6 +69,7 @@ class rails {
 
 3. 使用如下内容创建 +/etc/puppet/modules/rails/manifests/passenger.pp+ 文件：
 +
+[source,puppet]
 ----
 class rails::passenger {
     $passenger_version = "3.0.7"
@@ -203,6 +205,7 @@ http {
 
 6. 使用如下内容创建 +/etc/puppet/modules/rails/files/nginx.init+ 文件：
 +
+[source,bash]
 ----
 #!/bin/sh
 
@@ -308,6 +311,7 @@ exit 0
 
 7. 添加如下代码到一个节点：
 +
+[source,puppet]
 ----
 rails::app { "furiouspigs":
     sitedomain => "furiouspigs.com",
@@ -381,6 +385,7 @@ notice: Finished catalog run in 398.73 seconds
 
 上面所有代码的目的就是可以让你写出如下的实例化代码：
 
+[source,puppet]
 ----
 rails::app { "furiouspigs":
     sitedomain => "furiouspigs.com",
@@ -402,6 +407,7 @@ Nginx 必须与你想要的任何模块一起编译。
 一旦你已经安装了 Passenger 的 gem 包，这个脚本就会帮你完成编译工作。
 所以首先需要做的事就是安装 Passenger 的 **gem**：
 
+[source,puppet]
 ----
 class rails::passenger {
     $passenger_version = "3.0.7"
@@ -429,6 +435,7 @@ class rails::passenger {
 
 下一步是运行 +passenger-install-nginx-module+ 脚本：
 
+[source,puppet]
 ----
     exec { "install-passenger-nginx-module":
         command => "/usr/lib/ruby/gems/1.8/gems/passenger-${passenger_
@@ -456,6 +463,7 @@ class rails::passenger {
 
 下一步，我们创建了 Nginx 配置文件所需的目录结构：
 
+[source,puppet]
 ----
 file { [ "/opt/nginx",
          "/opt/nginx/conf",
@@ -472,6 +480,7 @@ file { [ "/opt/nginx",
 我们要删除默认的 Nginx 虚拟主机配置，否则可能会干扰我们要创建的虚拟主机。
 这可以通过如下代码实现：
 
+[source,puppet]
 ----
 file { "/opt/nginx/sites-enabled/default":
     ensure  => absent,
@@ -484,6 +493,7 @@ file { "/opt/nginx/sites-enabled/default":
 
 下面是 Nginx 的主配置文件：
 
+[source,puppet]
 ----
 file { "/opt/nginx/conf/nginx.conf":
     content => template("rails/nginx.conf.erb"),
@@ -499,11 +509,12 @@ passenger_root /usr/lib/ruby/gems/1.8/gems/passenger-<%= passenger_
 version %>;
 ----
 
-否则，它就是一个合理的标准的 Nginx 配置，你也可以在模板中添加任何你的服务器所需的特殊参数。
+否则，它就是一个标准的 Nginx 配置，你也可以在模板中添加任何你的服务器所需的特殊参数。
 
 因为我们没有使用发行版提供的软件包，所以我们需要为节点应用一个 +init+ 脚本
 （改编自 Ubuntu 版本，仅做了轻微的修改）：
 
+[source,puppet]
 ----
 file { "/etc/init.d/nginx":
     source  => "puppet:///modules/rails/nginx.init",
@@ -514,6 +525,7 @@ file { "/etc/init.d/nginx":
 
 为了运行 Nginx 服务需要如下代码：
 
+[source,puppet]
 ----
 service { "nginx":
     enable  => true,
@@ -522,8 +534,9 @@ service { "nginx":
 }
 ----
 
-要确保错误的配置不会使服务器宕机，配置文件的改变会通知如下的“配置检查和重载”资源：
+要确保错误的配置不会使服务器宕机，配置文件的改变会通知如下的 “配置检查和重载” 资源：
 
+[source,puppet]
 ----
 exec { "reload-nginx":
     command     => "/opt/nginx/sbin/nginx -t \
@@ -537,6 +550,7 @@ exec { "reload-nginx":
 
 你已经设置好了 Passenger 和 Nginx，接下来配置 *Rails* 需求的类：
 
+[source,puppet]
 ----
 class rails {
     include rails::passenger
@@ -554,11 +568,12 @@ class rails {
 例如，你应该注意到了，我们没有安装 +rails+ 的 gem；这通常是通过 Bundler 安装的，
 或者在应用程序的 +vendor+ 目录中已经提供了一份特定版本的 ++rails++。
 如果你没有使用 Bundler，或者你需要为你的 Rails 应用程序设置一些额外的依赖，
-请在在这个类中使用 Puppet 的 +package+ 资源做相应的配置来安装它们。
+请在这个类中使用 Puppet 的 +package+ 资源做相应的配置来安装它们。
 
 +rails+ 类的的主要部分是 +define+ 函数 app，
 对于你要管理的每个应用程序，它都会被实例化一次：
 
+[source,puppet]
 ----
 define app( $sitedomain ) {
     include rails
@@ -566,6 +581,7 @@ define app( $sitedomain ) {
 
 为应用程序做的第一件事是安装 Nginx 虚拟主机配置文件，它由 +app.conf.erb+ 模板生成：
 
+[source,puppet]
 ----
     file { "/opt/nginx/sites-available/${name}.conf":
         content => template("rails/app.conf.erb"),
@@ -601,6 +617,7 @@ passenger_pre_start http://<%= sitedomain %>;
 你可以在 Rails 模块中添加一个名为 +files/furiouspigs.conf+ 的文件来包含这些配置指令。 
 Puppet 会从如下的这段代码找到这个文件，并分发给节点：
 
+[source,puppet]
 ----
     file { "/opt/nginx/conf/includes/${name}.conf":
         source => [ "puppet:///modules/rails/${name}.conf",
@@ -615,6 +632,7 @@ Puppet 会从如下的这段代码找到这个文件，并分发给节点：
 最后我们要确保为准备部署的标准 Rails 目录结构配置 +www-data+ 用户属主及适当的权限（775）。
 如果你的 Nginx 以及部署的应用程序以不同的用户身份执行，请使用你的用户名替换所有的 ++www-data++。
 
+[source,puppet]
 ----
        file { [ "/var/www",
                 "/var/www/${name}",
@@ -639,10 +657,11 @@ Puppet 会从如下的这段代码找到这个文件，并分发给节点：
 ===== RVM
 
 正如我之前所提到的，使用 RVM 管理多版本 Ruby 和多版本的 gemsets 是一种强大的解决方案。
-当然，使用 RVM 也带来了自身的有趣问题 -- RVM 的开发活跃其主体经常变化。
+当然，使用 RVM 也带来了自身的有趣问题 -- RVM 的开发活跃，其主体经常变化。
 无论如何，RVM 为我们带来的好处还是比其带来的麻烦要多的多。
 所以，我建议你对生产线上的 Rails 站点，或许可以通过类似这样的代码应用 RVM：
 
+[source,puppet]
 ----
 class rails::rvm {
   package { [ "autoconf",
@@ -686,22 +705,24 @@ https://rvm.beginrescueend.com/install/rvm 。
 ===== 数据库
 
 本处方中，未对 Rails 应用程序创建任何数据库及访问数据库的用户；
-配置和中数据库取决于你团队的开发者正在使用的数据库（MySQL、Postgres、MongoDB 等），
+配置何种数据库取决于你团队的开发者正在使用何种数据库（MySQL、Postgres、MongoDB 等），
 你需要自行添加管理数据库的 Puppet 代码。如果使用的是 MySQL，
 你可以参考 <<ch07sec04,{Recipe704}>> 一节的内容并作适当的改写。 
 
 ===== SSL 证书
 
-一些应用程序会需要 SSL 证书并为 *vhost* 配置安全的 URLs，例如：处理网络付款。
+一些应用程序会需要 SSL 证书并为 *vhost* 配置安全的 URLs，例如：处理网上支付。
 这已超出了本处方的讲解范围，但你应该可以发现添加所需的代码并不困难。
 你可以在 +rails::app+ 函数的定义中添加一个可选参数，例如：
 
+[source,puppet]
 ----
 define app( $sitedomain, $ssl = false ) {
 ----
 
 并添加如下代码处理这个参数：
 
+[source,puppet]
 ----
 if $ssl {
    file { "/etc/ssl/certs/${name}.crt":
@@ -712,6 +733,7 @@ if $ssl {
 
 然后，只要使用如下的代码对你的应用程序进行实例化即可：
 
+[source,puppet]
 ----
 rails::app { "irritatedbadgers":
     sitedomain => "irritatedbadgers.com",

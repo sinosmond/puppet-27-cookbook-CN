@@ -14,6 +14,7 @@ Puppet 使这种管理变得简单，感谢其内置的 +ssh_authorized_key+ 类
 
 1. 对上一节创建的 +user::virtual+ 类做如下修改：
 +
+[source,puppet]
 ----
 class user::virtual
 {
@@ -42,6 +43,7 @@ class user::virtual
 
 2. 在一个节点上包含如下代码：
 +
+[source,puppet]
 ----
 realize( User::Virtual::Ssh_user["phil"] )
 ----
@@ -65,9 +67,10 @@ notice: Finished catalog run in 1.04 seconds
 
 ==== {Howitworks}
 
-我们创建了一个名为 +ssh_user+ 的 +define+，它包括用户自身的 +user+
+我们创建了一个名为 +ssh_user+ 的 ++define++，它包括用户自身的 +user+
 资源以及与其相关的 +ssh_authorized_key+ 资源，内容如下：
 
+[source,puppet]
 ----
 define ssh_user( $key )
 {
@@ -86,6 +89,7 @@ define ssh_user( $key )
 
 然后我们对用户 phil 创建了 +ssh_user+ 的一个虚拟资源实例： 
 
+[source,puppet]
 ----
     @ssh_user { "phil":
         key => "AAAAB3NzaC1yc2EAAAABIwAAAIEA3ATqENg+GW
@@ -100,6 +104,7 @@ define ssh_user( $key )
 
 最后，我们在节点中添加了如下代码：
 
+[source,puppet]
 ----
     realize( User::Virtual::Ssh_user["phil"] )
 ----
@@ -108,8 +113,9 @@ define ssh_user( $key )
 
 ==== {Theresmore}
 
-可以将这种思想应用到上一节提及的“组织用户到组类”中，修改相应类的代码为：
+可以将这种思想应用到上一节提及的 “组织用户到组的类” 中，修改相应类的代码为：
 
+[source,puppet]
 ----
 class user::sysadmins
 {

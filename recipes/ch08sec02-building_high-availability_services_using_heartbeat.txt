@@ -29,6 +29,7 @@ Even in the future, nothing works!
 
 2. 使用如下内容创建 +/etc/puppet/modules/heartbeat/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class heartbeat {
   package { "heartbeat":
@@ -83,7 +84,7 @@ auth 1
 1 sha1 topsecretpassword
 ----
 
-5. 使用如下内容创建 +/etc/puppet/modules/heartbeat/files/ha.cf+ 文件
+5. 使用如下内容创建 +/etc/puppet/modules/heartbeat/files/ha.cf+ 文件。
    替换下面的两个 IP 地址为你自己的两台机器上 eth0 接口对应的 IP 地址。
    同样需替换 +cookbook+ 和 +cookbook2+ 为你自己的两台机器的主机名（可以通过运行 `uname -n` 命令获得）。
 +

@@ -89,6 +89,7 @@ Puppet::Type.newtype(:gitrepo) do
 +isnamevar+ 声明告诉 Puppet 参数 +source+ 是此类型的 ++namevar++。
 因此当你声明这个资源的实例时，你给出的任何名字将被视为 +source+ 的值。例如：
 
+[source,puppet]
 ----
 gitrepo { "git://github.com/puppetlabs/puppet.git":
     path => "/home/john/work/puppet",
@@ -112,6 +113,7 @@ gitrepo { "git://github.com/puppetlabs/puppet.git":
 我在上面故意举了一个简单的例子，但是当你要为生产环境开发真正的自定义类型时，
 你应该加入文档字符串描述类型及其参数的用途。例如：
 
+[source,ruby]
 ----
 Puppet::Type.newtype(:gitrepo) do
     @doc = "Manages Git repos"
@@ -134,6 +136,7 @@ end
 当某人试图向资源传递错误的值时，你可以使用参数校验（validate）生成有用的错误信息。
 例如，你可以校验要创建仓库的目录是否已真实存在：
 
+[source,ruby]
 ----
   newparam(:path) do
     validate do |value|
@@ -147,6 +150,7 @@ end
 
 你也可以为参数指定一个允许的取值列表，例如：
 
+[source,ruby]
 ----
 newparam(:breakfast) do
     newvalues(:bacon, :eggs, :sausages)

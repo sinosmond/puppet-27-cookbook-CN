@@ -10,6 +10,7 @@ DNS 服务器；对 Ubuntu 系统和其他系统可能需要执行不同类的�
 
 在你的配置清单中添加如下的代码：
 
+[source,puppet]
 ----
 if $lsbdistid == "Ubuntu" {
     notice("Running on Ubuntu")
@@ -38,6 +39,7 @@ Puppet 对 +if+ 关键字之后的内容视为表达式并对其进行评估。�
 
 你可以添加 +elsif+ 关键字进行进一步的测试，例如：
 
+[source,puppet]
 ----
 if $lsbdistid == "Ubuntu" {
     notice("Running on Ubuntu")
@@ -53,6 +55,7 @@ immediately.")
 
 你可以使用 +==+ 语法检查两个值是否相同，例如：
 
+[source,puppet]
 ----
 if $lsbdistid == "Ubuntu" {
     ...
@@ -61,6 +64,7 @@ if $lsbdistid == "Ubuntu" {
 
 或者使用 +!=+ 语法检查两个值是否不同，例如：
 
+[source,puppet]
 ----
 if $lsbdistid != "CentOS" {
     ...
@@ -69,6 +73,7 @@ if $lsbdistid != "CentOS" {
 
 你也可以使用 +<+ 和 +>+ 比较两个数值，例如：
 
+[source,puppet]
 ----
 if $uptime_days > 365 {
     notice("Really .. there have been kernel security patches out
@@ -78,6 +83,7 @@ there for ages, you will so be 0wned!")
 
 还可以使用 +<=+ 或 +>=+ 对数值进行比较：
 
+[source,puppet]
 ----
 if $lsbmajdistrelease <= 9 {
     ...
@@ -89,6 +95,7 @@ if $lsbmajdistrelease <= 9 {
 你可以把上述代码片段中的一些简单表达式组合成更复杂的逻辑表达式，
 逻辑表达式使用与（++and++）、或（++or++）和非（++not++）连接简单表达式，例如：
 
+[source,puppet]
 ----
 if ($uptime_days > 365) and ($lsbdistid == "Ubuntu") {
      ...

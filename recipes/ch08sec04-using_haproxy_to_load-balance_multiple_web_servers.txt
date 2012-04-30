@@ -34,6 +34,7 @@ web 请求的负载均衡。
 
 2. 使用如下内容创建 +/etc/puppet/modules/loadbalancer/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class loadbalancer {
   package { "haproxy": ensure => installed }
@@ -104,6 +105,7 @@ listen myapp 0.0.0.0:80
 
 5. 在你的 HAProxy 节点中包含如下代码：
 +
+[source,puppet]
 ----
 include loadbalancer
 ----

@@ -4,6 +4,7 @@
 使用启用了 +schedule+ 参数的资源，你可以控制当前资源何时被应用。
 例如，你希望如下的 +exec+ 资源每天应用一次，将资源参数 +schedule+ 设置成了内置的值 ++daily++：
 
+[source,puppet]
 ----
 exec { "/usr/bin/apt-get update":
     schedule => daily,
@@ -24,6 +25,7 @@ exec { "/usr/bin/apt-get update":
 
 1. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 schedule { "not-in-office-hours":
     period => daily,
@@ -44,6 +46,7 @@ exec { "/bin/echo Doing maintenance!":
 我们创建了名为 +not-in-office-hours+ 的 ++schedule++，它指定了重复周期为 ++daily++, 
 且指定了允许的时间范围为下午 5 点到次日早上 9 点：
 
+[source,puppet]
 ----
     period  => daily,
     range   => [ "17:00-23:59", "00:00-09:00" ],
@@ -51,12 +54,14 @@ exec { "/bin/echo Doing maintenance!":
 
 我们同时设置了在每个时间周期内资源被应用的最大次数为 1：
 
+[source,puppet]
 ----
     repeat => 1,
 ----
 
 然后，我们在如下的 +exec+ 资源中使用这个自定义的 ++schedule++：
 
+[source,puppet]
 ----
     exec { "/bin/echo Doing maintenance!":
         schedule => "not-in-office-hours",
@@ -82,6 +87,7 @@ exec { "/bin/echo Doing maintenance!":
 
 如果需要，你可以增大 +repeat+ 参数的值，例如：在每小时内运行一个作业不超过 6 次：
 
+[source,puppet]
 ----
     period => hourly,
     repeat => 6,

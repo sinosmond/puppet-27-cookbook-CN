@@ -23,6 +23,7 @@ Puppet 的 +versioncmp+ 函数会帮我们解决这个问题。
 
 1. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 $app_version = "1.2.2"
 $min_version = "1.2.10"
@@ -42,6 +43,7 @@ notice: Upgrade needed
 
 3. 现在更变 +$app_version+ 的值：
 +
+[source,puppet]
 ----
 $app_version = "1.2.14"
 ----
@@ -55,7 +57,7 @@ notice: Version OK
 
 ==== {Howitworks}
 
-我们指定了可解说的最小版本（++$min_version++）是 1.2.10。
+我们指定了可接受的最小版本（++$min_version++）是 1.2.10。
 所以在上面的例子中，我们用 +$app_version+ 为 1.2.2 的版本号与之比较。  
 
 简单的对两个字符串进行比较（例如，Ruby 中的字符串比较）将会给出错误的结果，

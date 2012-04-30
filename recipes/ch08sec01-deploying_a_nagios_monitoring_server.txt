@@ -5,7 +5,7 @@
 My roommate lost his pet elephant. It's in the apartment somewhere.
 
 我们无法持续关注所有的一切。问题是：你怎么知道一台服务器何时会出现故障呢？
-错误的答案是，“我的客户打电话给我，告诉我服务器是关闭的。”
+错误的答案是，“我的客户打电话给我，告诉我服务器宕机了。”
 但是，你会惊奇地发现，许多组织的系统没有任何的自动监控。自动监控的设置非常简单。
 目前有许多优秀的免费开源的自动监测工具可用，包括 Nagios、Icinga、Zabbix 和 Zenoss。 
 Nagios 是其中历史最久最复杂的一个，尽管它有一个难以配置的名声（基本上是实至名归的）。
@@ -29,6 +29,7 @@ Nagios 是其中历史最久最复杂的一个，尽管它有一个难以配置�
 
 2. 使用如下内容创建 +/etc/puppet/modules/nagios/manifests/server.pp+ 文件：
 +
+[source,puppet]
 ----
 class nagios::server {
     include apache
@@ -378,6 +379,7 @@ define command{
 13. 使用如下内容创建 +/etc/puppet/modules/nagios/files/nagios.conf+ 文件
     （用你自己的服务器替换 ServerName 的配置值）：
 +
+[source,apache]
 ----
 ScriptAlias /cgi-bin/nagios3 /usr/lib/cgi-bin/nagios3
 ScriptAlias /nagios3/cgi-bin /usr/lib/cgi-bin/nagios3
@@ -434,6 +436,7 @@ nagios.bitfieldconsulting.com
 
 17. 在你的 Nagios 服务器的节点中定义中包含如下代码：
 +
+[source,puppet]
 ----
 include nagios::server
 ----
@@ -460,6 +463,7 @@ command[check_all_disks]=/usr/lib/nagios/plugins/check_disk -w
 
 19. 使用如下内容创建 +/etc/puppet/modules/nagios/manifests/target.pp+ 文件：
 +
+[source,puppet]
 ----
 class nagios::target {
     package { [ "nagios-nrpe-server",
@@ -487,6 +491,7 @@ class nagios::target {
 
 20. 在你要监控的所有节点（也应该包括 Nagios 服务器自己）上包含这个类：
 +
+[source,puppet]
 ----
 include nagios::target
 ----
@@ -512,7 +517,7 @@ image::image/ch08sec01_2.png[]
 ==== {Howitworks}
 
 尽管这个处方相当的长，但是 Puppet 的配置清单本身却很简单；
-这里没有我们在其他处方中还没使用过的配置内容。
+这里没有我们在其他处方中还没使用过的配置技巧。
 
 本质上，我们所做的就是安装 Nagios 包，配置服务于它的 Apache 虚拟主机，
 为 Nagios 部署一系列的配置文件，这些配置文件用于告诉 Nagios 要检查哪些主机、
@@ -542,7 +547,7 @@ image::image/ch08sec01_2.png[]
 - Web 站点检查：配置 Nagios 的 +check_http plugin+ 插件是相当复杂的，
   它可以处理重定向、SSL、认证以及在一个 Web 页面中匹配文本。
 - 进程检查：监视一个主机上指定的进程是一个常见的需求。使用 +check_procs+ 插件可以实现。
-- 不同的检查频率：我已经在 +service_templates.cfg+ 模板中定义了 ++every_hour+、
+- 不同的检查频率：我已经在 +service_templates.cfg+ 模板中定义了 ++every_hour++、
   +every_day+ 和 ++every_5_mins++；你可能想要添加一些新的频率设置。
 - 新的时间周期；在 +timeperiods.cfg+ 中，当前仅定义了一个时间周期 ++24x7++，
   但你可能想要创建自己的时间周期。例如，如果要从午夜 0 点到凌晨 1 点执行数据库的维护工作，

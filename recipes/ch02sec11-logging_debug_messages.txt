@@ -1,7 +1,7 @@
 [[ch02sec11]]
 === {Recipe211}
 
-真理会使你获得自由。在调试问题时，若能输出配置清单某一个点上的信息将会对问题解决有很帮助。 
+真理会使你获得自由。在调试问题时，若能输出配置清单某一个点上的信息将会对问题解决有很大帮助。 
 这是一种很好的报告问题的方式，例如，如果一个变量没有定义或者定义了一个非法的值。
 有时，获知一个特定的代码片段已经被执行也是很有用的。
 Puppet 的 +notify+ 资源可以让你显示出调试信息。
@@ -10,6 +10,7 @@ Puppet 的 +notify+ 资源可以让你显示出调试信息。
 
 在你的配置清单中要被调研的检查点上定义 +notify+ 资源：
 
+[source,puppet]
 ----
 notify { "Got this far!": }
 ----
@@ -18,13 +19,13 @@ notify { "Got this far!": }
 
 当这个资源被编译时，Puppet 就会显示如下的信息：
 
-----
+....
 notice: Got this far!
-----
+....
 
 ==== {Theresmore}
 
-如果你有勇敢的心，喜欢尝试，当然我也希望你是那样的一个人，
+如果你有颗勇敢的心，喜欢尝试，当然我也希望你是那样的一个人，
 你或许会从自己的调试信息中发现大量的代码不能工作的原因。
 所以知道如何获得更多的 Puppet 调试特性将非常有用。
 下面将解释其中的一些用法。
@@ -33,6 +34,7 @@ notice: Got this far!
 
 你可以在消息中引用变量：
 
+[source,puppet]
 ----
 notify { "operatingsystem is $operatingsystem": }
 ----
@@ -47,6 +49,7 @@ notice: operatingsystem is Ubuntu
 
 对于更高级的调试， 你可以使用 +withpath+ 参数显示哪个类的 +notify+ 消息被执行了：
 
+[source,puppet]
 ----
 notify { "operatingsystem is $operatingsystem":
     withpath => true,
@@ -60,16 +63,17 @@ notice: /Stage[main]/Nagios::Target/Notify[operatingsystem is Ubuntu]/
 message: operatingsystem is Ubuntu
 ......
 
-===== 将日志信息记录到 Puppetmaster
+===== 将调试信息记录到 Puppetmaster
 
 有时你仅仅想要在 Puppetmaster 上记录日志消息，而不在客户端生成额外的输出。
 你可以使用 +notice+ 函数实现：
 
+[source,puppet]
 ----
 notice("I am running on node $fqdn")
 ----
 
-现在，当你运行 Puppet，就不会在客户端看到任何输出，但在 Puppetmaster
+现在，当你运行 Puppet 时，就不会在客户端看到任何输出，但在 Puppetmaster
 上会有一条如下的消息被记录到 syslog 系统日志：
 
 ......

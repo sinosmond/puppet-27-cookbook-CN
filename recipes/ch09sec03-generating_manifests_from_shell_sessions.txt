@@ -97,13 +97,14 @@ class ntp {
 
 然后，当你安装 +ntp+ 软件包时，++cft++ 会记录这个事实。
 软件包安装了服务的启动脚本，配置了在机器启动时启动服务，++cft++ 同时也记录了这些。
-最后，++cft++ 注意到你编辑了 +/etc/ntp.conf+ 文件，并保存了一份修改后的拷贝已被后用。
+最后，++cft++ 注意到你编辑了 +/etc/ntp.conf+ 文件，并保存了一份修改后的拷贝以备后用。
 
 当你运行 `cft finish ntp` 命令，这会停止记录变化。
 现在你可以使用 `cft manifest ntp` 命令生成与你的控制台会话等效的 Puppet 配置清单。
 
 正如你看到的，生成的配置清单包括了 +package+ 声明（由命令 `apt-get install ntp` 触发）：
 
+[source,puppet]
 ----
 package { 'ntp':
     ensure => '1:4.2.4p8+dfsg-1ubuntu2'
@@ -112,6 +113,7 @@ package { 'ntp':
 
 同时包括了再现包安装脚本作用的 +service+ 声明，启动服务并设置开机启动：
 
+[source,puppet]
 ----
 service { 'ntp':
     enable => 'true',
@@ -130,6 +132,7 @@ service { 'ntp':
 `cft` 只知道你对这个文件做了改变，但不知道你具体做了哪些改变，
 所以 `cft` 将修改后的整个文件做为一个拷贝，并使其可以通过 Puppet 分发这个文件：
 
+[source,puppet]
 ----
 file { '/etc/ntp.conf':
     group  => 'root',

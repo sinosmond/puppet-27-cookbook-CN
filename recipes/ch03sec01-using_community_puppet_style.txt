@@ -19,6 +19,7 @@ probably be unendurable.
 2. 总是将非 Puppet 保留字的参数值用双引号括起来，例如：
 +
 --
+[source,puppet]
 ----
 name  => "Nucky Thompson",
 mode  => "0700",
@@ -27,6 +28,7 @@ owner => "deploy",
 
 但保留字不用使用引号：
 
+[source,puppet]
 ----
 ensure => installed,
 enable => true,
@@ -35,6 +37,7 @@ ensure => running,
 
 当在字符串中引用变量的值时，始终使用大括号将变量名括起来。例如：
 
+[source,puppet]
 ----
 source => "puppet:///modules/webserver/${brand}.conf",
 ----
@@ -45,6 +48,7 @@ source => "puppet:///modules/webserver/${brand}.conf",
 3. 总是以逗号结束参数声明的行，即使它是最后一个参数：
 +
 --
+[source,puppet]
 ----
 service { "memcached":
     ensure => running,
@@ -58,13 +62,14 @@ service { "memcached":
 
 4. 当声明仅有一个参数的资源时，将声明放在一行上且无需使用结尾的逗号：
 +
+[source,puppet]
 ----
 package { "puppet": ensure => installed }
 ----
 
 5. 当声明有多个参数的资源时，每个参数占一行：
 +
---
+[source,puppet]
 ----
 package { "rake":
     ensure   => installed,
@@ -73,19 +78,20 @@ package { "rake":
 }
 ----
 
-当声明 **符号链接**（**symlinks**）时，使用 ++ensure => link++：
-
+6. 当声明 **符号链接**（**symlinks**）时，使用 ++ensure => link++：
++
+[source,puppet]
 ----
 file { "/etc/php5/cli/php.ini":
     ensure => link,
     target => "/etc/php.ini",
 }
 ----
---
 
-6. 为了使代码便于阅读，所有的箭头以最长一个参数对齐，例如：
+7. 为了使代码便于阅读，所有的箭头以最长一个参数对齐，例如：
 +
 --
+[source,puppet]
 ----
 file { "/var/www/${app}/shared/config/rvmrc":
     owner   => "deploy",

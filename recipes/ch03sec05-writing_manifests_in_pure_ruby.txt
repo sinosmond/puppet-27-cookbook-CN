@@ -20,6 +20,7 @@ some that do.
 在下面的例子中，我将向你展示如何将典型的 Puppet 配置清单转换成 Ruby 的。
 Puppet 语法的原始配置清单如下：
 
+[source,puppet]
 ----
 class admin::exim {
     package { "exim4": ensure => installed }
@@ -39,8 +40,8 @@ class admin::exim {
 
 ==== {Howtodoit}
 
-使用如下内容创建 +/etc/puppet/modules/admin/manifests/exim.rb+ 文件：
-
+1. 使用如下内容创建 +/etc/puppet/modules/admin/manifests/exim.rb+ 文件：
++
 [source,ruby]
 ----
 hostclass "admin::exim" do
@@ -57,7 +58,7 @@ hostclass "admin::exim" do
 end
 ----
 
-在一个节点中包含这个类并运行 Puppet。
+2. 在一个节点中包含这个类并运行 Puppet。
 
 ==== {Howitworks}
 
@@ -97,6 +98,7 @@ Ruby DSL 尚处于早期开发阶段。试验虽然有趣，除非你有使用 R
 当你像常规的 Ruby 程序一样使用 Ruby 变量时，可以使用 +scope.lookupvar+
 访问你的 Puppet 变量，例如：
 
+[source,puppet]
 ----
 notice( "I am running on node %s" % scope.lookupvar("fqdn") )
 ----
@@ -109,6 +111,7 @@ notice: I am running on node cookbook.bitfieldconsulting.com
 
 要在你的 Puppet 配置清单范围内设置变量，使用 ++scope.setvar++，例如：
 
+[source,puppet]
 ----
 require 'time'
 scope.setvar("now", Time.now)
@@ -128,7 +131,7 @@ will be: Wed Mar 23 05:58:16 -0600 2011
 你可以在 Puppet Labs 网站找到更多如何使用 Ruby DSL 的详细资料，包括诸如
 *virtual resources* 和 *collections* 这样的高级主题： http://projects.puppetlabs.com/projects/1/wiki/Ruby_Dsl 。
 
-Ken Barber 提供了一些语法例子,并对 Puppet 语法和 Ruby DSL 结构做了比较，网址在 https://github.com/bobsh/puppet-rubydsl-examples 。
+Ken Barber 提供了一些语法例子，并对 Puppet 语法和 Ruby DSL 结构做了比较，网址在 https://github.com/bobsh/puppet-rubydsl-examples 。
 
 最后，James Turnbull 发布过一篇 blog， 展示了使用 Ruby 连接 MySQL 服务器的高级方法：
 http://www.puppetlabs.com/blog/using-ruby-inthe-puppet-ruby-dsl/ 。

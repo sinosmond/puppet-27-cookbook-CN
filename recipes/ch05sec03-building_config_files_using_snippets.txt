@@ -9,6 +9,7 @@
 
 1. 使用如下代码创建 +/etc/puppet/modules/admin/manifests/rsyncdconf.pp+ 文件：
 +
+[source,puppet]
 ----
 class admin::rsyncdconf {
     file { "/etc/rsyncd.d":
@@ -16,8 +17,7 @@ class admin::rsyncdconf {
     }
 
     exec { "update-rsyncd.conf":
-        command => "/bin/cat /etc/rsyncd.d/*.conf > /etc/
-        rsyncd.conf",
+        command => "/bin/cat /etc/rsyncd.d/*.conf > /etc/rsyncd.conf",
         refreshonly => true,
     }
 }
@@ -25,6 +25,7 @@ class admin::rsyncdconf {
 
 2. 添加如下代码到你的配置清单：
 +
+[source,puppet]
 ----
 class myapp::rsync {
     include admin::rsyncdconf
@@ -74,6 +75,7 @@ notice: Finished catalog run in 1.01 seconds
 
 +admin::rsyncdconf+ 类为存放 +rsync+ 的配置片段创建了如下目录：
 
+[source,puppet]
 ----
 file { "/etc/rsyncd.d":
     ensure => directory,
@@ -86,6 +88,7 @@ file { "/etc/rsyncd.d":
 
 只要 +/etc/rsyncd.d+ 目录中有一个配置片段被更新，++exec++ 资源就会执行一次：
 
+[source,puppet]
 ----
 exec { "update-rsyncd.conf":
     command     => "/bin/cat /etc/rsyncd.d/*.conf > /etc/rsyncd.conf",

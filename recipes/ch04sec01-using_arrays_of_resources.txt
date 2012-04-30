@@ -8,6 +8,7 @@
 
 1. 在你的配置清单中，将同一类型资源的几个实例定义在一个类中，例如：++packages++：
 +
+[source,puppet]
 ----
 package { "sudo" : ensure => installed }
 package { "unzip" : ensure => installed }
@@ -19,6 +20,7 @@ package { "rubygems" : ensure => installed }
 
 2. 使用如下的方法用数组将它们组织在一起并用一个 +package+ 资源代替：
 +
+[source,puppet]
 ----
 package { [ "cron",
             "locate",

@@ -5,7 +5,7 @@
 There are only two hard problems in computer science: cache invalidation, naming
 things, and off-by-one errors.
 
-当你维护代码时会发现，选择适当而有意义的信息为你的模块或类命名是由很大帮助的。
+当你维护代码时会发现，选择适当而有意义的信息为你的模块或类命名是有很大帮助的。
 尤其是当其他人需要阅读或基于你编写的配置清单工作时，这种命名方法是十分必要的。
 
 ==== {Howtodoit}
@@ -20,6 +20,7 @@ things, and off-by-one errors.
 
 2. 如果一个节点需要提供多种服务，请在节点的定义中包含一个类或者每个服务的类名。例如：
 +
+[source,puppet]
 ----
 node server014 inherits server {
     include puppet::server
@@ -31,19 +32,24 @@ node server014 inherits server {
 ----
 
 3. 管理用户的模块应该命名为 ++user++。
-4. 在 +user+ 模块中，声明虚拟用户的类应命名为 ++user::virtual++。
-5. 在 +user+ 模块中，一个特定的用户组应该命名为子类，例如 +user::sysadmins+
++
+--
+a. 在 +user+ 模块中，声明虚拟用户的类应命名为 ++user::virtual++。
+b. 在 +user+ 模块中，一个特定的用户组应该命名为子类，例如 +user::sysadmins+
    或 ++user::contractors++。
-6. 当你需要覆盖某些特定节点或服务的类时，继承该类并以节点名作为子类名的前缀。
+--
+
+4. 当你需要覆盖某些特定节点或服务的类时，继承该类并以节点名作为子类名的前缀。
    例如，如果节点 +cartman+ 需要一个特殊的 SSH 配置且要覆盖 +ssh+ 类，可以这样做：
 +
+[source,puppet]
 ----
 class cartman_ssh inherits ssh {
     [ override config here ]
 }
 ----
 
-7. 当使用 Puppet 为不同的服务部署配置时，被 Puppet 解析后传出的文件应该以服务开头，
+5. 当使用 Puppet 为不同的服务部署配置时，被 Puppet 解析后传出的文件应该以服务开头，
    随后跟上指示文件功能的后缀。例如：
 +
 --
@@ -64,6 +70,7 @@ http://projects.puppetlabs.com/projects/1/wiki/Puppet_Best_Practice2 。
 一些人更愿意在一个节点中使用逗号分割的列表包含多个类，而不是使用分离的
 +include+ 语句。例如：
 
+[source,puppet]
 ----
 node server014 inherits server {
     include puppet::server,

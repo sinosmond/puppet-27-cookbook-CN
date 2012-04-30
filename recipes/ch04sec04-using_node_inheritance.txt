@@ -8,6 +8,7 @@
 
 使用 Puppet 的一种实现方法是在节点定义中设置一个变量用于告知每个节点处于哪个提供商：
 
+[source,puppet]
 ----
 node webserver127 {
     $provider = "VerySlow"
@@ -38,6 +39,7 @@ node loadbalancer5 {
 
 1. 为所有的节点创建一个基类，它仅包含每个节点都要执行的类，例如：
 +
+[source,puppet]
 ----
 node server {
     include admin::basics
@@ -50,6 +52,7 @@ node server {
 
 2. 通过这个 +server+ 节点创建三个不同的子类，每个子类都设置了适当的 +provider+ 变量：
 +
+[source,puppet]
 ----
 node wreckspace_server inherits server {
     $provider = "WreckSpace"
@@ -66,6 +69,7 @@ node veryslow_server inherits server {
 
 3. 现在，为了要在 +VerySlow+ 创建一个新的 Web 服务器，仅需要从 +veryslow_server+ 继承即可：
 +
+[source,puppet]
 ----
 node webserver904 inherits veryslow_server {
     include webserver
@@ -80,6 +84,7 @@ node webserver904 inherits veryslow_server {
 你可以配置一个节点继承自另外一个节点，而另外一个节点也可以继承自其它节点等。
 但是你不能继承自多个节点（即不能多重继承），因此不能使用如下方式定义节点：
 
+[source,puppet]
 ----
 node movable_server inherits gododgy_server, veryslow_server,
 wreckspace_server {
@@ -89,8 +94,9 @@ wreckspace_server {
 
 ==== {Theresmore}
 
-与定义一个普通节点一样，你可以指定一个节点列表，这些节点都继承自相同的定义：
+与定义一个普通节点一样，你可以指定一个节点列表，这些节点都继承自相同的节点定义：
 
+[source,puppet]
 ----
 node webserver1, webserver2, webserver3 inherits wreckspace_server {
     ...
@@ -99,6 +105,7 @@ node webserver1, webserver2, webserver3 inherits wreckspace_server {
 
 另外，你也可以使用正则表达式匹配多个服务器节点：
 
+[source,puppet]
 ----
 node /webserver\d+.veryslow.com/ inherits veryslow_server {
     ...

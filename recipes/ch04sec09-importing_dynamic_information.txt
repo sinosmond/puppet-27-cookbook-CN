@@ -22,6 +22,7 @@ print page.match(/stable version is ([\d\.]*)/)[1]
 
 1. 在你的配置清单中添加如下的内容：
 +
+[source,puppet]
 ----
 $latestversion = generate("/usr/local/bin/latest-puppet.rb")
 notify { "The latest stable Puppet version is ${latestversion}.
@@ -57,6 +58,7 @@ notice: The latest stable Puppet version is 2.6.5. You're using 2.6.3.
 如果你在调用 +generate+ 时需要为其传递参数去执行，
 可以将这些参数作为函数调用的额外参数，例如：
 
+[source,puppet]
 ----
 $latestpuppet = generate("/usr/local/bin/latest-version.rb", "puppet")
 $latestmc = generate("/usr/local/bin/latest-version.rb", "mcollective")

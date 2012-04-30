@@ -10,8 +10,9 @@ Puppet 的 +tagged+ 函数会告诉你一个被命名的类或资源是否已经
 ==== {Howtodoit}
 
 1. 为了帮你辨别你是否运行在一个指定的节点或一组节点，所有节点会根据节点名被自动打标签，
-   并父节点那里继承名称。
+   并从父节点那里继承名称。
 +
+[source,puppet]
 ----
 node bitfield_server {
     include bitfield
@@ -27,9 +28,10 @@ node cookbook inherits bitfield_server {
 }
 ----
 
-2. 为了告诉你一个指定的类是否被包含在一个节点，所有的节点会
-   用他们包含的所有类其父类的名字自动打标签：
+2. 为了告诉你一个节点是否包含一个指定的类，
+   所有的节点会用他们包含的所有类其父类的名字自动打标签：
 +
+[source,puppet]
 ----
 include apache::port8000
 
@@ -44,6 +46,7 @@ if tagged("apache") {
 
 3. 如果你想要在一个节点上设置指定的标签，则需使用 +tag+ 函数：
 +
+[source,puppet]
 ----
 tag("old-slow-server")
 if tagged("old-slow-server") {
@@ -53,6 +56,7 @@ if tagged("old-slow-server") {
 
 4. 如果你想要对一个指定的资源设置标签，则需使用 +tag+ **元参数**（**metaparameter**）：
 +
+[source,puppet]
 ----
 file { "/etc/ssh/sshd_config":
     source => "puppet:///modules/admin/sshd_config",
@@ -72,9 +76,10 @@ file { "/etc/ssh/sshd_config":
 
 ==== {Theresmore}
 
-你可以使用标签创建一个资源的集合。例如，如果某服务依赖需要依赖一大批文件片段，
+你可以使用标签创建一个资源的集合。例如，如果某服务需要依赖一大批文件片段，
 你可以使用下面的配置：
 
+[source,puppet]
 ----
 class firewall::service {
     service { "firewall":
@@ -93,8 +98,8 @@ class myapp {
 ----
 
 在此，我们指定如果更新了被标记为 +firewall-snippet+ 的任何 +file+ 资源，
-就通知 +firewall+ 服务。 我们所要做的全部工作就是为特定的应用或服务添加防火墙配置片段，
-且应用或服务是打了 +firewall-snippet+ 标签的， 剩下的工作交由 Puppet 完成。
+就通知 +firewall+ 服务。 我们所要做的全部工作就是为特定的应用程序或服务添加防火墙配置片段，
+且应用程序或服务是打了 +firewall-snippet+ 标签的， 剩下的工作交由 Puppet 完成。
 
 虽然我们添加了 +notify => Service["firewall"]+ 到每一个资源片段，但是如果
 我们定义的 +firewall+ 服务不断变化，就不得不捕获这些变化并据此更新所有的片段。

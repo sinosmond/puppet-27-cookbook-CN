@@ -12,6 +12,7 @@ Ruby, like fire, is a very useful friend, and a very dangerous enemy.
 
 在 Puppet 的配置清单中将 Ruby 代码传递给 +inline_template+ 函数：
 
+[source,puppet]
 ----
 cron { "nightly-job":
     command => "/usr/local/bin/nightly-job",

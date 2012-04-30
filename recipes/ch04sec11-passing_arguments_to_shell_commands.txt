@@ -12,6 +12,7 @@
 
 1. 在你的配置清单中添加如下的代码：
 +
+[source,puppet]
 ----
 $source = "Hello Jerry"
 $target = "Hello... Newman"
@@ -60,6 +61,7 @@ $command = "/bin/mv ${argstring}"
    会发生什么？
 +
 --
+[source,puppet]
 ----
 $source = "Hello Jerry"
 $target = "Hello... Newman"

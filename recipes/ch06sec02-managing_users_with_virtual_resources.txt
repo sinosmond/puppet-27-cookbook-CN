@@ -5,6 +5,7 @@
 你有三个用户：John、Graham 和 Steven。为了简化管理大量主机，你为两种类型的用户定义了类：
 +developers+ 和 ++sysadmins++。每个机器都需要包含 ++sysadmins++，但只有一部分机器允许 +developer+ 访问：
 
+[source,puppet]
 ----
 node server
 {
@@ -33,6 +34,7 @@ John 是个系统管理员，Steven 是个开发者，而 Graham 既是系统管
 
 2. 使用如下内容创建 +/etc/puppet/modules/user/manifests/virtual.pp+ 文件：
 +
+[source,puppet]
 ----
 class user::virtual
 {
@@ -44,6 +46,7 @@ class user::virtual
 
 3. 使用如下内容创建 +/etc/puppet/modules/user/manifests/developers.pp+ 文件：
 +
+[source,puppet]
 ----
 class user::developers
 {
@@ -54,6 +57,7 @@ class user::developers
 
 4. 使用如下内容创建 +/etc/puppet/modules/user/manifests/sysadmins.pp+ 文件：
 +
+[source,puppet]
 ----
 class user::sysadmins
 {
@@ -64,6 +68,7 @@ class user::sysadmins
 
 5. 在一个节点中添加如下代码：
 +
+[source,puppet]
 ----
 include user::virtual
 include user::sysadmins
@@ -92,6 +97,7 @@ notice: Finished catalog run in 2.36 seconds
 然后你可以对你的用户进行分组（不同于 UNIX 系统中的组，只是用于区分不同的团队或任务角色），
 例如 +developers+ 和 ++sysadmins++。 对于一个组的类，可以 +realize+ 组里需要的所有用户，例如：
 
+[source,puppet]
 ----
 class user::sysadmins
 {

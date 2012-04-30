@@ -2,7 +2,7 @@
 === {Recipe405}
 
 正如节点可以从其他节点继承一样，这可以为相似的节点复制很多代码，
-同样的想法也可以用于类。
+同样的思想也可以用于类。
 
 例如，假设你有一个管理 Apache Web 服务器的 +apache+ 类，
 你想要使用略有不同的配置文件设置一台新的 Apache 机器 -- 也许是监听的端口不同。
@@ -24,6 +24,7 @@
 
 2. 使用如下代码创建 +/etc/puppet/modules/apache/manifests/init.pp+ 文件：
 +
+[source,puppet]
 ----
 class apache {
     package { "apache2-mpm-worker": ensure => installed }
@@ -41,7 +42,7 @@ class apache {
 }
 ----
 
-3. 若 Apache 软件包还未安装，安装它，复制被包含的文件 +ports.conf+ 到 Puppet：
+3. 若 Apache 软件包还未安装，安装它，复制其包含的文件 +ports.conf+ 到 Puppet：
 +
 ....
 # apt-get install apache2-mpm-worker
@@ -52,6 +53,7 @@ class apache {
 
 4. 添加 +apache+ 类到一个节点，例如：
 +
+[source,puppet]
 ----
 node cookbook {
     include apache
@@ -71,6 +73,7 @@ Listen 8000
 
 2. 使用如下内容创建一个新文件 ++/etc/puppet/modules/apache/manifests/port8000.pp++：
 +
+[source,puppet]
 ----
 class apache::port8000 inherits apache {
     File["/etc/apache2/ports.conf"] {
@@ -81,6 +84,7 @@ class apache::port8000 inherits apache {
 
 3. 改变你的节点配置，使其包含 +apache::port8000+ 类而不是 +apache+ 类：
 +
+[source,puppet]
 ----
 node cookbook {
     include apache::port8000
@@ -128,6 +132,7 @@ notice: Finished catalog run in 4.85 seconds
 
 让我们再看看这个新类：
 
+[source,puppet]
 ----
 class apache::port8000 inherits apache {
     File["/etc/apache2/ports.conf"] {
@@ -157,6 +162,7 @@ source => "puppet:///modules/apache/port8000.conf.apache",
 意味着我们将使用一个新的值覆盖父类中 +source+ 资源的参数值。
 如果我们复制整个 +apache+ 类的定义并改变资源 +source+ 的值，那么结果将是完全一样的：
 
+[source,puppet]
 ----
 class apache {
     package { "apache2-mpm-worker": ensure => installed }
@@ -176,7 +182,7 @@ class apache {
 
 ==== {Theresmore}
 
-首先覆盖被继承的类看上去有些复杂。然而一旦掌握你了这种思想，就会发现这实际上很简单。
+首先覆盖被继承的类看上去有些复杂。然而一旦你掌握了这种思想，就会发现这实际上很简单。
 这是一种使你的配置清单更具可读性的强大方式，因为这样消除了大量的重复代码，
 使你仅专注于编写不同的代码部分。下面给出几种使用覆盖的方法。
 
@@ -186,6 +192,7 @@ class apache {
 为了实现这一点，可以使用 +undef+ 值覆盖原有值。 
 其结果就像是此参数从未在先前定义过一样。
 
+[source,puppet]
 ----
 class apache::norestart inherits apache {
     File["/etc/apache2/ports.conf"] {
@@ -199,6 +206,7 @@ class apache::norestart inherits apache {
 与替换一个值类似，你可能想要在父类定义的基础上添加更多的值。
 使用 *plusignment* 操作符 ++>+ 可以实现这一功能：
 
+[source,puppet]
 ----
 class apache::ssl inherits apache {
     file { "/etc/ssl/certs/cookbook.pem":
@@ -214,6 +222,7 @@ class apache::ssl inherits apache {
 操作符 ++>+ 在父类定义的值的基础上添加一个值（或使用方括号括起来的一个数组）。
 对于上面的例子，我们最终得到的代码相当于：
 
+[source,puppet]
 ----
 service { "apache2":
     enable  => true,
@@ -227,6 +236,7 @@ service { "apache2":
 
 继承和覆盖最常见的用途之一就是禁用服务或其他资源：
 
+[source,puppet]
 ----
 class apache::disabled inherits apache {
     Service["apache2"] {

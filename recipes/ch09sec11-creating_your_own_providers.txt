@@ -42,6 +42,7 @@ end
 
 1. 在 Puppet 配置清单中添加如下代码为新的资源类型 +gitrepo+ 创建一个实例：
 +
+[source,puppet]
 ----
 gitrepo { "https://github.com/puppetlabs/puppet.git":
     path   => "/tmp/puppet",

@@ -11,6 +11,7 @@
 
 1. 添加如下代码到 ++/etc/puppet/modules/apache/manifests/init.pp++：
 +
+[source,puppet]
 ----
 define site( $sitedomain = "", $documentroot = "" ) {
     include apache
@@ -68,6 +69,7 @@ define site( $sitedomain = "", $documentroot = "" ) {
 
 3. 添加如下代码到一个节点：
 +
+[source,puppet]
 ----
 apache::site { "keithlard.com": }
 ----
@@ -108,12 +110,14 @@ notice: Finished catalog run in 3.79 seconds
 默认情况下，假设站点的域名与站点实例的名字相同，本例中是 ++keithlard.com++。
 所以当 Puppet 看到如下代码时：
 
+[source,puppet]
 ----
 apache::site { "keithlard.com": }
 ----
 
 它就使用 +keithlard.com+ 作为站点域名。如果你要指定不同的域名，请添加 +sitedomain+ 参数：
 
+[source,puppet]
 ----
 apache::site { "networkr_production":
     sitedomain => "networkr.com",
@@ -127,9 +131,10 @@ apache::site { "networkr_staging":
 模板系统的优秀之处在于：如果你想为所有站点重新配置一个值（例如，更改管理员的 e-mail 地址），
 你只需要修改一次模板，Puppet 就会根据模板相应地更新所有的虚拟主机。
 
-同样地，如果你需要为虚拟主机指定与默认值（++/var/www/${name}++）不同的 ++DocumentRoot++，
+同样地，如果你需要为虚拟主机指定与默认值（++/var/www/$\{name}++）不同的 ++DocumentRoot++，
 请添加如下的 +documentroot+ 参数：
 
+[source,puppet]
 ----
 apache::site { "communitysafety.org":
     documentroot => "/var/apps/commsafe",
