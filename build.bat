@@ -1,4 +1,4 @@
-﻿@ECHO OFF
+@ECHO OFF
 
 REM "Text based document generation:  http://www.methods.co.nz/asciidoc/"
 REM "highlighter:  http://pygments.org/ & https://github.com/rodjek/puppet-pygments-lexer"

@@ -17,8 +17,8 @@
 :Recipe207: 执行模拟运行
 :Recipe208: 检测编译错误
 :Recipe209: 理解 Puppet 的错误信息
-:Recipe210: 将命令的输出记入日志
-:Recipe211: 将调试信息记入日志
+:Recipe210: 显示命令的输出结果
+:Recipe211: 输出调试信息
 :Recipe212: 检查配置设置
 :Recipe213: 使用标签
 :Recipe214: 使用运行阶段
@@ -91,10 +91,10 @@
 :Recipe907: 使用 MCollective
 :Recipe908: 使用公共模块
 :Recipe909: 使用外部节点分类器
-:Recipe910: 创建自己的资源类型
-:Recipe911: 创建自己的提供者
+:Recipe910: 创建自定义的资源类型
+:Recipe911: 创建自定义的提供者
 :Gettingready: 准备工作
-:Howtodoit: 实现方法
+:Howtodoit: 操作步骤
 :Howitworks: 工作原理
 :Theresmore: 更多用法
 :Seealso: 参见本书

@@ -1,8 +1,9 @@
-Puppet 2.7 Cookbook ���İ�
+Puppet 2.7 Cookbook 中文版
 ==========================
 :Author:      John Arundel
 :Email:       hello@bitfieldconsulting.com
-:description: Build reliable, scalable, secure, +
+:description: Puppet 2.7 Cookbook -- +
+              Build reliable, scalable, secure, +
               high-performance systems to fully utilize the power of cloud computing.
 :doctype:     book
 :lang:        zh-CN
@@ -11,6 +12,47 @@ Puppet 2.7 Cookbook ���İ�
 :revnumber:   1.0
 
 include::entries.txt[tabsize=0]
+
+
+[IMPORTANT]
+================
+- *Chinese translation version only for learning purposes, do not for commercial purposes.*
+  *http://www.amazon.co.uk/Puppet-2-7-Cookbook-John-Arundel/dp/1849515387[Please buy the original English version].*
+- *中文翻译版仅用于学习目的，请勿用于商业目的。*
+  *支持原作者，http://www.amazon.co.uk/Puppet-2-7-Cookbook-John-Arundel/dp/1849515387[请购买英文原版]。*
+================
+
+== 中文翻译版
+
+**译者**： Osmond Liang <linuxbooksAT126DOTcom>
+
+**版本**： 0.99 （2012/04/30）
+
+****
+中文翻译版使用 AsciiDoc + Github 的方式制作。
+****
+
+* 中文翻译版的源码位于： https://github.com/sinosmond/puppet-27-cookbook-CN
+* **您可以用 http://www.worldhello.net/gotgithub/04-work-with-others/index.html[GitHub 的方法参与本书的纠错]**
+* 原书为**封闭版权**（而非开放版权）的作品
+** **鉴于版权原因**，我未在 Github 上以 Github Page 形式发布 HTML 版
+** HTML 翻译版的打包文件发布在 http://down.51cto.com/4139732/ 
+** 未制作 PDF/epub/mobi 版本，有兴趣的读者可以下载源码自行制作
+
+[NOTE]
+====
+- 请下载 HTML 翻译版的打包文件，解压缩后在本机阅读
+- **由于您可以获取翻译源码，鉴于版权原因请不要在公网上直接发布任何 HTML/PDF/epub/mobi 版本的中文翻译**
+====
+
+
+include::00-translator_preamble.txt[]
+
+include::01-colophon.txt[]
+
+include::02-author.txt[]
+
+include::03-preface.txt[]
 
 
 include::ch01-Puppet_Infrastructure.txt[]

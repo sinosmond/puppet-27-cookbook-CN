@@ -18,7 +18,7 @@ than that.
 本章将介绍一些使用 Puppet 管理一些特定应用程序的处方：MySQL、Apache、Nginx、Rails 和 Drupal。
 这些都是非常流行的应用程序， 所以这对你会很有用。
 然而，它们使用的模式和技术几乎适用于任何软件，
-所以适当改写这些处方以适应自己的目的不是什么难事。
+所以适当改写这些处方以适应自己的目的并非难事。
 
 
 include::recipes/ch07sec01-managing_apache_servers.txt[]

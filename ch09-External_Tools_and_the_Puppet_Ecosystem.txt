@@ -1,5 +1,5 @@
 ﻿[[chapter09]]
-== 扩展工具和 Puppet 生态环境
+== 外部工具和 Puppet 生态环境
 
 [quote, Belinda Asbell,]
 Unix is the answer, but only if you phrase the question very carefully.
@@ -21,12 +21,11 @@ Unix is the answer, but only if you phrase the question very carefully.
 
 Puppet 本身就是一个有用的工具，但组合使用 Puppet 与其他工具和框架可以得到更大的利益。
 在本章我们会看到：使用工具（Facter、++cft++ 和 ++puppet resource++）获得 Puppet 所需的数据；
-使用工具（Foreman 和 Puppet Dashboard）管理和报告出自 Puppet 的数据。
+使用工具（Foreman 和 Puppet Dashboard）管理和报告来自 Puppet 的数据。
 
-你还会学到：如何通过创建你自己自定义的资源类型扩展 Puppet，并在不同的平台上实现自定义类型；
+你还会学到：如何通过创建你自定义的资源类型扩展 Puppet，并在不同的平台上实现自定义类型；
 如何使用外部节点分类器脚本整合 Puppet 和数据库（例如：LDAP）；
-如何使用来自 Puppet Forge 的公共模块；以及
-Puppet 如何与系统管理框架 MCollective 协同工作。
+如何使用来自 Puppet Forge 的公共模块；以及 Puppet 如何与系统管理框架 MCollective 协同工作。
 
 
 include::recipes/ch09sec01-creating_custom_facter_facts.txt[]

@@ -36,7 +36,7 @@ If it is getting worse, I will die.
 我们还将看到：如何在 Puppet 中安排资源的执行；
 为提高效率如何将 cron 任务分散到不同的时间执行；
 如何处理时区，如何处理 +/etc/hosts+ 条目；
-以及如何让 Puppet 收集审计数据，当有人搞乱了你网络中的机器时你就会知道。
+以及如何让 Puppet 收集审计数据，使有人搞乱了你网络中的机器时能被发现。
 
 
 include::recipes/ch06sec01-using_virtual_resources.txt[]
